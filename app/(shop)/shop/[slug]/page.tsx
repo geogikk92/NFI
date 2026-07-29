@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { getProductBySlug } from "@/lib/commerce/catalog";
 import { formatMoney } from "@/lib/money";
 import { WITHDRAWAL_PERIOD_DAYS } from "@/lib/legal";
+import { addToCartForm } from "../../actions";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -116,9 +117,14 @@ export default async function ProductPage({ params }: Params) {
               </div>
             </dl>
 
-            <Button className="mt-6 w-full" size="lg" disabled={soldOut}>
-              {soldOut ? "Ausverkauft" : "In den Warenkorb"}
-            </Button>
+            {/* Формуляр, не onClick — работи и без JavaScript. */}
+            <form action={addToCartForm} className="mt-6">
+              <input type="hidden" name="productId" value={product.id} />
+              <input type="hidden" name="quantity" value={1} />
+              <Button type="submit" className="w-full" size="lg" disabled={soldOut}>
+                {soldOut ? "Ausverkauft" : "In den Warenkorb"}
+              </Button>
+            </form>
 
             {isDigital ? (
               <p className="mt-4 text-xs leading-relaxed text-muted-foreground">

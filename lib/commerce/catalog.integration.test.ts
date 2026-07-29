@@ -57,6 +57,16 @@ suite("каталог срещу истинска база", () => {
     expect(isCheckoutable(cart)).toBe(true);
   });
 
+  it("редът носи НЕМСКОТО заглавие — то отива и във фактурата", async () => {
+    const physical = await getProductBySlug("lehrbuch-a1");
+    const cart = await priceCartFromDb({
+      items: [{ productId: physical!.id, quantity: 1 }],
+      countryCode: "DE",
+    });
+    // Product.title е българското ("Учебник A1 (печатно издание)").
+    expect(cart.lines[0].title).toBe("Lehrbuch A1 (gedruckt)");
+  });
+
   it("дигитална поръчка не носи доставка", async () => {
     const digital = await getProductBySlug("arbeitsheft-a1-pdf");
     const cart = await priceCartFromDb({

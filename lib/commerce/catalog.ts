@@ -147,6 +147,7 @@ export async function priceCartFromDb(
       select: {
         id: true,
         title: true,
+        titleDe: true,
         type: true,
         priceCents: true,
         vatCategory: true,
@@ -165,7 +166,10 @@ export async function priceCartFromDb(
 
   const catalog: CatalogProduct[] = products.map((product) => ({
     id: product.id,
-    title: product.title,
+    // Немското заглавие печели: клиентите са в Германия, а това заглавие
+    // отива и в OrderItem.titleSnapshot, тоест накрая във фактурата.
+    // Когато дойде превключване на езика, тук се подава locale.
+    title: product.titleDe ?? product.title,
     kind: product.type,
     priceCents: product.priceCents,
     vatCategory: toVatCategory(product.vatCategory),
