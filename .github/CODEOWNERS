@@ -1,0 +1,28 @@
+# ⚠️  ПЪРВА РАБОТА: замени ЖОРО-GITHUB с истинския му GitHub username (и на двата реда).
+#     Докато не го направиш, GitHub игнорира тези правила.
+#
+# Тук се изброяват САМО общите файлове. Личните територии нарочно ги няма —
+# ако бяха тук, GitHub щеше да иска чуждо одобрение за всеки твой PR
+# (човек не може да одобри собствения си PR) и щяхте да се блокирате взаимно.
+#
+# Как работи на практика:
+#   • PR само в твоята папка          → мърджваш веднага, без ревю
+#   • PR, който бута общ файл отдолу  → чака одобрение от другия
+
+/prisma/schema/base.prisma    @BorisGudev @ЖОРО-GITHUB
+/app/layout.tsx               @BorisGudev @ЖОРО-GITHUB
+/tailwind.config.ts           @BorisGudev @ЖОРО-GITHUB
+/components/ui/               @BorisGudev @ЖОРО-GITHUB
+/package.json                 @BorisGudev @ЖОРО-GITHUB
+/.env.example                 @BorisGudev @ЖОРО-GITHUB
+/.github/CODEOWNERS           @BorisGudev @ЖОРО-GITHUB
+
+# Разпределението на териториите (за справка, не се налага от GitHub):
+#
+#   БОБИ   app/(public)/  app/(profile)/  app/admin/(content)/
+#          components/content/  lib/cms/  lib/storage/
+#          prisma/schema/content.prisma
+#
+#   ЖОРО   app/(shop)/  app/(translate)/  app/admin/(commerce)/
+#          components/commerce/  lib/payments/  lib/email/  lib/nap/
+#          prisma/schema/commerce.prisma

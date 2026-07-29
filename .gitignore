@@ -1,0 +1,43 @@
+# зависимости
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# продукция
+dist/
+
+# среда — НИКОГА не се качва
+.env
+.env.local
+.env*.local
+!.env.example
+
+# бази и качени файлове
+*.db
+*.sqlite
+/uploads/
+
+# тестове
+coverage/
+playwright-report/
+test-results/
+
+# OS / редактори
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# вътрешни документи (не се публикуват)
+*.pdf
+*.docx
+Оферта-*
+
+# Vercel
+.vercel
