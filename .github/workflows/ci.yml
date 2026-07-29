@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Нов push по същия клон отменя предишния пробег — иначе се трупа опашка.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nfi
+          POSTGRES_PASSWORD: nfi
+          POSTGRES_DB: nfi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://nfi:nfi@localhost:5432/nfi_test
+      # Тестовете на lib/legal четат реквизитите на продавача.
+      SELLER_NAME: CI
+      SELLER_EIK: "000000000"
+      SELLER_ADDRESS: CI
+      APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # postinstall вика `prisma generate`, така че клиентът идва наготово.
+      - run: npm ci
+
+      - name: Схемата валидна ли е
+        run: npx prisma validate
+
+      # Срещу истинска база — иначе тестът за паралелните номера на
+      # фактури се пропуска тихо и никой не забелязва.
+      - name: Миграции
+        run: npx prisma migrate deploy
+
+      - name: Типове
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Контраст (WCAG 2.1 AA)
+        run: npm run a11y:contrast
+
+      - name: Тестове
+        run: npm test
+
+      - name: Build
+        run: npm run build

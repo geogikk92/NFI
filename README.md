@@ -75,15 +75,37 @@ gh pr create --fill
 ## Стартиране
 
 ```bash
-npm install
+npm install                    # postinstall вика prisma generate
 cp .env.example .env.local     # попълни поне DATABASE_URL
-npx prisma generate            # клиентът отива в app/generated/prisma
-npx prisma migrate dev         # изисква работеща база
+createdb nfi_dev               # или каквато база ползваш
+npx prisma migrate dev
 npm run dev
 ```
 
 Схемата е **многофайлова** (`prisma/schema/`). Prisma CLI чете `.env.local`
 през `prisma.config.ts` — само един файл с тайни, за Next и за Prisma.
+
+## Проверки
+
+```bash
+npm test              # 58 теста (vitest)
+npm run typecheck
+npm run lint
+npm run a11y:contrast # WCAG 2.1 AA контраст на палитрата
+npm run build
+```
+
+Всичките петте се въртят в CI при всеки PR (`.github/workflows/ci.yml`),
+включително срещу истински Postgres.
+
+**`npm run a11y:contrast`** чете `app/tokens.css`, резолвира `var()`
+веригите и мери 42 двойки в светъл и тъмен режим. Пада ли една — излиза с
+код 1. Достъпността е правно задължение от 28.06.2025, не пожелание:
+виж [`docs/ПРАВНИ-ИЗИСКВАНИЯ.md`](docs/ПРАВНИ-ИЗИСКВАНИЯ.md) §6.
+
+Тестовете за парите и номерацията се пишат **срещу спецификацията**, не
+срещу реализацията. Ако тест падне, първо провери дали не е прав той.
+Интеграционните тестове се пропускат тихо без `DATABASE_URL`.
 
 ## Стек
 
