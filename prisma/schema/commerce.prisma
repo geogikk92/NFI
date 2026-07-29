@@ -16,6 +16,20 @@ enum ProductType {
   PHYSICAL
 }
 
+/// Как се третира продуктът по ДДС. НЕ съвпада с ProductType: онлайн курс
+/// на живо и записан видеокурс са и двата „дигитални", но само вторият е
+/// електронна услуга и минава през OSS. Виж docs/ПРАВНИ-ИЗИСКВАНИЯ.md §3.2.
+enum VatCategory {
+  /// Курс с преподавател — присъствен или на живо.
+  EDUCATION
+  /// Записано съдържание, PDF, автоматично сваляне.
+  ELECTRONIC
+  /// Физическа стока.
+  GOODS
+  /// Заверен превод.
+  TRANSLATION
+}
+
 model Product {
   id      String @id @default(cuid())
   slug    String @unique
@@ -31,8 +45,12 @@ model Product {
   /// от клиента — сверява се оттук при всеки checkout.
   priceCents Int
   currency   String @default("EUR")
-  /// Ставката, приложена към този продукт (напр. 19.00 за DE, 20.00 за BG).
-  vatRate Decimal @db.Decimal(5, 2)
+
+  /// НЕ се пази ставка, а КАТЕГОРИЯ. Ставката зависи от държавата на
+  /// купувача и от прага за OSS, тоест е различна за двама клиенти на
+  /// един и същ продукт — смята се в lib/legal.resolveVatRate() и се
+  /// снима в OrderItem.vatRate към момента на поръчката.
+  vatCategory VatCategory
 
   /// Физически: тегло за доставка. Дигитални: null.
   weightGrams Int?
