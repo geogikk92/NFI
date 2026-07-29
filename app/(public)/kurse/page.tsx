@@ -22,7 +22,15 @@ export const metadata: Metadata = {
     "Deutschkurse von A1 bis C2 — Präsenz, Online und Hybrid. Kleine Gruppen, Prüfungsvorbereitung.",
 };
 
-export const revalidate = 300;
+// БЕЗ revalidate — той няма да подейства и само заблуждава.
+// SiteShell чете бисквитки (брояч на количката, cookie решение), а
+// `cookies()` прави целия маршрут динамичен. Затова страницата се
+// рендира при всяка заявка, каквото и да пише тук.
+//
+// Ако това стане проблем при реален трафик, изходите са три: брояч на
+// количката в клиентски компонент, Partial Prerendering, или кеш на
+// заявките с unstable_cache. Решението е на Боби — това е негова
+// територия и зависи от дизайна на навигацията.
 
 type Props = {
   searchParams: Promise<{ level?: string; format?: string }>;
@@ -37,7 +45,9 @@ export default async function CoursesPage({ searchParams }: Props) {
 
   const [courses, counts] = await Promise.all([
     listCourses({ level, format }),
-    countCoursesByLevel(),
+    // Броевете уважават филтъра по формат — иначе „A1 (1)" стои над нула
+    // резултата при ?format=ONLINE.
+    countCoursesByLevel({ format }),
   ]);
 
   return (
@@ -55,12 +65,15 @@ export default async function CoursesPage({ searchParams }: Props) {
       </header>
 
       {/* Филтърът е връзки, не бутони: състоянието живее в адреса, значи
-          страницата се споделя и работи без JavaScript. */}
+          страницата се споделя и работи без JavaScript.
+
+          Връзките ПАЗЯТ другия филтър — иначе избор на ниво тихо изхвърля
+          избрания формат и човекът вижда резултати, които не е поискал. */}
       <nav aria-label="Nach Niveau filtern" className="mt-12">
         <ul className="flex flex-wrap gap-2">
           <li>
             <Link
-              href="/kurse"
+              href={format ? `/kurse?format=${format}` : "/kurse"}
               aria-current={!level ? "true" : undefined}
               className={cn(
                 "inline-flex rounded-full border px-4 py-2 text-sm font-medium transition-colors",
@@ -75,19 +88,25 @@ export default async function CoursesPage({ searchParams }: Props) {
           {COURSE_LEVELS.map((item) => {
             const count = counts[item];
             const active = level === item;
+            const href = format
+              ? `/kurse?level=${item}&format=${format}`
+              : `/kurse?level=${item}`;
 
             return (
               <li key={item}>
+                {/* Без aria-disabled и без pointer-events-none: те правеха
+                    връзката недостъпна за мишка, но напълно работеща от
+                    клавиатура, а четецът я обявяваше като „unavailable".
+                    Броят в скобите казва същото, без да лъже. */}
                 <Link
-                  href={`/kurse?level=${item}`}
+                  href={href}
                   aria-current={active ? "true" : undefined}
-                  aria-disabled={count === 0 ? "true" : undefined}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                     active
                       ? "border-primary bg-primary text-primary-foreground"
                       : count === 0
-                        ? "pointer-events-none border-border text-subtle"
+                        ? "border-border text-subtle hover:bg-muted"
                         : "border-border hover:bg-muted",
                   )}
                 >

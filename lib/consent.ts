@@ -67,6 +67,44 @@ export function rejectAll(now: Date): ConsentState {
   };
 }
 
+/**
+ * Включва ЕДНА категория, без да пипа останалите.
+ *
+ * Ползва се от ConsentGate: човекът натиска „зареди това видео" и това
+ * не бива да означава „и статистиката, моля". Съгласието по Art. 6(1)(a)
+ * GDPR е конкретно за целта — един бутон не може да покрие две цели.
+ *
+ * Пази и вече изразен отказ по другата категория.
+ */
+export function acceptCategory(
+  state: ConsentState,
+  category: Exclude<ConsentCategory, "necessary">,
+  now: Date,
+): ConsentState {
+  return {
+    ...state,
+    necessary: true,
+    [category]: true,
+    version: CONSENT_VERSION,
+    decidedAt: now.toISOString(),
+  };
+}
+
+/** Оттегляне на една категория. Art. 7(3) GDPR — оттеглянето е право. */
+export function revokeCategory(
+  state: ConsentState,
+  category: Exclude<ConsentCategory, "necessary">,
+  now: Date,
+): ConsentState {
+  return {
+    ...state,
+    necessary: true,
+    [category]: false,
+    version: CONSENT_VERSION,
+    decidedAt: now.toISOString(),
+  };
+}
+
 export function saveSelection(
   selection: { functional: boolean; analytics: boolean },
   now: Date,

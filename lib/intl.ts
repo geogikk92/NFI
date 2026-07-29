@@ -17,7 +17,18 @@ const LOCALE_TAGS: Record<Locale, string> = {
   bg: "bg-BG",
 };
 
-/** Часовата зона на института. Не се разчита на тази на сървъра. */
+/**
+ * Часовата зона на института. Не се разчита на тази на сървъра.
+ *
+ * ВНИМАНИЕ: нарочно е различна от зоната в lib/counter.ts
+ * (`Europe/Sofia`). Не е недоглеждане:
+ *   • ТУК се показват часове на КЛИЕНТА — той е в Германия, курсът е в
+ *     Нюрнберг, „начало 18:00" значи 18:00 нюрнбергско време;
+ *   • ТАМ се определя счетоводната година по седалището на ДРУЖЕСТВОТО —
+ *     то е българско и годината се приключва по българско време.
+ * Двете съвпадат по часова разлика днес, но са различни решения и не
+ * бива да се обединяват.
+ */
 export const TIME_ZONE = "Europe/Berlin";
 
 function tag(locale: Locale): string {
@@ -136,14 +147,25 @@ export function formatList(
   return new Intl.ListFormat(tag(locale), { style: "long", type }).format(items);
 }
 
-/** „vor 3 Tagen" / „in 2 Wochen" */
+/**
+ * „vor 3 Tagen" / „in 2 Wochen"
+ *
+ * `numeric: "always"` е нарочно, не пропуск. С `"auto"` форматерът връща
+ * КАЛЕНДАРНИ думи („gestern", „letzte Woche") за ±1, а тук се смята
+ * ИЗТЕКЛО време по фиксирани константи. Двете не си съответстват:
+ * 30 часа са 1.25 дни → закръглят се на 1 → „gestern", макар денят да е
+ * завчерашен. Затова се изписва „vor 1 Tag", което е винаги вярно.
+ *
+ * Ако някога трябват истински календарни думи, те се смятат от разликата
+ * в КАЛЕНДАРНИ дни в TIME_ZONE, а не от продължителност.
+ */
 export function formatRelative(
   date: Date,
   locale: Locale = "de",
   now: Date = new Date(),
 ): string {
   const formatter = new Intl.RelativeTimeFormat(tag(locale), {
-    numeric: "auto",
+    numeric: "always",
   });
 
   const diffMs = date.getTime() - now.getTime();

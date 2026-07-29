@@ -7,7 +7,7 @@
 // Клиентски компонент е само защото мобилното меню има състояние. Съдържанието
 // на връзките идва отвън, за да може да мине през CMS в задача 18c.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
@@ -27,6 +27,29 @@ interface SiteNavProps {
 export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
+  // Escape затваря менюто и връща фокуса на бутона. Без връщането фокусът
+  // пада в началото на документа и човекът с клавиатура се губи.
+  useEffect(() => {
+    if (!open) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // Смяната на страница затваря менюто. Иначе при навигация с браузърните
+  // бутони то остава отворено над новото съдържание.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -97,6 +120,7 @@ export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
 
           {/* Мобилен превключвател */}
           <Button
+            ref={toggleRef}
             type="button"
             variant="ghost"
             size="icon"

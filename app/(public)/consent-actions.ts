@@ -4,8 +4,34 @@
 // Писано от Жоро, докато Боби е в отпуск.
 
 import { revalidatePath } from "next/cache";
-import { acceptAll, rejectAll, saveSelection } from "@/lib/consent";
-import { writeConsent } from "@/lib/consent-cookie";
+import {
+  acceptAll,
+  acceptCategory,
+  rejectAll,
+  saveSelection,
+  type ConsentCategory,
+} from "@/lib/consent";
+import { readConsent, writeConsent } from "@/lib/consent-cookie";
+
+/**
+ * Включва САМО поисканата категория и запазва останалите избори.
+ *
+ * Ползва се от ConsentGate. Едно „зареди това видео" не бива да включва
+ * статистиката — съгласието по GDPR е конкретно за целта.
+ */
+export async function acceptConsentCategory(
+  formData: FormData,
+): Promise<void> {
+  const raw = formData.get("category");
+  const category: ConsentCategory | null =
+    raw === "functional" || raw === "analytics" ? raw : null;
+
+  if (!category) return;
+
+  const current = await readConsent();
+  await writeConsent(acceptCategory(current, category, new Date()));
+  revalidatePath("/", "layout");
+}
 
 export async function acceptAllCookies(): Promise<void> {
   await writeConsent(acceptAll(new Date()));

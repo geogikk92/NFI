@@ -17,7 +17,7 @@ import { Play, ShieldOff } from "lucide-react";
 import { readConsent } from "@/lib/consent-cookie";
 import { hasConsent, type ConsentCategory } from "@/lib/consent";
 import { Button } from "@/components/ui/button";
-import { acceptAllCookies } from "@/app/(public)/consent-actions";
+import { acceptConsentCategory } from "@/app/(public)/consent-actions";
 
 interface ConsentGateProps {
   category: Exclude<ConsentCategory, "necessary">;
@@ -55,8 +55,11 @@ export async function ConsentGate({
         IP-Adresse. Deshalb laden wir ihn erst, wenn Sie zustimmen.
       </p>
 
-      {/* Бутонът е формуляр, не onClick — работи и без JavaScript. */}
-      <form action={acceptAllCookies} className="mt-6">
+      {/* Формуляр, не onClick — работи и без JavaScript.
+          Подава се КОНКРЕТНАТА категория: съгласието за едно видео не бива
+          да включва статистиката. */}
+      <form action={acceptConsentCategory} className="mt-6">
+        <input type="hidden" name="category" value={category} />
         <Button type="submit" variant="outline">
           <Play aria-hidden />
           Laden und zustimmen
@@ -64,8 +67,12 @@ export async function ConsentGate({
       </form>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Die Zustimmung gilt für alle externen Inhalte und ist jederzeit
-        widerrufbar.
+        Die Zustimmung gilt für externe Inhalte auf der gesamten Seite und
+        ist unter{" "}
+        <a href="/cookies" className="underline hover:text-primary">
+          Cookie-Einstellungen
+        </a>{" "}
+        jederzeit widerrufbar.
       </p>
     </div>
   );

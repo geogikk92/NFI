@@ -1,6 +1,7 @@
 // ТЕРИТОРИЯ НА БОБИ · задача 4 — курсове.
 // Писано от Жоро, докато Боби е в отпуск.
 
+import { cache } from "react";
 import { db } from "@/lib/db";
 
 export type CourseLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
@@ -87,7 +88,10 @@ export function parseLevel(value: unknown): CourseLevel | null {
 }
 
 export function parseFormat(value: unknown): CourseFormat | null {
-  return typeof value === "string" && value in FORMAT_LABELS
+  // Object.hasOwn, НЕ `in`: операторът `in` обхожда и прототипната верига,
+  // затова `?format=toString` минаваше за валиден формат и Prisma гърмеше
+  // с 500 на публична страница.
+  return typeof value === "string" && Object.hasOwn(FORMAT_LABELS, value)
     ? (value as CourseFormat)
     : null;
 }
@@ -106,13 +110,23 @@ export async function listCourses(
   });
 }
 
-/** Броячи за филтъра — за да не се показва ниво с нула курса. */
-export async function countCoursesByLevel(): Promise<
-  Record<CourseLevel, number>
-> {
+/**
+ * Броячи за филтъра по ниво.
+ *
+ * Приема филтъра по ФОРМАТ, защото броевете стоят в чиповете точно над
+ * резултатите: при `?format=ONLINE` „A1 (1)" до нула показани курса е
+ * подвеждащо. Филтърът по ниво нарочно НЕ се прилага — иначе всяко друго
+ * ниво би показвало нула.
+ */
+export async function countCoursesByLevel(
+  filter: Pick<CourseFilter, "format"> = {},
+): Promise<Record<CourseLevel, number>> {
   const rows = await db.course.groupBy({
     by: ["level"],
-    where: { published: true },
+    where: {
+      published: true,
+      ...(filter.format ? { format: filter.format } : {}),
+    },
     _count: { _all: true },
   });
 
@@ -127,33 +141,40 @@ export async function countCoursesByLevel(): Promise<
   return counts;
 }
 
-export async function getCourseBySlug(
-  slug: string,
-): Promise<CourseDetail | null> {
-  const course = await db.course.findFirst({
-    where: { slug, published: true },
-    select: {
-      ...SUMMARY_FIELDS,
-      description: true,
-      descriptionDe: true,
-      reviews: {
-        where: { published: true },
-        select: { rating: true },
+/**
+ * Обвито в React `cache()`: generateMetadata и самата страница викат тази
+ * функция независимо, а Next мемоизира само `fetch()`, не и Prisma. Без
+ * това всяко зареждане на детайла правеше две еднакви заявки.
+ *
+ * Рейтингът се смята в БАЗАТА с aggregate, не в паметта — иначе курс с
+ * хиляда рецензии тегли хиляда реда, за да получи едно число.
+ */
+export const getCourseBySlug = cache(
+  async (slug: string): Promise<CourseDetail | null> => {
+    const course = await db.course.findFirst({
+      where: { slug, published: true },
+      select: {
+        ...SUMMARY_FIELDS,
+        description: true,
+        descriptionDe: true,
       },
-    },
-  });
+    });
 
-  if (!course) return null;
+    if (!course) return null;
 
-  const { reviews, ...rest } = course;
-  const reviewCount = reviews.length;
-  const averageRating =
-    reviewCount > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
-      : null;
+    const stats = await db.review.aggregate({
+      where: { courseId: course.id, published: true },
+      _count: { _all: true },
+      _avg: { rating: true },
+    });
 
-  return { ...rest, reviewCount, averageRating };
-}
+    return {
+      ...course,
+      reviewCount: stats._count._all,
+      averageRating: stats._avg.rating,
+    };
+  },
+);
 
 /** Останалите курсове от същото ниво — за края на детайлната страница. */
 export async function listRelatedCourses(

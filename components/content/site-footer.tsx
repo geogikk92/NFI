@@ -39,6 +39,9 @@ const sections = [
       { href: "/datenschutz", label: "Datenschutz" },
       { href: "/agb", label: "AGB" },
       { href: "/widerruf", label: "Widerrufsrecht" },
+      // Art. 7(3) GDPR: оттеглянето трябва да е толкова лесно, колкото
+      // даването. Банерът изчезва след решението — това е постоянният път.
+      { href: "/cookies", label: "Cookie-Einstellungen" },
     ],
   },
 ] as const;

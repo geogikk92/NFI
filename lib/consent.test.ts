@@ -3,10 +3,12 @@ import {
   CONSENT_VERSION,
   DEFAULT_CONSENT,
   acceptAll,
+  acceptCategory,
   hasConsent,
   needsDecision,
   parseConsent,
   rejectAll,
+  revokeCategory,
   saveSelection,
   serializeConsent,
 } from "./consent";
@@ -61,6 +63,47 @@ describe("решения", () => {
   it("necessary не може да се изключи", () => {
     const state = saveSelection({ functional: false, analytics: false }, NOW);
     expect(state.necessary).toBe(true);
+  });
+});
+
+describe("acceptCategory / revokeCategory", () => {
+  it("включва САМО поисканата категория", () => {
+    // Натискането на „зареди това видео" не бива да включва статистиката —
+    // съгласието по GDPR е конкретно за целта.
+    const state = acceptCategory(DEFAULT_CONSENT, "functional", NOW);
+    expect(state.functional).toBe(true);
+    expect(state.analytics).toBe(false);
+  });
+
+  it("не презаписва вече изразен отказ по другата категория", () => {
+    const refused = rejectAll(NOW);
+    const state = acceptCategory(refused, "functional", NOW);
+    expect(state.functional).toBe(true);
+    expect(state.analytics).toBe(false);
+  });
+
+  it("запазва вече дадено съгласие по другата категория", () => {
+    const partial = saveSelection({ functional: false, analytics: true }, NOW);
+    const state = acceptCategory(partial, "functional", NOW);
+    expect(state.functional).toBe(true);
+    expect(state.analytics).toBe(true);
+  });
+
+  it("оттеглянето маха само една категория", () => {
+    const all = acceptAll(NOW);
+    const state = revokeCategory(all, "analytics", NOW);
+    expect(state.analytics).toBe(false);
+    expect(state.functional).toBe(true);
+    expect(state.necessary).toBe(true);
+  });
+
+  it("и двете отбелязват момента на решението", () => {
+    expect(acceptCategory(DEFAULT_CONSENT, "analytics", NOW).decidedAt).toBe(
+      NOW.toISOString(),
+    );
+    expect(revokeCategory(acceptAll(NOW), "analytics", NOW).decidedAt).toBe(
+      NOW.toISOString(),
+    );
   });
 });
 
