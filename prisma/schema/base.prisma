@@ -1,0 +1,254 @@
+// ╔═══════════════════════════════════════════════════════════════════════╗
+// ║  ЗАМРАЗЕН ФАЙЛ. Промяна само през PR с ревю от другия.                ║
+// ║  Виж .github/CODEOWNERS. Тук е всичко, което ползват И ДВАМАТА.       ║
+// ╚═══════════════════════════════════════════════════════════════════════╝
+//
+// Правило за релациите: когато добавяш модел в content.prisma или
+// commerce.prisma, който сочи към User, релационното поле от страната на
+// User се добавя ТУК — значи PR с ревю. Затова полетата по-долу са
+// изброени изчерпателно още сега, за да не се налага да се пипа файлът.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Потребители и автентикация (Auth.js v5 + @auth/prisma-adapter)
+// ─────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+
+  /// Без него гост-поръчка може да бъде присвоена от чужд човек,
+  /// който регистрира същия имейл. Изискване от одита (план, раздел 5).
+  emailVerified DateTime?
+
+  name         String?
+  phone        String?
+  image        String?
+  passwordHash String?
+  role         Role    @default(STUDENT)
+
+  /// "de" | "bg" — езикът на интерфейса и на транзакционните имейли.
+  locale String @default("de")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  /// GDPR: меко изтриване. Анонимизацията минава оттук, за да не рушим
+  /// историята на поръчките и фактурите (те се пазят по закон).
+  deletedAt DateTime?
+
+  accounts  Account[]
+  sessions  Session[]
+  consents  ConsentLog[]
+  auditLogs AuditLog[]
+
+  // съдържание — Боби
+  callRequests     CallRequest[]
+  certificates     Certificate[]
+  downloadGrants   DownloadGrant[]
+  levelTestResults LevelTestResult[]
+  reviews          Review[]
+
+  // търговия — Жоро
+  orders              Order[]
+  translationRequests TranslationRequest[]
+
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Съгласия — Art. 7(1) GDPR изисква да можем да ДОКАЖЕМ съгласието
+// ─────────────────────────────────────────────────────────────────────────
+
+enum ConsentType {
+  NEWSLETTER
+  COOKIES
+  TERMS
+  PRIVACY
+  MATERIAL_DOWNLOAD
+  /// §356(5) BGB — изричен отказ от правото на отказ при дигитални стоки.
+  /// Без него клиентът сваля файла и законно си иска парите обратно.
+  WIDERRUF
+}
+
+model ConsentLog {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Пази се отделно от userId: съгласието може да е дадено от гост,
+  /// а и трябва да преживее изтриването на профила.
+  email String?
+  type  ConsentType
+
+  /// Коя версия на текста е приел човекът. Без това доказването пада.
+  textVersion String
+  textHash    String
+  granted     Boolean @default(true)
+
+  requestedAt DateTime  @default(now())
+  confirmedAt DateTime?
+  revokedAt   DateTime?
+
+  ip        String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([email, type])
+  @@index([type, confirmedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Броячи — единственият източник на последователни номера
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Ползва се от фактури, кредитни известия (Жоро) И от сертификати (Боби).
+/// ЗАДЪЛЖИТЕЛНО се увеличава атомарно вътре в транзакция:
+///   UPDATE "Counter" SET value = value + 1 WHERE key = $1 RETURNING value
+/// Всяко четене-после-запис дава дублиран номер при паралелни плащания.
+model Counter {
+  key       String   @id
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Медия — споделеният файлов слой (S3/R2)
+// ─────────────────────────────────────────────────────────────────────────
+
+model Media {
+  id     String @id @default(cuid())
+  /// Ключът в bucket-а. Uniqueness пази от презаписване.
+  key    String @unique
+  bucket String
+
+  mimeType  String
+  sizeBytes Int
+  width     Int?
+  height    Int?
+  checksum  String?
+
+  /// Достъпност: alt текстът е двуезичен, защото сайтът е двуезичен.
+  alt   String?
+  altDe String?
+  title String?
+
+  /// { "thumb": "...", "md": "...", "lg": "..." }
+  variants Json?
+
+  uploadedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([mimeType])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Одитна следа
+// ─────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id      String  @id @default(cuid())
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  /// Дублира се като текст, за да преживее изтриването на потребителя.
+  actorEmail String?
+
+  /// "order.refund", "content.publish", "user.export"
+  action   String
+  entity   String
+  entityId String?
+
+  before Json?
+  after  Json?
+
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Webhook дедупликация
+// ─────────────────────────────────────────────────────────────────────────
+
+enum WebhookSource {
+  MOLLIE
+  RESEND
+  NAP
+}
+
+model WebhookEvent {
+  id     String        @id @default(cuid())
+  source WebhookSource
+  /// Идентификаторът от доставчика. Заедно със source е UNIQUE —
+  /// това е цялата защита срещу двойна фактура при повторен webhook.
+  externalId String
+  eventType  String?
+
+  payload     Json
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  attempts    Int       @default(0)
+  error       String?
+
+  @@unique([source, externalId])
+  @@index([processedAt])
+  @@index([source, receivedAt])
+}

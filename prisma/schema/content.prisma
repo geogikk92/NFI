@@ -1,0 +1,395 @@
+// ═══════════════════════════════════════════════════════════════════════
+//  ТЕРИТОРИЯ НА БОБИ. Жоро не пипа този файл.
+//  Курсове, лийд-потоци, сертификати, безплатни материали, CMS.
+// ═══════════════════════════════════════════════════════════════════════
+//
+// Медия: моделите тук пазят `...MediaId String?` БЕЗ foreign key към Media.
+// Причината е нарочна — една снимка се ползва на много места и каскадното
+// изтриване би трило съдържание. Свързването става в кода през lib/storage.
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Курсове
+// ─────────────────────────────────────────────────────────────────────────
+
+enum CourseLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+enum CourseFormat {
+  ONLINE
+  PRESENCE
+  HYBRID
+  INDIVIDUAL
+}
+
+model Course {
+  id    String @id @default(cuid())
+  slug  String @unique
+  title String
+  /// Немското заглавие. Сайтът е двуезичен от край до край.
+  titleDe String?
+
+  level  CourseLevel
+  format CourseFormat
+
+  summary     String?
+  description String? @db.Text
+  summaryDe   String?
+  descriptionDe String? @db.Text
+
+  /// В центове. Никога Float — закръгляването на парите е тествано отделно.
+  priceCents Int?
+  currency   String @default("EUR")
+
+  durationWeeks  Int?
+  hoursPerWeek   Int?
+  maxParticipants Int?
+  startsAt       DateTime?
+
+  coverMediaId String?
+
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  sortOrder   Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  callRequests CallRequest[]
+  certificates Certificate[]
+  reviews      Review[]
+
+  @@index([published, sortOrder])
+  @@index([level])
+  @@index([slug])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Заявки за обаждане — трите източника
+// ─────────────────────────────────────────────────────────────────────────
+
+enum CallRequestSource {
+  COURSE_PAGE
+  CONTACT_PAGE
+  LEVEL_TEST
+}
+
+enum CallRequestStatus {
+  NEW
+  CONTACTED
+  SCHEDULED
+  CLOSED
+  SPAM
+}
+
+model CallRequest {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name    String
+  email   String
+  phone   String?
+  message String? @db.Text
+
+  source CallRequestSource
+  status CallRequestStatus @default(NEW)
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  /// Предпочитан час за обаждане, както го е написал човекът.
+  preferredTime String?
+
+  /// Rate limiting и honeypot следа — пазим ги, за да можем да
+  /// разпознаем ботовете със задна дата.
+  ip        String?
+  userAgent String?
+
+  handledAt   DateTime?
+  handledNote String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([courseId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Тест за ниво
+// ─────────────────────────────────────────────────────────────────────────
+
+model LevelTestQuestion {
+  id       String @id @default(cuid())
+  position Int
+
+  prompt String @db.Text
+  /// [{ "id": "a", "text": "...", "correct": true }, ...]
+  options Json
+  /// Тежест на въпроса при точкуването.
+  points Int         @default(1)
+  level  CourseLevel
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, position])
+}
+
+model LevelTestResult {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  email String?
+  name  String?
+
+  score       Int
+  maxScore    Int
+  resultLevel CourseLevel
+
+  /// Пълните отговори, за да може резултатът да се преразгледа.
+  answers Json
+
+  /// Тестът завършва със заявка за обаждане — това е връзката.
+  callRequestId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Безплатни материали зад форма
+// ─────────────────────────────────────────────────────────────────────────
+
+enum MaterialKind {
+  PDF
+  VIDEO_VIMEO
+  VIDEO_GOTO
+  AUDIO
+  LINK
+}
+
+model FreeMaterial {
+  id    String @id @default(cuid())
+  slug  String @unique
+  title String
+  titleDe String?
+
+  description   String? @db.Text
+  descriptionDe String? @db.Text
+
+  kind MaterialKind
+
+  /// За PDF/аудио: ключ в S3. За видео: id-то във Vimeo/GoTo.
+  storageKey  String?
+  externalId  String?
+  coverMediaId String?
+
+  level CourseLevel?
+
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  sortOrder   Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grants DownloadGrant[]
+
+  @@index([published, sortOrder])
+  @@index([slug])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Защитено сваляне — токен + персонализиран воден знак
+// ─────────────────────────────────────────────────────────────────────────
+
+model DownloadGrant {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email  String?
+
+  /// Точно един от двата е попълнен: безплатен материал ИЛИ купен продукт.
+  freeMaterialId String?
+  freeMaterial   FreeMaterial? @relation(fields: [freeMaterialId], references: [id], onDelete: Cascade)
+  /// Сочи ProductFile.id (commerce). Без FK — двата файла остават независими.
+  productFileId  String?
+
+  /// Достатъчна ентропия: 32 байта, base64url. Не е cuid.
+  token String @unique
+
+  expiresAt     DateTime
+  maxDownloads  Int       @default(5)
+  downloadCount Int       @default(0)
+  lastUsedAt    DateTime?
+  revokedAt     DateTime?
+
+  /// Текстът, който се щампова в PDF-а — име и имейл на купувача.
+  watermarkText String?
+
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([expiresAt])
+  @@index([freeMaterialId])
+  @@index([productFileId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Бюлетин — double opt-in
+// ─────────────────────────────────────────────────────────────────────────
+
+enum SubscriberStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+model NewsletterSubscriber {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+
+  status SubscriberStatus @default(PENDING)
+  locale String           @default("de")
+
+  /// Потвърждение и отписване (RFC 8058 One-Click).
+  confirmToken     String    @unique
+  unsubscribeToken String    @unique
+  confirmedAt      DateTime?
+  unsubscribedAt   DateTime?
+
+  /// Дублира ConsentLog.textVersion за бърза справка в админа.
+  consentTextVersion String?
+
+  ip        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Сертификати
+// ─────────────────────────────────────────────────────────────────────────
+
+model Certificate {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  /// Номерът идва от общия Counter ("certificate:2026"), не от брояч в кода.
+  number String @unique
+
+  /// Името, както се изписва в PDF-а — може да се различава от User.name.
+  holderName String
+  level      CourseLevel
+  issuedAt   DateTime    @default(now())
+
+  /// Ключ в S3 към генерирания PDF.
+  storageKey String?
+  /// Публичен код за проверка на автентичността.
+  verifyCode String  @unique
+
+  revokedAt    DateTime?
+  revokeReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Един сертификат на курс за човек. Изискване от одита (план, раздел 5).
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@index([issuedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Рецензии
+// ─────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  courseId String?
+  course   Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  authorName String
+  rating     Int
+  body       String @db.Text
+  locale     String @default("de")
+
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, createdAt])
+  @@index([courseId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  CMS — редактируемо съдържание с чернова срещу публикувано
+// ─────────────────────────────────────────────────────────────────────────
+
+model Page {
+  id    String @id @default(cuid())
+  /// "home", "about", "contact", "community", "impressum" ...
+  slug  String @unique
+  title String
+
+  /// Публикуваната версия — това вижда посетителят.
+  published Json?
+  /// Черновата — това вижда редакторът в preview режим.
+  draft Json?
+
+  publishedAt   DateTime?
+  draftUpdatedAt DateTime?
+  updatedById   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+/// Кратки текстове извън страниците: етикети, бутони, съобщения.
+model ContentSnippet {
+  id     String @id @default(cuid())
+  key    String
+  locale String @default("de")
+
+  value      String  @db.Text
+  valueDraft String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Един и същ ключ съществува веднъж на език.
+  @@unique([key, locale])
+  @@index([locale])
+}

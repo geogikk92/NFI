@@ -1,0 +1,516 @@
+// ═══════════════════════════════════════════════════════════════════════
+//  ТЕРИТОРИЯ НА ЖОРО. Боби не пипа този файл.
+//  Магазин, checkout (Mollie), рефанди, фактури, преводи, НАП.
+// ═══════════════════════════════════════════════════════════════════════
+//
+// ПАРИ: всички суми са Int в ЕВРОЦЕНТОВЕ. Никъде Float, никъде Decimal
+// в приложния код. Закръгляването се прави на едно място (lib/payments)
+// и е покрито с unit тестове (задача 24b).
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Продукти
+// ─────────────────────────────────────────────────────────────────────────
+
+enum ProductType {
+  DIGITAL
+  PHYSICAL
+}
+
+model Product {
+  id      String @id @default(cuid())
+  slug    String @unique
+  title   String
+  titleDe String?
+
+  description   String? @db.Text
+  descriptionDe String? @db.Text
+
+  type ProductType
+
+  /// Цена с включено ДДС, в центове. Сървърът НИКОГА не вярва на цена
+  /// от клиента — сверява се оттук при всеки checkout.
+  priceCents Int
+  currency   String @default("EUR")
+  /// Ставката, приложена към този продукт (напр. 19.00 за DE, 20.00 за BG).
+  vatRate Decimal @db.Decimal(5, 2)
+
+  /// Физически: тегло за доставка. Дигитални: null.
+  weightGrams Int?
+  stock       Int?
+
+  coverMediaId String?
+
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  sortOrder   Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  files      ProductFile[]
+  orderItems OrderItem[]
+
+  @@index([published, sortOrder])
+  @@index([type])
+  @@index([slug])
+}
+
+/// Файловете зад дигиталния продукт. Свалят се само през DownloadGrant.
+model ProductFile {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  label      String
+  storageKey String
+  mimeType   String
+  sizeBytes  Int
+
+  /// Дали PDF-ът да се щампова с името на купувача при сваляне.
+  watermark Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Доставка и отстъпки
+// ─────────────────────────────────────────────────────────────────────────
+
+model ShippingZone {
+  id   String @id @default(cuid())
+  name String
+
+  /// ISO 3166-1 alpha-2: ["DE", "AT"]
+  countries String[]
+
+  priceCents     Int
+  freeAboveCents Int?
+  /// Тегло над това не се приема онлайн.
+  maxWeightGrams Int?
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+}
+
+enum DiscountKind {
+  PERCENT
+  FIXED
+}
+
+/// Отделен модел, не свободен String в поръчката. Иначе сверяването на
+/// цените има дупка — клиентът може да прати какъвто код си иска.
+model Discount {
+  id   String @id @default(cuid())
+  code String @unique
+
+  kind  DiscountKind
+  /// PERCENT: 10 = 10%. FIXED: центове.
+  value Int
+
+  minOrderCents Int?
+  /// null = без ограничение
+  maxRedemptions Int?
+  redemptions    Int  @default(0)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+  active   Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([active, endsAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Поръчки
+// ─────────────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+model Order {
+  id     String  @id @default(cuid())
+  /// Човешкият номер ("NFI-2026-000123") — идва от Counter, не от кода.
+  number String  @unique
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Гост-поръчка: имейлът се пази тук и се свързва с профил чак след
+  /// потвърждаване на имейла (User.emailVerified).
+  email String
+  phone String?
+
+  status   OrderStatus @default(PENDING)
+  currency String      @default("EUR")
+
+  subtotalCents Int
+  discountCents Int @default(0)
+  shippingCents Int @default(0)
+  vatCents      Int
+  totalCents    Int
+
+  discountId String?
+  discount   Discount? @relation(fields: [discountId], references: [id], onDelete: SetNull)
+
+  /// Държавата определя ДДС ставката (OSS при B2C над прага).
+  billingName    String?
+  billingCompany String?
+  billingVatId   String?
+  billingStreet  String?
+  billingCity    String?
+  billingZip     String?
+  billingCountry String
+  shippingName    String?
+  shippingStreet  String?
+  shippingCity    String?
+  shippingZip     String?
+  shippingCountry String?
+
+  /// §312f BGB — потвърждението, което тръгва след Button-Lösung.
+  confirmationSentAt DateTime?
+  /// Свързва се с ConsentLog(type: WIDERRUF) за дигиталните стоки.
+  widerrufConsentId String?
+
+  paidAt      DateTime?
+  cancelledAt DateTime?
+  notes       String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items    OrderItem[]
+  payments Payment[]
+  refunds  Refund[]
+  invoices Invoice[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Restrict, не Cascade: изтрит продукт не бива да руши историята.
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  /// SNAPSHOT към момента на поръчката. Цената на продукта може да се
+  /// смени утре — фактурата от вчера трябва да остане вярна.
+  titleSnapshot String
+  priceCents    Int
+  vatRate       Decimal @db.Decimal(5, 2)
+  vatCents      Int
+  quantity      Int     @default(1)
+  totalCents    Int
+
+  type ProductType
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Плащания (Mollie) и рефанди
+// ─────────────────────────────────────────────────────────────────────────
+
+enum PaymentStatus {
+  OPEN
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  CARD
+  PAYPAL
+  KLARNA
+  SEPA
+  BANCONTACT
+  IDEAL
+  OTHER
+}
+
+model Payment {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Идентификаторът в Mollie ("tr_..."). Unique — един опит, един запис.
+  molliePaymentId String        @unique
+  status          PaymentStatus @default(OPEN)
+  method          PaymentMethod @default(OTHER)
+
+  amountCents Int
+  currency    String @default("EUR")
+
+  checkoutUrl String?
+  /// Сурово копие от последния webhook — за разследване на спорове.
+  rawPayload Json?
+
+  paidAt    DateTime?
+  failedAt  DateTime?
+  failureReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refunds Refund[]
+
+  @@index([orderId])
+  @@index([status])
+}
+
+enum RefundStatus {
+  QUEUED
+  PENDING
+  REFUNDED
+  FAILED
+}
+
+model Refund {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  mollieRefundId String? @unique
+  status         RefundStatus @default(QUEUED)
+
+  /// Частичен рефанд: сумата може да е по-малка от тази на поръчката.
+  amountCents Int
+  vatCents    Int
+  reason      String?
+  /// Кой администратор го е пуснал (за AuditLog кръстосване).
+  initiatedById String?
+
+  refundedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  creditNote CreditNote?
+
+  @@index([orderId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Фактури — българско законодателство (ЗДДС, Закон за счетоводството)
+// ─────────────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  /// Последователен номер от Counter ("invoice:2026"). Без дупки, без
+  /// повторения — иначе счетоводството не минава.
+  number   String   @unique
+  issuedAt DateTime @default(now())
+
+  /// Реквизити по ЗДДС — снимка към момента на издаване.
+  sellerName    String
+  sellerEik     String
+  sellerVatId   String?
+  sellerAddress String
+  sellerMol     String?
+
+  buyerName    String
+  buyerCompany String?
+  buyerVatId   String?
+  buyerAddress String
+  buyerCountry String
+
+  subtotalCents Int
+  vatCents      Int
+  totalCents    Int
+  vatRate       Decimal @db.Decimal(5, 2)
+  currency      String  @default("EUR")
+  /// Основание при обратно начисляване / OSS.
+  vatNote String?
+
+  /// Ключ в S3 към PDF-а (с кирилица и умлаути, вграден шрифт).
+  storageKey String?
+  sentAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creditNotes CreditNote[]
+
+  @@index([orderId])
+  @@index([issuedAt])
+}
+
+model CreditNote {
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  refundId  String? @unique
+  refund    Refund? @relation(fields: [refundId], references: [id], onDelete: SetNull)
+
+  /// Собствена поредица ("creditnote:2026").
+  number   String   @unique
+  issuedAt DateTime @default(now())
+
+  amountCents Int
+  vatCents    Int
+  reason      String?
+  storageKey  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Превод на документи
+// ─────────────────────────────────────────────────────────────────────────
+
+enum TranslationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  QUOTED
+  QUOTE_ACCEPTED
+  QUOTE_DECLINED
+  IN_PROGRESS
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model TranslationRequest {
+  id     String  @id @default(cuid())
+  number String  @unique
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Гост-достъп: клиентът следи заявката си само с този токен.
+  /// 32 байта ентропия, не cuid.
+  accessToken String @unique
+
+  email String
+  name  String
+  phone String?
+
+  sourceLang String
+  targetLang String
+  /// Официален превод с печат?
+  certified Boolean @default(false)
+  notes     String? @db.Text
+
+  status TranslationStatus @default(SUBMITTED)
+
+  /// Офертата се въвежда ръчно от админа след преглед на документите.
+  quotedCents Int?
+  quotedVatRate Decimal? @db.Decimal(5, 2)
+  quotedAt      DateTime?
+  quoteExpiresAt DateTime?
+  /// Поръчката, създадена при приемане на офертата.
+  orderId String?
+
+  deliveredAt DateTime?
+  /// GDPR: след този момент документите се трият от retention cron-а.
+  purgeAfter DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents TranslationDocument[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([status, createdAt])
+  @@index([purgeAfter])
+}
+
+model TranslationDocument {
+  id        String             @id @default(cuid())
+  requestId String
+  request   TranslationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  /// true = качен от клиента; false = готовият превод.
+  isSource Boolean @default(true)
+
+  filename   String
+  storageKey String
+  mimeType   String
+  sizeBytes  Int
+  pages      Int?
+
+  /// Кога файлът е изтрит от S3 от retention cron-а.
+  purgedAt  DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([requestId])
+  @@index([purgedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  НАП — Наредба Н-18
+// ─────────────────────────────────────────────────────────────────────────
+
+enum NapReceiptStatus {
+  QUEUED
+  SENT
+  ACKNOWLEDGED
+  FAILED
+}
+
+/// Outbox: бележката се записва ТУК първо, после се праща. Ретраите
+/// четат оттук. Изпращане директно от заявката губи бележки при срив.
+model NapReceipt {
+  id      String @id @default(cuid())
+  /// Order.id или Refund.id — без FK, за да не блокира поръчката при срив.
+  orderId  String?
+  refundId String?
+
+  status NapReceiptStatus @default(QUEUED)
+
+  /// Уникалният номер на продажбата (УНП) по Н-18.
+  unp String? @unique
+
+  amountCents Int
+  vatCents    Int
+  /// Държава на доставка — определя ДДС третирането.
+  deliveryCountry String
+  paymentMethod   PaymentMethod
+
+  payload  Json
+  response Json?
+
+  attempts   Int       @default(0)
+  lastTriedAt DateTime?
+  sentAt     DateTime?
+  error      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, attempts])
+  @@index([orderId])
+  @@index([createdAt])
+}

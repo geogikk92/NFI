@@ -1,0 +1,168 @@
+/* ╔═══════════════════════════════════════════════════════════════════════╗
+   ║  ЗАМРАЗЕН ФАЙЛ. Промяна само през PR с ревю от другия.                ║
+   ║  Виж .github/CODEOWNERS.                                              ║
+   ╚═══════════════════════════════════════════════════════════════════════╝
+
+   Тук са САМО токените — договорката между двамата. Стойностите се
+   променят от Боби (задача 2a), но ИМЕНАТА се пипат само с ревю, защото
+   Жоро строи магазина срещу тях.
+
+   Всичко останало — сигнатурните елементи (flagline, duo, stamp, grain),
+   prose слоят, компонентните класове — живее в globals.css и е свободна
+   територия на Боби.
+
+   Tailwind v4: тези токени автоматично стават utility класове.
+   --color-nfi-red-600 → bg-nfi-red-600, text-nfi-red-600, border-nfi-red-600
+*/
+
+@theme {
+  /* ── Червената нишка ──────────────────────────────────────────────
+     Единственият цвят, който немският и българският флаг споделят.
+     Оттам идва и водещият акцент на сайта.                          */
+  --color-nfi-red-50: #fef3f2;
+  --color-nfi-red-100: #fee2e0;
+  --color-nfi-red-200: #fecac6;
+  --color-nfi-red-300: #fca9a2;
+  --color-nfi-red-400: #f7776d;
+  --color-nfi-red-500: #ee4a3e;
+  --color-nfi-red-600: #d42a22; /* основен акцент */
+  --color-nfi-red-700: #b21e19; /* текст върху светло — AA на бяло */
+  --color-nfi-red-800: #931c18;
+  --color-nfi-red-900: #7a1c1a;
+  --color-nfi-red-950: #420a09;
+
+  /* ── Немското злато ───────────────────────────────────────────────
+     За печата (stamp), сертификатите и празничните акценти.
+     НЕ за текст — не минава контраста на бяло.                       */
+  --color-nfi-gold-50: #fffbeb;
+  --color-nfi-gold-100: #fff4c6;
+  --color-nfi-gold-200: #ffe888;
+  --color-nfi-gold-300: #ffd849;
+  --color-nfi-gold-400: #ffce00; /* цветът от знамето */
+  --color-nfi-gold-500: #e8ad00;
+  --color-nfi-gold-600: #c98500;
+  --color-nfi-gold-700: #a05e00;
+  --color-nfi-gold-800: #854a07;
+  --color-nfi-gold-900: #713d0c;
+
+  /* ── Българското зелено ───────────────────────────────────────────
+     Вторичен акцент: успех, потвърдено, завършен курс.               */
+  --color-nfi-green-50: #eefbf4;
+  --color-nfi-green-100: #d6f5e3;
+  --color-nfi-green-200: #b0e9cc;
+  --color-nfi-green-300: #7cd7ae;
+  --color-nfi-green-400: #45bd8b;
+  --color-nfi-green-500: #1fa370;
+  --color-nfi-green-600: #00966e; /* цветът от знамето */
+  --color-nfi-green-700: #0a6b4c;
+  --color-nfi-green-800: #0d553e;
+  --color-nfi-green-900: #0c4634;
+
+  /* ── Мастило ──────────────────────────────────────────────────────
+     Не чисто черно: на екран изморява. Топло-неутрална сива скала.   */
+  --color-ink-50: #f7f7f6;
+  --color-ink-100: #eeedeb;
+  --color-ink-200: #dcdad6;
+  --color-ink-300: #bfbcb5;
+  --color-ink-400: #9c978d;
+  --color-ink-500: #807a70;
+  --color-ink-600: #67615a;
+  --color-ink-700: #544f4a;
+  --color-ink-800: #47433f;
+  --color-ink-900: #3e3b38;
+  --color-ink-950: #1c1a19;
+
+  /* ── Хартия ───────────────────────────────────────────────────────
+     Фонът на сайта. Топъл офбял, не #fff — работи с grain текстурата. */
+  --color-paper: #fbfaf8;
+  --color-paper-raised: #ffffff;
+  --color-paper-sunken: #f2f0ec;
+
+  /* ── Семантични ───────────────────────────────────────────────────
+     Жоро ползва ТЕЗИ в магазина, не суровите скали по-горе. Така,
+     когато Боби завърти палитрата, търговската част се променя с нея. */
+  --color-surface: var(--color-paper);
+  --color-surface-raised: var(--color-paper-raised);
+  --color-surface-sunken: var(--color-paper-sunken);
+  --color-foreground: var(--color-ink-950);
+  --color-muted: var(--color-ink-600);
+  --color-subtle: var(--color-ink-400);
+  --color-border: var(--color-ink-200);
+  --color-accent: var(--color-nfi-red-600);
+  --color-accent-hover: var(--color-nfi-red-700);
+  --color-success: var(--color-nfi-green-600);
+  --color-warning: var(--color-nfi-gold-600);
+  --color-danger: var(--color-nfi-red-700);
+
+  /* ── Шрифтове ─────────────────────────────────────────────────────
+     И двата ЗАДЪЛЖИТЕЛНО покриват кирилица + ä ö ü ß. Това е причината
+     да не са свободен избор: половината съдържание е на български,
+     другата на немски, а на едно място стоят едно до друго.
+
+     Конкретните семейства ги избира Боби в задача 2a — сменят се тук,
+     на един ред, и целият сайт тръгва след тях.                      */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ── Типографска скала ────────────────────────────────────────────
+     Мащаб 1.25 (голяма терца), закотвена на 16px.                    */
+  --text-2xs: 0.694rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.953rem;
+  --text-4xl: 2.441rem;
+  --text-5xl: 3.052rem;
+  --text-6xl: 3.815rem;
+  /* Заглавието на hero-то. Свива се само на телефон. */
+  --text-hero: clamp(2.5rem, 1.2rem + 5.5vw, 5rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  --tracking-tighter: -0.03em;
+  --tracking-tight: -0.015em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  /* За kicker-а — малките главни букви над заглавията. */
+  --tracking-kicker: 0.14em;
+
+  /* ── Форма ────────────────────────────────────────────────────────*/
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 22px;
+  --radius-2xl: 32px;
+
+  /* ── Сенки ────────────────────────────────────────────────────────
+     Топли, не сиви — иначе изглеждат мръсни върху хартиения фон.     */
+  --shadow-xs: 0 1px 2px rgb(28 26 25 / 0.05);
+  --shadow-sm: 0 2px 4px rgb(28 26 25 / 0.06), 0 1px 2px rgb(28 26 25 / 0.04);
+  --shadow-md: 0 6px 16px rgb(28 26 25 / 0.08), 0 2px 4px rgb(28 26 25 / 0.04);
+  --shadow-lg: 0 16px 40px rgb(28 26 25 / 0.1), 0 4px 8px rgb(28 26 25 / 0.04);
+  --shadow-accent: 0 8px 24px rgb(212 42 34 / 0.18);
+
+  /* ── Движение ─────────────────────────────────────────────────────
+     Всяка анимация ЗАДЪЛЖИТЕЛНО се изключва при prefers-reduced-motion
+     (правилото е в globals.css).                                     */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 420ms;
+
+  /* ── Оформление ───────────────────────────────────────────────────*/
+  --container-prose: 68ch;
+  --container-page: 1200px;
+  --container-wide: 1440px;
+
+  /* Височината на флаг-линията — знакът на марката. */
+  --size-flagline: 3px;
+}
