@@ -11,7 +11,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 const territories = [
@@ -58,9 +57,16 @@ export default function Home() {
           <h1 className="mt-3 text-(length:--text-hero) font-semibold tracking-tighter">
             Nürnberger Fremdsprachen&nbsp;Institut
           </h1>
+          {/* Езикът на всеки ред се маркира изрично: екранният четец
+              трябва да смени гласа, а :lang(de) в globals.css включва
+              пренасянето на немските съставни думи. */}
           <div className="duo mt-6 max-w-xl text-lg">
-            <p>Sprachkurse, Prüfungsvorbereitung und beglaubigte Übersetzungen.</p>
-            <p>Езикови курсове, подготовка за изпити и заверени преводи.</p>
+            <p lang="de">
+              Sprachkurse, Prüfungsvorbereitung und beglaubigte Übersetzungen.
+            </p>
+            <p lang="bg">
+              Езикови курсове, подготовка за изпити и заверени преводи.
+            </p>
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -76,9 +82,11 @@ export default function Home() {
             <Card key={t.owner}>
               <CardHeader>
                 <div className="flex items-center justify-between gap-4">
-                  <CardTitle className="font-display text-2xl">
+                  {/* CardTitle рендира <div> — заглавието трябва да е
+                      в дървото на заглавията, затова е изричен <h3>. */}
+                  <h3 className="font-display text-2xl leading-snug">
                     {t.title}
-                  </CardTitle>
+                  </h3>
                   <Badge variant="secondary">{t.hours} ч</Badge>
                 </div>
                 <CardDescription>Собственик: {t.owner}</CardDescription>
@@ -117,6 +125,11 @@ export default function Home() {
                 />
                 <span className={item.done ? "" : "text-muted-foreground"}>
                   {item.label}
+                </span>
+                {/* Състоянието не бива да се носи само от цвета на
+                    точката — WCAG 1.4.1. Оттам и текстът. */}
+                <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                  {item.done ? "готово" : "предстои"}
                 </span>
               </li>
             ))}

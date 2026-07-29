@@ -41,7 +41,7 @@ export async function nextCounterValue(
   return value;
 }
 
-/** "NFI-2026-000042" */
+/** "NFI-B-2026-000042" — за документи, които НЕ са данъчни. */
 export function formatSequential(
   prefix: string,
   year: number,
@@ -52,44 +52,82 @@ export function formatSequential(
 }
 
 /**
- * Пълният номер на фактура. Сменя поредицата на 1 януари.
- * `now` се подава явно, за да е тестваемо.
+ * Счетоводната година по БЪЛГАРСКО време, не по UTC.
+ *
+ * България е UTC+2/+3. Поръчка на 1 януари в 01:00 местно време е още
+ * 31 декември в UTC — `getUTCFullYear()` би върнал изтеклата година и би
+ * увеличил нейния брояч, след като тя вече е приключена и подадена.
  */
-export async function nextInvoiceNumber(
-  executor: Executor = db,
-  now: Date = new Date(),
-): Promise<string> {
-  const year = now.getUTCFullYear();
-  const value = await nextCounterValue(`invoice:${year}`, executor);
-  return formatSequential("NFI", year, value);
+export function accountingYear(now: Date = new Date()): number {
+  return Number.parseInt(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Sofia",
+      year: "numeric",
+    }).format(now),
+    10,
+  );
 }
 
-/** Кредитните известия имат собствена поредица по ЗДДС. */
+/**
+ * Номер на ДАНЪЧЕН документ по ЗДДС чл. 114, ал. 1, т. 2:
+ * „пореден десетразряден номер, съдържащ само арабски цифри".
+ *
+ * Само цифри — без представка, без тире, без година. И без нулиране на
+ * 1 януари: поредицата е непрекъсната през целия живот на дружеството.
+ */
+export function formatTaxDocumentNumber(value: number): string {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`Невалиден номер на данъчен документ: ${value}`);
+  }
+  if (value > 9_999_999_999) {
+    throw new Error("Изчерпана е десетразрядната поредица.");
+  }
+  return String(value).padStart(10, "0");
+}
+
+/**
+ * Фактурите и кредитните известия делят ЕДНА поредица.
+ *
+ * ЗДДС допуска и повече серии, но общата поредица прави номера уникален
+ * сам по себе си и премахва цял клас грешки при сверяване. Ако
+ * счетоводителят настоява за отделни серии, това е мястото — но решението
+ * се взема ПРЕДИ първата издадена фактура, защото после не се преномерира.
+ */
+const TAX_DOCUMENT_SERIES = "taxdoc";
+
+/** Пореден десетразряден номер на фактура: "0000000042". */
+export async function nextInvoiceNumber(executor: Executor = db): Promise<string> {
+  const value = await nextCounterValue(TAX_DOCUMENT_SERIES, executor);
+  return formatTaxDocumentNumber(value);
+}
+
+/** Кредитно известие — от същата поредица, същия формат. */
 export async function nextCreditNoteNumber(
   executor: Executor = db,
-  now: Date = new Date(),
 ): Promise<string> {
-  const year = now.getUTCFullYear();
-  const value = await nextCounterValue(`creditnote:${year}`, executor);
-  return formatSequential("NFI-KI", year, value);
+  const value = await nextCounterValue(TAX_DOCUMENT_SERIES, executor);
+  return formatTaxDocumentNumber(value);
 }
 
-/** Номер на поръчка. */
+/**
+ * Номер на поръчка. НЕ е данъчен документ — форматът е свободен и е
+ * избран да е четим на телефон при обаждане от клиент.
+ */
 export async function nextOrderNumber(
   executor: Executor = db,
   now: Date = new Date(),
 ): Promise<string> {
-  const year = now.getUTCFullYear();
+  const year = accountingYear(now);
   const value = await nextCounterValue(`order:${year}`, executor);
   return formatSequential("NFI-B", year, value);
 }
 
-/** Номер на сертификат (Боби, задача 16). */
+/** Номер на сертификат (Боби, задача 16). Също не е данъчен документ. */
 export async function nextCertificateNumber(
   executor: Executor = db,
   now: Date = new Date(),
 ): Promise<string> {
-  const year = now.getUTCFullYear();
+  const year = accountingYear(now);
   const value = await nextCounterValue(`certificate:${year}`, executor);
   return formatSequential("NFI-Z", year, value, 5);
 }

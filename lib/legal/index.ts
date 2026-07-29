@@ -108,7 +108,18 @@ export interface VatContext {
  * стандартна ставка — по-безопасната от двете грешки.
  */
 export function resolveVatRate(ctx: VatContext): number {
-  const country = ctx.ossThresholdExceeded
+  // Държавата на КУПУВАЧА важи само за два вида доставки, и то само над
+  // прага: дистанционна продажба на стоки и електронни услуги (TBE).
+  //
+  // Всичко останало следва общото правило за услуги към данъчно
+  // незадължени лица — облага се по седалището на ДОСТАВЧИКА. Заверен
+  // превод има човешки труд и не е електронна услуга, така че никога не
+  // минава през OSS, колкото и голям да е оборотът.
+  const followsCustomer =
+    (ctx.category === "goods" || ctx.category === "electronic") &&
+    ctx.ossThresholdExceeded;
+
+  const country = followsCustomer
     ? ctx.countryCode.toUpperCase()
     : HOME_COUNTRY;
 
@@ -116,10 +127,15 @@ export function resolveVatRate(ctx: VatContext): number {
 
   switch (ctx.category) {
     case "goods":
-      // Книги и учебници обикновено са с намалена ставка — уточнява се
-      // per продукт, затова тук е стандартната.
+      // Книгите и учебниците обикновено са с намалена ставка — уточнява се
+      // за всеки продукт, затова тук е стандартната.
       return rates.standard;
     case "education":
+      // ⚠️ Отворен въпрос 1: възможно освобождаване по чл. 41 ЗДДС.
+      // Освен това мястото на доставка при обучение зависи от това дали
+      // курсът е присъствен, и къде. До отговор от счетоводителя се
+      // ползва българска стандартна ставка — по-безопасната грешка.
+      return rates.standard;
     case "electronic":
     case "translation":
       return rates.standard;
