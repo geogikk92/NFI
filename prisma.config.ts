@@ -10,6 +10,8 @@ export default defineConfig({
   schema: "prisma/schema",
   migrations: {
     path: "prisma/migrations",
+    // Пуска се и сам след `prisma migrate reset`.
+    seed: "tsx --env-file=.env.local prisma/seed.ts",
   },
   datasource: {
     url: process.env["DATABASE_URL"],

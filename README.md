@@ -79,8 +79,13 @@ npm install                    # postinstall вика prisma generate
 cp .env.example .env.local     # попълни поне DATABASE_URL
 createdb nfi_dev               # или каквато база ползваш
 npx prisma migrate dev
+npm run db:seed                # 3 курса, 2 продукта, зони, промокод
 npm run dev
 ```
+
+Сийдът е **идемпотентен** — пускай го колкото искаш. Данните са минимални
+нарочно: колкото да има какво да се рисува и тества. Истинското съдържание
+идва от Василена в задача 18a.
 
 Схемата е **многофайлова** (`prisma/schema/`). Prisma CLI чете `.env.local`
 през `prisma.config.ts` — само един файл с тайни, за Next и за Prisma.
