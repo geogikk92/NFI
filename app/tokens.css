@@ -60,12 +60,15 @@
 
   /* ── Мастило ──────────────────────────────────────────────────────
      Не чисто черно: на екран изморява. Топло-неутрална сива скала.   */
+  /* 400 и 500 са нарочно по-тъмни, отколкото „изглежда правилно": при
+     по-светли стойности ink-500 пада под 4.5:1 като текст, а ink-400 —
+     под 3:1 като граница на поле (WCAG 1.4.11). Измерено, не преценено. */
   --color-ink-50: #f7f7f6;
   --color-ink-100: #eeedeb;
   --color-ink-200: #dcdad6;
   --color-ink-300: #bfbcb5;
-  --color-ink-400: #9c978d;
-  --color-ink-500: #807a70;
+  --color-ink-400: #8b867c;
+  --color-ink-500: #767066;
   --color-ink-600: #67615a;
   --color-ink-700: #544f4a;
   --color-ink-800: #47433f;
@@ -87,8 +90,12 @@
      на NFI, защото стойностите им са завъртени по-долу.               */
   --color-surface-raised: var(--color-paper-raised);
   --color-surface-sunken: var(--color-paper-sunken);
-  --color-subtle: var(--color-ink-400);
-  --color-success: var(--color-nfi-green-600);
+  /* Най-тихият цвят, който още МИНАВА 4.5:1 като текст (4.70). */
+  --color-subtle: var(--color-ink-500);
+  /* Зеленото от знамето (green-600) е красиво, но дава 3.60:1 — под
+     прага и като текст, и с бял текст върху него. За смислов цвят се
+     ползва 700; 600 остава за декорация (flagline). */
+  --color-success: var(--color-nfi-green-700);
   --color-success-foreground: var(--color-paper-raised);
   --color-warning: var(--color-nfi-gold-400);
   --color-warning-foreground: var(--color-nfi-gold-900);
@@ -201,8 +208,11 @@
   --destructive: var(--color-nfi-red-700);
   --destructive-foreground: #ffffff;
 
+  /* border = декоративни разделители; input = границата на КОНТРОЛ.
+     Втората носи информация („докъде стига полето") и затова ѝ трябват
+     3:1 по WCAG 1.4.11. Оттам и разликата — не е недоглеждане. */
   --border: var(--color-ink-200);
-  --input: var(--color-ink-200);
+  --input: var(--color-ink-400);
   --ring: var(--color-nfi-red-600);
 
   --radius: 0.625rem;
@@ -252,8 +262,18 @@
   --destructive-foreground: var(--color-nfi-red-950);
 
   --border: #ffffff1a;
-  --input: #ffffff26;
+  /* Полупрозрачно бяло дава 1.58:1 върху тъмната карта — границата на
+     полето става невидима. Плътен цвят е единственият начин да се
+     удържат 3:1 по WCAG 1.4.11. */
+  --input: var(--color-ink-400);
   --ring: var(--color-nfi-red-400);
+
+  /* Тези три идват от @theme и без предефиниране тук тъмният режим
+     наследява светлите им стойности — а те падат на тъмен фон.
+     Проверява се с `npm run a11y:contrast`. */
+  --color-subtle: var(--color-ink-300);
+  --color-success: var(--color-nfi-green-400);
+  --color-success-foreground: var(--color-ink-950);
 
   --chart-1: var(--color-nfi-red-400);
   --chart-2: var(--color-nfi-green-400);
