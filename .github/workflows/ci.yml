@@ -65,6 +65,11 @@ jobs:
       - name: Контраст (WCAG 2.1 AA)
         run: npm run a11y:contrast
 
+      # Само докладва. Преди деплой в продукция се пуска
+      # `npm run check:legal:strict`, което спира пускането.
+      - name: Незапълнени правни текстове
+        run: npm run check:legal
+
       - name: Тестове
         run: npm test
 

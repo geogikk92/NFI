@@ -1,0 +1,173 @@
+// ТЕРИТОРИЯ НА БОБИ · задача 4 — курсове.
+// Писано от Жоро, докато Боби е в отпуск.
+
+import { db } from "@/lib/db";
+
+export type CourseLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+export type CourseFormat = "ONLINE" | "PRESENCE" | "HYBRID" | "INDIVIDUAL";
+
+export const COURSE_LEVELS: readonly CourseLevel[] = [
+  "A1",
+  "A2",
+  "B1",
+  "B2",
+  "C1",
+  "C2",
+];
+
+/** Немските етикети на нивата — това вижда посетителят. */
+export const LEVEL_LABELS: Record<CourseLevel, string> = {
+  A1: "A1 · Anfänger",
+  A2: "A2 · Grundlagen",
+  B1: "B1 · Mittelstufe",
+  B2: "B2 · Fortgeschritten",
+  C1: "C1 · Kompetent",
+  C2: "C2 · Muttersprachlich",
+};
+
+export const FORMAT_LABELS: Record<CourseFormat, string> = {
+  ONLINE: "Online",
+  PRESENCE: "Präsenz",
+  HYBRID: "Hybrid",
+  INDIVIDUAL: "Einzelunterricht",
+};
+
+export interface CourseSummary {
+  id: string;
+  slug: string;
+  title: string;
+  titleDe: string | null;
+  summary: string | null;
+  summaryDe: string | null;
+  level: CourseLevel;
+  format: CourseFormat;
+  priceCents: number | null;
+  durationWeeks: number | null;
+  hoursPerWeek: number | null;
+  maxParticipants: number | null;
+  startsAt: Date | null;
+  coverMediaId: string | null;
+}
+
+export interface CourseDetail extends CourseSummary {
+  description: string | null;
+  descriptionDe: string | null;
+  reviewCount: number;
+  averageRating: number | null;
+}
+
+const SUMMARY_FIELDS = {
+  id: true,
+  slug: true,
+  title: true,
+  titleDe: true,
+  summary: true,
+  summaryDe: true,
+  level: true,
+  format: true,
+  priceCents: true,
+  durationWeeks: true,
+  hoursPerWeek: true,
+  maxParticipants: true,
+  startsAt: true,
+  coverMediaId: true,
+} as const;
+
+export interface CourseFilter {
+  level?: CourseLevel | null;
+  format?: CourseFormat | null;
+}
+
+/** Валидира стойност от адреса. Непознатото се игнорира, не гърми. */
+export function parseLevel(value: unknown): CourseLevel | null {
+  return typeof value === "string" &&
+    (COURSE_LEVELS as readonly string[]).includes(value)
+    ? (value as CourseLevel)
+    : null;
+}
+
+export function parseFormat(value: unknown): CourseFormat | null {
+  return typeof value === "string" && value in FORMAT_LABELS
+    ? (value as CourseFormat)
+    : null;
+}
+
+export async function listCourses(
+  filter: CourseFilter = {},
+): Promise<CourseSummary[]> {
+  return db.course.findMany({
+    where: {
+      published: true,
+      ...(filter.level ? { level: filter.level } : {}),
+      ...(filter.format ? { format: filter.format } : {}),
+    },
+    orderBy: [{ sortOrder: "asc" }, { level: "asc" }],
+    select: SUMMARY_FIELDS,
+  });
+}
+
+/** Броячи за филтъра — за да не се показва ниво с нула курса. */
+export async function countCoursesByLevel(): Promise<
+  Record<CourseLevel, number>
+> {
+  const rows = await db.course.groupBy({
+    by: ["level"],
+    where: { published: true },
+    _count: { _all: true },
+  });
+
+  const counts = Object.fromEntries(
+    COURSE_LEVELS.map((level) => [level, 0]),
+  ) as Record<CourseLevel, number>;
+
+  for (const row of rows) {
+    counts[row.level as CourseLevel] = row._count._all;
+  }
+
+  return counts;
+}
+
+export async function getCourseBySlug(
+  slug: string,
+): Promise<CourseDetail | null> {
+  const course = await db.course.findFirst({
+    where: { slug, published: true },
+    select: {
+      ...SUMMARY_FIELDS,
+      description: true,
+      descriptionDe: true,
+      reviews: {
+        where: { published: true },
+        select: { rating: true },
+      },
+    },
+  });
+
+  if (!course) return null;
+
+  const { reviews, ...rest } = course;
+  const reviewCount = reviews.length;
+  const averageRating =
+    reviewCount > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount
+      : null;
+
+  return { ...rest, reviewCount, averageRating };
+}
+
+/** Останалите курсове от същото ниво — за края на детайлната страница. */
+export async function listRelatedCourses(
+  course: Pick<CourseSummary, "id" | "level">,
+  limit = 3,
+): Promise<CourseSummary[]> {
+  return db.course.findMany({
+    where: {
+      published: true,
+      id: { not: course.id },
+      level: course.level,
+    },
+    take: limit,
+    orderBy: { sortOrder: "asc" },
+    select: SUMMARY_FIELDS,
+  });
+}

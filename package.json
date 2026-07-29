@@ -9,6 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "a11y:contrast": "node scripts/contrast-audit.mjs",
+    "check:legal": "node scripts/check-legal-placeholders.mjs",
+    "check:legal:strict": "CHECK_LEGAL_STRICT=1 node scripts/check-legal-placeholders.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
