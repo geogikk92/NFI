@@ -19,18 +19,42 @@
 |---|---|
 | `app/(public)/`, `app/(profile)/` | `app/(shop)/`, `app/(translate)/` |
 | `app/admin/(content)/` | `app/admin/(commerce)/` |
-| `components/ui/`, `components/content/` | `components/commerce/` |
+| `app/globals.css`, `components/content/` | `components/commerce/` |
 | `lib/cms/`, `lib/storage/` | `lib/payments/`, `lib/email/`, `lib/nap/` |
 | `prisma/schema/content.prisma` | `prisma/schema/commerce.prisma` |
 
-### 2. Четири файла са общи и ЗАМРАЗЕНИ след ден 1
+`lib/storage`, `lib/email` и `lib/payments` вече съществуват като
+**сигнатури с mock тяло**. Кодирай срещу тях от днес; собственикът ги
+запълва по график. Mock-ът хвърля с ясно съобщение кой я дължи и кога.
+
+### 2. Общите файлове са ЗАМРАЗЕНИ след ден 1
 
 ```
-prisma/schema/base.prisma   app/layout.tsx   tailwind.config.ts   components/ui/
+prisma/schema/base.prisma   app/layout.tsx   app/tokens.css   components/ui/
+lib/db.ts   lib/money.ts   lib/counter.ts
 ```
 
 Промяна в тях минава през PR с ревю от другия (виж `.github/CODEOWNERS`).
 Ако ти трябва нов споделен примитив — пишеш на другия, получаваш го до 24 ч.
+
+> **Защо `app/tokens.css`, а не `tailwind.config.ts`:** Tailwind v4 държи
+> токените в CSS, конфигурационен файл няма. Затова договорката е в
+> `app/tokens.css` (замразен), а `app/globals.css` остава свободна
+> територия на Боби.
+
+### Как работят цветовете
+
+`app/tokens.css` захранва shadcn речника с палитрата на NFI. На практика:
+
+```tsx
+<Button>Плати</Button>              // вече е в червеното на NFI
+<p className="text-muted-foreground">…</p>
+```
+
+Жоро пише стандартни shadcn класове и не мисли за цветове. Когато Боби
+завърти палитрата в `tokens.css`, магазинът се променя с нея.
+Суровите скали (`bg-nfi-red-600`, `text-ink-700`, `bg-nfi-gold-400`) са
+на разположение, но семантичните класове са за предпочитане.
 
 ### 3. Клонове и PR
 
@@ -52,15 +76,23 @@ gh pr create --fill
 
 ```bash
 npm install
-cp .env.example .env.local     # попълни стойностите
-npx prisma migrate dev
+cp .env.example .env.local     # попълни поне DATABASE_URL
+npx prisma generate            # клиентът отива в app/generated/prisma
+npx prisma migrate dev         # изисква работеща база
 npm run dev
 ```
 
+Схемата е **многофайлова** (`prisma/schema/`). Prisma CLI чете `.env.local`
+през `prisma.config.ts` — само един файл с тайни, за Next и за Prisma.
+
 ## Стек
 
-Next.js 15 (App Router) · TypeScript · Tailwind · shadcn/ui · Prisma · PostgreSQL ·
-Auth.js v5 · **Mollie** · Resend / React Email · S3/R2 · pdf-lib · Vercel EU
+Next.js 15 (App Router) · TypeScript · **Tailwind v4** · shadcn/ui (Radix) ·
+**Prisma 7** (driver adapter, не Rust engine) · PostgreSQL · Auth.js v5 ·
+**Mollie** · Resend / React Email · S3/R2 · pdf-lib · Vercel EU
+
+> Prisma 7 работи през `@prisma/adapter-pg`. `new PrismaClient()` без adapter
+> не тръгва — ползвай `db` от [`lib/db.ts`](lib/db.ts), не си прави втори клиент.
 
 ## Ключови решения
 

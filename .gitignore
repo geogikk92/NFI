@@ -8,6 +8,11 @@ node_modules/
 out/
 build/
 next-env.d.ts
+tsconfig.tsbuildinfo
+
+# Локални настройки на Claude Code (skills се теглят от prisma init)
+.claude/
+skills-lock.json
 
 # продукция
 dist/

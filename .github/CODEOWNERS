@@ -9,11 +9,25 @@
 #   • PR само в твоята папка          → мърджваш веднага, без ревю
 #   • PR, който бута общ файл отдолу  → чака одобрение от другия
 
+# Tailwind v4 няма tailwind.config.ts — токените са CSS. Затова
+# замразеният файл е app/tokens.css, а app/globals.css остава свободна
+# територия на Боби.
+
 /prisma/schema/base.prisma    @BorisGudev @ЖОРО-GITHUB
 /app/layout.tsx               @BorisGudev @ЖОРО-GITHUB
-/tailwind.config.ts           @BorisGudev @ЖОРО-GITHUB
+/app/tokens.css               @BorisGudev @ЖОРО-GITHUB
 /components/ui/               @BorisGudev @ЖОРО-GITHUB
+
+# Общи помощни модули — и двамата ги викат от ден 1.
+/lib/db.ts                    @BorisGudev @ЖОРО-GITHUB
+/lib/money.ts                 @BorisGudev @ЖОРО-GITHUB
+/lib/counter.ts               @BorisGudev @ЖОРО-GITHUB
+
+# Конфигурация
 /package.json                 @BorisGudev @ЖОРО-GITHUB
+/prisma.config.ts             @BorisGudev @ЖОРО-GITHUB
+/components.json              @BorisGudev @ЖОРО-GITHUB
+/next.config.ts               @BorisGudev @ЖОРО-GITHUB
 /.env.example                 @BorisGudev @ЖОРО-GITHUB
 /.github/CODEOWNERS           @BorisGudev @ЖОРО-GITHUB
 

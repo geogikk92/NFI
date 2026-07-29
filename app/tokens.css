@@ -78,21 +78,20 @@
   --color-paper-raised: #ffffff;
   --color-paper-sunken: #f2f0ec;
 
-  /* ── Семантични ───────────────────────────────────────────────────
-     Жоро ползва ТЕЗИ в магазина, не суровите скали по-горе. Така,
-     когато Боби завърти палитрата, търговската част се променя с нея. */
-  --color-surface: var(--color-paper);
+  /* ── Семантични добавки ───────────────────────────────────────────
+     ВАЖНО: общата семантика (bg-primary, text-muted-foreground,
+     border-border ...) идва от shadcn и е дефинирана най-долу в този
+     файл. Тук са само нещата, които shadcn няма.
+
+     Жоро ползва shadcn класовете както ги знае — те вече са в цветовете
+     на NFI, защото стойностите им са завъртени по-долу.               */
   --color-surface-raised: var(--color-paper-raised);
   --color-surface-sunken: var(--color-paper-sunken);
-  --color-foreground: var(--color-ink-950);
-  --color-muted: var(--color-ink-600);
   --color-subtle: var(--color-ink-400);
-  --color-border: var(--color-ink-200);
-  --color-accent: var(--color-nfi-red-600);
-  --color-accent-hover: var(--color-nfi-red-700);
   --color-success: var(--color-nfi-green-600);
-  --color-warning: var(--color-nfi-gold-600);
-  --color-danger: var(--color-nfi-red-700);
+  --color-success-foreground: var(--color-paper-raised);
+  --color-warning: var(--color-nfi-gold-400);
+  --color-warning-foreground: var(--color-nfi-gold-900);
 
   /* ── Шрифтове ─────────────────────────────────────────────────────
      И двата ЗАДЪЛЖИТЕЛНО покриват кирилица + ä ö ü ß. Това е причината
@@ -133,13 +132,10 @@
   /* За kicker-а — малките главни букви над заглавията. */
   --tracking-kicker: 0.14em;
 
-  /* ── Форма ────────────────────────────────────────────────────────*/
+  /* ── Форма ────────────────────────────────────────────────────────
+     Скалата --radius-sm ... --radius-4xl я строи shadcn от --radius
+     (стойността е най-долу). Тук е само стъпалото под нея.          */
   --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
-  --radius-xl: 22px;
-  --radius-2xl: 32px;
 
   /* ── Сенки ────────────────────────────────────────────────────────
      Топли, не сиви — иначе изглеждат мръсни върху хартиения фон.     */
@@ -165,4 +161,112 @@
 
   /* Височината на флаг-линията — знакът на марката. */
   --size-flagline: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Мостът към shadcn/ui
+   ═══════════════════════════════════════════════════════════════════════
+
+   shadcn компонентите говорят на своя речник: bg-primary, text-muted-
+   foreground, border-border. Тук този речник се захранва с цветовете на
+   NFI — така Жоро пише стандартен shadcn код, а вижда NFI визия.
+
+   Тези променливи се четат от @theme inline блока в globals.css.
+   Ако смениш име тук, чупиш магазина — оттам и замразяването.        */
+
+:root {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink-950);
+
+  --card: var(--color-paper-raised);
+  --card-foreground: var(--color-ink-950);
+  --popover: var(--color-paper-raised);
+  --popover-foreground: var(--color-ink-950);
+
+  /* Основното действие е червената нишка — „Запиши се", „Плати". */
+  --primary: var(--color-nfi-red-600);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--color-paper-sunken);
+  --secondary-foreground: var(--color-ink-900);
+
+  /* muted = ФОН; muted-foreground = вторичен текст. Не ги разменяй. */
+  --muted: var(--color-ink-100);
+  --muted-foreground: var(--color-ink-600);
+
+  /* accent = светлият фон при hover, не акцентният цвят. */
+  --accent: var(--color-nfi-red-50);
+  --accent-foreground: var(--color-nfi-red-700);
+
+  --destructive: var(--color-nfi-red-700);
+  --destructive-foreground: #ffffff;
+
+  --border: var(--color-ink-200);
+  --input: var(--color-ink-200);
+  --ring: var(--color-nfi-red-600);
+
+  --radius: 0.625rem;
+
+  /* Табло в админа (задача 17f1). */
+  --chart-1: var(--color-nfi-red-600);
+  --chart-2: var(--color-nfi-green-600);
+  --chart-3: var(--color-nfi-gold-500);
+  --chart-4: var(--color-ink-500);
+  --chart-5: var(--color-nfi-red-300);
+
+  --sidebar: var(--color-paper-sunken);
+  --sidebar-foreground: var(--color-ink-900);
+  --sidebar-primary: var(--color-nfi-red-600);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--color-nfi-red-50);
+  --sidebar-accent-foreground: var(--color-nfi-red-700);
+  --sidebar-border: var(--color-ink-200);
+  --sidebar-ring: var(--color-nfi-red-600);
+}
+
+/* Тъмният режим е за админа. Публичният сайт остава светъл — така е
+   в мокъпа, който е одобрен от клиентката. */
+.dark {
+  --background: var(--color-ink-950);
+  --foreground: var(--color-ink-50);
+
+  --card: #262422;
+  --card-foreground: var(--color-ink-50);
+  --popover: #262422;
+  --popover-foreground: var(--color-ink-50);
+
+  /* По-светло червено: 600 не носи достатъчно контраст на тъмен фон. */
+  --primary: var(--color-nfi-red-400);
+  --primary-foreground: var(--color-nfi-red-950);
+
+  --secondary: var(--color-ink-800);
+  --secondary-foreground: var(--color-ink-50);
+
+  --muted: var(--color-ink-800);
+  --muted-foreground: var(--color-ink-300);
+
+  --accent: var(--color-ink-800);
+  --accent-foreground: var(--color-nfi-red-300);
+
+  --destructive: var(--color-nfi-red-400);
+  --destructive-foreground: var(--color-nfi-red-950);
+
+  --border: #ffffff1a;
+  --input: #ffffff26;
+  --ring: var(--color-nfi-red-400);
+
+  --chart-1: var(--color-nfi-red-400);
+  --chart-2: var(--color-nfi-green-400);
+  --chart-3: var(--color-nfi-gold-300);
+  --chart-4: var(--color-ink-400);
+  --chart-5: var(--color-nfi-red-200);
+
+  --sidebar: #262422;
+  --sidebar-foreground: var(--color-ink-50);
+  --sidebar-primary: var(--color-nfi-red-400);
+  --sidebar-primary-foreground: var(--color-nfi-red-950);
+  --sidebar-accent: var(--color-ink-800);
+  --sidebar-accent-foreground: var(--color-nfi-red-300);
+  --sidebar-border: #ffffff1a;
+  --sidebar-ring: var(--color-nfi-red-400);
 }
