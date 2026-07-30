@@ -31,7 +31,7 @@
   h2,
   h3,
   h4 {
-    font-family: var(--font-display);
+    font-family: var(--font-title);
     line-height: var(--leading-tight);
     letter-spacing: var(--tracking-tight);
     text-wrap: balance;
@@ -58,8 +58,8 @@
   }
 
   ::selection {
-    background-color: var(--color-nfi-red-100);
-    color: var(--color-nfi-red-900);
+    background-color: var(--color-red-100);
+    color: var(--color-red-900);
   }
 
   /* Изключваме анимациите за хората, които са ги изключили системно. */
@@ -88,48 +88,187 @@
   .flagline {
     display: block;
     height: var(--size-flagline);
-    border-radius: 999px;
+    /* Точните стъпки от мокъпа: черно-червено-златно (DE) преминава в
+       бяло-зелено-червено (BG). Двете страни, свързани с една линия. */
     background: linear-gradient(
-      to right,
-      var(--color-ink-950) 0%,
-      var(--color-ink-950) 16%,
-      var(--color-nfi-red-600) 16%,
-      var(--color-nfi-red-600) 33%,
-      var(--color-nfi-gold-400) 33%,
-      var(--color-nfi-gold-400) 50%,
-      var(--color-paper-raised) 50%,
-      var(--color-paper-raised) 66%,
-      var(--color-nfi-green-600) 66%,
-      var(--color-nfi-green-600) 83%,
-      var(--color-nfi-red-600) 83%,
-      var(--color-nfi-red-600) 100%
+      90deg,
+      #16130f 0 16.66%,
+      #c11f2f 16.66% 33.32%,
+      #b98a2b 33.32% 49.98%,
+      #ffffff 49.98% 66.64%,
+      #2f7d5b 66.64% 83.3%,
+      #c11f2f 83.3% 100%
     );
+    box-shadow: inset 0 0 0 0.5px rgb(22 19 15 / 0.18);
   }
 
   /* ── kicker ───────────────────────────────────────────────────────
      Малкият надпис над заглавието.                                  */
+  /* Мокъпът прави kicker-а MONO, в мастилен тон, с цветно квадратче
+     преди текста — не червен текст. */
   .kicker {
-    font-family: var(--font-sans);
-    font-size: var(--text-xs);
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
     letter-spacing: var(--tracking-kicker);
     text-transform: uppercase;
-    color: var(--color-primary);
+    color: var(--color-muted-foreground);
+  }
+
+  .kicker-sq {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    background: var(--color-red-600);
+  }
+
+  .kicker-sq-gold {
+    background: var(--color-gold-400);
+  }
+  .kicker-sq-green {
+    background: var(--color-green-600);
   }
 
   /* ── duo ──────────────────────────────────────────────────────────
-     Двуезична двойка: немското отгоре, българското отдолу, вързани
-     с тънка червена нишка отляво.                                   */
+     ДУОТОН обработка на изображение — пренесено от мокъпа.
+
+     ВНИМАНИЕ: по-рано този клас беше двуезична двойка текст. Това беше
+     грешно прочитане на мокъпа: там .duo е снимка, минала през две
+     смесени слоя (multiply + screen), която придава единен цветен тон
+     на целия снимков материал. Двуезичната двойка сега е .bilingual.  */
   .duo {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: var(--color-paper-2);
+  }
+
+  .duo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.18) brightness(0.9);
+  }
+
+  .duo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    mix-blend-mode: multiply;
+    background: var(--duo-lo, #3d2020);
+  }
+
+  .duo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    mix-blend-mode: screen;
+    background: var(--duo-hi, #efe6d6);
+    opacity: 0.9;
+  }
+
+  .duo-red {
+    --duo-lo: #571c22;
+    --duo-hi: #f1e5d8;
+  }
+  .duo-green {
+    --duo-lo: #1d4636;
+    --duo-hi: #eee9da;
+  }
+  .duo-ink {
+    --duo-lo: #181510;
+    --duo-hi: #e9e3d6;
+  }
+  .duo-gold {
+    --duo-lo: #4c3a14;
+    --duo-hi: #f2e9d4;
+  }
+
+  /* ── bilingual ────────────────────────────────────────────────────
+     Двуезичната двойка: единият език отгоре, другият отдолу, вързани с
+     червената нишка отляво. Ползва се там, където самото двуезичие е
+     съобщението — затова не следва избрания език.                     */
+  .bilingual {
     display: grid;
     gap: 0.15em;
     padding-left: 0.9rem;
-    border-left: 2px solid var(--color-nfi-red-600);
+    border-left: 2px solid var(--color-red-600);
   }
 
-  .duo > :last-child {
+  .bilingual > :last-child {
     font-size: 0.82em;
     color: var(--color-muted-foreground);
+  }
+
+  /* ── stamp ────────────────────────────────────────────────────────
+     Печатът за заверен превод — пренесен от мокъпа. Кръгъл, наклонен,
+     с двоен кант.                                                     */
+  .stamp {
+    aspect-ratio: 1;
+    display: grid;
+    place-content: center;
+    padding: 18px;
+    border: 2px solid var(--color-red-600);
+    border-radius: 50%;
+    color: var(--color-red-600);
+    text-align: center;
+    position: relative;
+    transform: rotate(-7deg);
+  }
+
+  .stamp::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    opacity: 0.55;
+  }
+
+  .stamp-title {
+    font-family: var(--font-title);
+    font-weight: 700;
+    font-style: italic;
+    font-size: clamp(1.0625rem, 2.2vw, 1.375rem);
+  }
+
+  .stamp-sub {
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.53rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  /* ── tag ──────────────────────────────────────────────────────────
+     Малкият етикет с кант — от мокъпа.                                */
+  .tag {
+    display: inline-block;
+    padding: 5px 11px;
+    border: 1px solid currentColor;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .tag-red {
+    color: var(--color-red-600);
+  }
+  /* Златото за ТЕКСТ е по-тъмно от мокъпното: #b98a2b дава 2.86:1. */
+  .tag-gold {
+    color: var(--color-gold-text);
+  }
+  .tag-green {
+    color: var(--color-green-600);
+  }
+  .tag-solid {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-paper);
   }
 
   /* ── prose ────────────────────────────────────────────────────────
@@ -279,9 +418,9 @@
 }
 
 /* Свързва shadcn речника с променливите от tokens.css.
-   --font-sans и --font-display НЕ се пипат тук — идват от tokens.css. */
+   --font-sans и --font-title НЕ се пипат тук — идват от tokens.css. */
 @theme inline {
-  --font-heading: var(--font-display);
+  --font-heading: var(--font-title);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

@@ -59,11 +59,11 @@ export default async function AdminLayout({
             {/* Временният знак „N" — сменя се, когато дойде логото. */}
             <span
               aria-hidden
-              className="grid size-8 place-items-center rounded-md bg-nfi-red-600 font-display text-base text-white"
+              className="grid size-8 place-items-center rounded-md bg-red-600 font-title text-base text-white"
             >
               N
             </span>
-            <span className="font-display text-lg font-semibold">
+            <span className="font-title text-lg font-semibold">
               Администрация
             </span>
           </div>

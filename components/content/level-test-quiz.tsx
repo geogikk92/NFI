@@ -96,7 +96,7 @@ export function LevelTestQuiz({ questions, action }: LevelTestQuizProps) {
           <legend
             ref={headingRef}
             tabIndex={-1}
-            className="px-2 font-display text-xl leading-snug"
+            className="px-2 font-title text-xl leading-snug"
           >
             {question.prompt}
           </legend>

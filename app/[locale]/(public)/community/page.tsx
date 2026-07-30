@@ -56,7 +56,7 @@ export default async function CommunityPage({ params }: Props) {
       {/* Събитията ще идват от CMS в задача 18c. Дотогава празното
           състояние показва честно, че още няма насрочени. */}
       <section className="mt-16" aria-labelledby="termine">
-        <h2 id="termine" className="font-display text-2xl">
+        <h2 id="termine" className="font-title text-2xl">
           {t.datesHeading}
         </h2>
         <EmptyState

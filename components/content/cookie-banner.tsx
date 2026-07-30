@@ -49,7 +49,7 @@ export function CookieBanner({
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card shadow-lg"
     >
       <div className="mx-auto max-w-(--container-page) px-6 py-6">
-        <h2 id="cookie-titel" className="font-display text-xl">
+        <h2 id="cookie-titel" className="font-title text-xl">
           {t.title}
         </h2>
 

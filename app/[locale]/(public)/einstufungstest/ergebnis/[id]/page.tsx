@@ -79,7 +79,7 @@ export default async function ErgebnisPage({ params }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">{t.estimatedLevel}</p>
-            <p className="mt-1 font-display text-3xl">
+            <p className="mt-1 font-title text-3xl">
               {levelLabel(locale, level)}
             </p>
           </div>
@@ -130,7 +130,7 @@ export default async function ErgebnisPage({ params }: Props) {
 
       {courses.length > 0 ? (
         <section className="mt-14" aria-labelledby="passende-kurse">
-          <h2 id="passende-kurse" className="font-display text-2xl">
+          <h2 id="passende-kurse" className="font-title text-2xl">
             {t.matchingCourses}
           </h2>
           <ul className="mt-6 grid gap-6 sm:grid-cols-2">
@@ -143,7 +143,7 @@ export default async function ErgebnisPage({ params }: Props) {
         </section>
       ) : (
         <section className="mt-14 rounded-xl border border-border bg-surface-sunken px-6 py-8">
-          <h2 className="font-display text-xl">{t.noCourseTitle(level)}</h2>
+          <h2 className="font-title text-xl">{t.noCourseTitle(level)}</h2>
           <p className="mt-2 text-muted-foreground">{t.noCourseBody}</p>
           <Button asChild className="mt-5">
             <Link href={`/${locale}/kurse`}>{t.allCourses}</Link>
@@ -153,7 +153,7 @@ export default async function ErgebnisPage({ params }: Props) {
 
       {/* Третият източник на заявки за обаждане (LEVEL_TEST). */}
       <section className="mt-16" aria-labelledby="beratung">
-        <h2 id="beratung" className="font-display text-2xl">
+        <h2 id="beratung" className="font-title text-2xl">
           {t.callbackTitle}
         </h2>
         <p className="mt-3 max-w-prose text-muted-foreground">

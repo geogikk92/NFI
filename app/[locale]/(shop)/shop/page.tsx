@@ -76,7 +76,7 @@ export default async function ShopPage({ params }: Props) {
                 <Card className="relative flex h-full flex-col">
                   <CardContent className="flex-1">
                     <div className="flex items-start justify-between gap-3">
-                      <h2 className="font-display text-xl leading-snug">
+                      <h2 className="font-title text-xl leading-snug">
                         <Link
                           href={`/${locale}/shop/${product.slug}`}
                           className="after:absolute after:inset-0 hover:text-primary"

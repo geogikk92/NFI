@@ -69,12 +69,12 @@ export function SiteNav({ locale, cartCount = 0 }: SiteNavProps) {
       <div className="mx-auto flex max-w-(--container-page) items-center gap-4 px-6 py-4">
         <Link
           href={`/${locale}`}
-          className="flex items-center gap-2 font-display text-xl font-semibold"
+          className="flex items-center gap-2 font-title text-xl font-semibold"
         >
           {/* Временният знак „N" — сменя се за минути, когато дойде логото. */}
           <span
             aria-hidden
-            className="grid size-9 place-items-center rounded-md bg-nfi-red-600 font-display text-lg text-white"
+            className="grid size-9 place-items-center rounded-md bg-red-600 font-title text-lg text-white"
           >
             N
           </span>

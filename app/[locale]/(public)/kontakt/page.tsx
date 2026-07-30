@@ -65,7 +65,7 @@ export default async function KontaktPage({ params, searchParams }: Props) {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-display text-xl">{t.directHeading}</h2>
+            <h2 className="font-title text-xl">{t.directHeading}</h2>
 
             {/* Указанията в AwaitingLegalText остават на немски НАРОЧНО:
                 те са бележка към екипа кой какво още дължи, не текст за

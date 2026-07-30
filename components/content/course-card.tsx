@@ -51,7 +51,7 @@ export function CourseCard({ course, locale }: CourseCardProps) {
           <Badge variant="outline">{formatLabel(locale, course.format)}</Badge>
         </div>
 
-        <h3 className="mt-4 font-display text-xl leading-snug">
+        <h3 className="mt-4 font-title text-xl leading-snug">
           {/* Цялата карта е кликаема, но връзката е една — иначе екранният
               четец обявява един и същ адрес по три пъти. */}
           <Link

@@ -63,7 +63,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <span className="flagline w-16" aria-hidden />
-            <p className="mt-4 font-display text-lg font-semibold">
+            <p className="mt-4 font-title text-lg font-semibold">
               Nürnberger
               <br />
               Fremdsprachen

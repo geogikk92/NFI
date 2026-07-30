@@ -144,7 +144,7 @@ export default async function CartPage({ params }: Props) {
 
           <aside className="lg:sticky lg:top-8 lg:self-start">
             <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="font-display text-xl">{t.summary}</h2>
+              <h2 className="font-title text-xl">{t.summary}</h2>
 
               <dl className="mt-6 space-y-3 text-sm">
                 <div className="flex justify-between gap-4">

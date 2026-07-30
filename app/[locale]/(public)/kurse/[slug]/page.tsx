@@ -114,7 +114,7 @@ export default async function CoursePage({ params }: Props) {
 
           {course.reviewCount > 0 && course.averageRating !== null ? (
             <section className="mt-12" aria-labelledby="bewertungen">
-              <h2 id="bewertungen" className="font-display text-2xl">
+              <h2 id="bewertungen" className="font-title text-2xl">
                 {t.reviewsHeading}
               </h2>
               <p className="mt-3 text-muted-foreground">
@@ -201,7 +201,7 @@ export default async function CoursePage({ params }: Props) {
 
       {related.length > 0 ? (
         <section className="mt-24" aria-labelledby="weitere">
-          <h2 id="weitere" className="font-display text-2xl">
+          <h2 id="weitere" className="font-title text-2xl">
             {t.related(course.level)}
           </h2>
           <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

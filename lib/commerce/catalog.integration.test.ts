@@ -57,14 +57,31 @@ suite("каталог срещу истинска база", () => {
     expect(isCheckoutable(cart)).toBe(true);
   });
 
-  it("редът носи НЕМСКОТО заглавие — то отива и във фактурата", async () => {
+  it("редът носи заглавието НА ЕЗИКА НА КЛИЕНТА — то отива във фактурата", async () => {
     const physical = await getProductBySlug("lehrbuch-a1");
-    const cart = await priceCartFromDb({
+
+    // Фактура на език, който купувачът не чете, е негодна. Затова
+    // заглавието следва подадения locale, а не фиксиран език.
+    const de = await priceCartFromDb({
+      items: [{ productId: physical!.id, quantity: 1 }],
+      countryCode: "DE",
+      locale: "de",
+    });
+    expect(de.lines[0].title).toBe("Lehrbuch A1 (gedruckt)");
+
+    const en = await priceCartFromDb({
+      items: [{ productId: physical!.id, quantity: 1 }],
+      countryCode: "DE",
+      locale: "en",
+    });
+    expect(en.lines[0].title).toBe("Coursebook A1 (print)");
+
+    // Без подаден език — българският, основният за сайта.
+    const fallback = await priceCartFromDb({
       items: [{ productId: physical!.id, quantity: 1 }],
       countryCode: "DE",
     });
-    // Product.title е българското ("Учебник A1 (печатно издание)").
-    expect(cart.lines[0].title).toBe("Lehrbuch A1 (gedruckt)");
+    expect(fallback.lines[0].title).toBe("Учебник A1 (печатно издание)");
   });
 
   it("дигитална поръчка не носи доставка", async () => {

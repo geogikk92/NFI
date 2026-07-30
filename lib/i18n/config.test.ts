@@ -21,7 +21,7 @@ describe("разпознаване на език", () => {
     }
   });
 
-  it("toLocale пада към немски вместо да гърми", () => {
+  it("toLocale пада към езика по подразбиране вместо да гърми", () => {
     expect(toLocale("bg")).toBe("bg");
     expect(toLocale("измислен")).toBe(DEFAULT_LOCALE);
     expect(toLocale(undefined)).toBe(DEFAULT_LOCALE);
@@ -33,13 +33,16 @@ describe("pick · вериги от резервни варианти", () => {
     expect(pick("bg", { bg: "Курс", de: "Kurs", en: "Course" })).toBe("Курс");
   });
 
-  it("липсващият превод пада на немски, после на български", () => {
-    expect(pick("en", { bg: "Курс", de: "Kurs" })).toBe("Kurs");
-    expect(pick("en", { bg: "Курс" })).toBe("Курс");
+  it("липсващият превод пада на БЪЛГАРСКИ, после на немски", () => {
+    // Българският е основният: мокъпът е на български и админът въвежда
+    // на него, значи тази колона е винаги попълнена.
+    expect(pick("en", { bg: "Курс", de: "Kurs" })).toBe("Курс");
+    expect(pick("en", { de: "Kurs" })).toBe("Kurs");
+    expect(pick("de", { en: "Course" })).toBe("Course");
   });
 
   it("празният низ се брои за липсващ", () => {
-    expect(pick("en", { en: "", de: "Kurs" })).toBe("Kurs");
+    expect(pick("en", { en: "", bg: "Курс" })).toBe("Курс");
     expect(pick("en", { en: "   ", de: "Kurs" })).toBe("Kurs");
   });
 
@@ -65,7 +68,7 @@ describe("localeFromAcceptLanguage", () => {
     expect(localeFromAcceptLanguage("de-AT,en;q=0.5")).toBe("de");
   });
 
-  it("непознат език пада на немски", () => {
+  it("непознат език пада на езика по подразбиране", () => {
     expect(localeFromAcceptLanguage("fr,it;q=0.8")).toBe(DEFAULT_LOCALE);
     expect(localeFromAcceptLanguage(null)).toBe(DEFAULT_LOCALE);
     expect(localeFromAcceptLanguage("")).toBe(DEFAULT_LOCALE);

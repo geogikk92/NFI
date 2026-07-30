@@ -72,7 +72,7 @@ export default async function UeberUnsPage({ params }: Props) {
       </div>
 
       <section className="mt-20 rounded-xl border border-border bg-surface-sunken px-6 py-10">
-        <h2 className="font-display text-2xl">{t.ctaTitle}</h2>
+        <h2 className="font-title text-2xl">{t.ctaTitle}</h2>
         <p className="mt-3 max-w-prose text-muted-foreground">{t.ctaBody}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild size="lg">

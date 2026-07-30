@@ -3,117 +3,126 @@
    ║  Виж .github/CODEOWNERS.                                              ║
    ╚═══════════════════════════════════════════════════════════════════════╝
 
-   Тук са САМО токените — договорката между двамата. Стойностите се
-   променят от Боби (задача 2a), но ИМЕНАТА се пипат само с ревю, защото
-   Жоро строи магазина срещу тях.
+   Токените са ПРЕНЕСЕНИ ОТ МОКЪПА (задача 2a: „Tailwind токени от
+   style.css на мокъпа"). Източник:
+   https://borisgudev.github.io/nfi-website-mockup/assets/style.css
 
-   Всичко останало — сигнатурните елементи (flagline, duo, stamp, grain),
-   prose слоят, компонентните класове — живее в globals.css и е свободна
-   територия на Боби.
+   Мокъпът е одобреният от клиентката вид, затова стойностите му са
+   водещи. Отклоненията от него са ДВЕ и са само там, където мокъпът
+   пада на контраст — измерено с `npm run a11y:contrast`, не преценено:
+
+     1. Златото (#b98a2b) дава 2.86:1 на хартия. За ТЕКСТ се ползва
+        --color-gold-text (#8f6718, 4.68:1); самото #b98a2b остава за
+        рамки и печати, където 3:1 е достатъчно.
+     2. Червеното (#c11f2f) дава 3.09:1 върху тъмната секция. Там се
+        ползва --color-red-on-dark (#e35d68, 5.32:1).
+
+   Достъпността е ПРАВНО задължение от 28.06.2025 (WCAG 2.1 AA) — виж
+   docs/ПРАВНИ-ИЗИСКВАНИЯ.md §6. Затова тези две не са по избор.
 
    Tailwind v4: тези токени автоматично стават utility класове.
-   --color-nfi-red-600 → bg-nfi-red-600, text-nfi-red-600, border-nfi-red-600
+   --color-red-600 → bg-red-600, text-red-600, border-red-600
 */
 
 @theme {
-  /* ── Червената нишка ──────────────────────────────────────────────
-     Единственият цвят, който немският и българският флаг споделят.
-     Оттам идва и водещият акцент на сайта.                          */
-  --color-nfi-red-50: #fef3f2;
-  --color-nfi-red-100: #fee2e0;
-  --color-nfi-red-200: #fecac6;
-  --color-nfi-red-300: #fca9a2;
-  --color-nfi-red-400: #f7776d;
-  --color-nfi-red-500: #ee4a3e;
-  --color-nfi-red-600: #d42a22; /* основен акцент */
-  --color-nfi-red-700: #b21e19; /* текст върху светло — AA на бяло */
-  --color-nfi-red-800: #931c18;
-  --color-nfi-red-900: #7a1c1a;
-  --color-nfi-red-950: #420a09;
-
-  /* ── Немското злато ───────────────────────────────────────────────
-     За печата (stamp), сертификатите и празничните акценти.
-     НЕ за текст — не минава контраста на бяло.                       */
-  --color-nfi-gold-50: #fffbeb;
-  --color-nfi-gold-100: #fff4c6;
-  --color-nfi-gold-200: #ffe888;
-  --color-nfi-gold-300: #ffd849;
-  --color-nfi-gold-400: #ffce00; /* цветът от знамето */
-  --color-nfi-gold-500: #e8ad00;
-  --color-nfi-gold-600: #c98500;
-  --color-nfi-gold-700: #a05e00;
-  --color-nfi-gold-800: #854a07;
-  --color-nfi-gold-900: #713d0c;
-
-  /* ── Българското зелено ───────────────────────────────────────────
-     Вторичен акцент: успех, потвърдено, завършен курс.               */
-  --color-nfi-green-50: #eefbf4;
-  --color-nfi-green-100: #d6f5e3;
-  --color-nfi-green-200: #b0e9cc;
-  --color-nfi-green-300: #7cd7ae;
-  --color-nfi-green-400: #45bd8b;
-  --color-nfi-green-500: #1fa370;
-  --color-nfi-green-600: #00966e; /* цветът от знамето */
-  --color-nfi-green-700: #0a6b4c;
-  --color-nfi-green-800: #0d553e;
-  --color-nfi-green-900: #0c4634;
+  /* ── Хартия ───────────────────────────────────────────────────────
+     Топъл офбял от мокъпа. НЕ чисто бяло — работи с grain текстурата. */
+  --color-paper: #f7f5f0;
+  --color-paper-2: #efece4;
+  --color-paper-raised: #ffffff;
 
   /* ── Мастило ──────────────────────────────────────────────────────
-     Не чисто черно: на екран изморява. Топло-неутрална сива скала.   */
-  /* 400 и 500 са нарочно по-тъмни, отколкото „изглежда правилно": при
-     по-светли стойности ink-500 пада под 4.5:1 като текст, а ink-400 —
-     под 3:1 като граница на поле (WCAG 1.4.11). Измерено, не преценено. */
-  --color-ink-50: #f7f7f6;
-  --color-ink-100: #eeedeb;
-  --color-ink-200: #dcdad6;
-  --color-ink-300: #bfbcb5;
-  --color-ink-400: #8b867c;
-  --color-ink-500: #767066;
-  --color-ink-600: #67615a;
-  --color-ink-700: #544f4a;
-  --color-ink-800: #47433f;
-  --color-ink-900: #3e3b38;
-  --color-ink-950: #1c1a19;
+     Не чисто черно: на екран изморява. Двете стойности от мокъпа плюс
+     скала за случаите между тях.                                     */
+  --color-ink: #16130f;
+  --color-ink-2: #57503f;
+  --color-ink-50: #f4f2ed;
+  --color-ink-100: #e8e4dc;
+  --color-ink-200: #d5cfc3;
+  --color-ink-300: #b3aa99;
+  --color-ink-400: #8b8271;
+  --color-ink-500: #6f6857;
+  --color-ink-600: #57503f;
+  --color-ink-700: #443e31;
+  --color-ink-800: #302b22;
+  --color-ink-900: #221e18;
+  --color-ink-950: #16130f;
 
-  /* ── Хартия ───────────────────────────────────────────────────────
-     Фонът на сайта. Топъл офбял, не #fff — работи с grain текстурата. */
-  --color-paper: #fbfaf8;
-  --color-paper-raised: #ffffff;
-  --color-paper-sunken: #f2f0ec;
+  /* ── Червената нишка ──────────────────────────────────────────────
+     Водещият акцент. Единственият цвят, който немският и българският
+     флаг споделят — оттам и мотивът „der rote Faden".               */
+  --color-red-50: #fdf2f3;
+  --color-red-100: #fbe0e2;
+  --color-red-200: #f6c2c7;
+  --color-red-300: #ee949c;
+  --color-red-400: #e35d68;
+  --color-red-500: #d13341;
+  --color-red-600: #c11f2f; /* мокъп: --red */
+  --color-red-700: #a51a28;
+  --color-red-800: #8f1622; /* мокъп: --red-deep */
+  --color-red-900: #77141e;
+  --color-red-950: #420a0f;
+
+  /* По-светло червено за ТЪМНАТА секция: #c11f2f там дава 3.09:1. */
+  --color-red-on-dark: #e35d68;
+
+  /* ── Злато ────────────────────────────────────────────────────────
+     За печата (stamp), етикетите и празничните акценти.              */
+  --color-gold-100: #f7edd6;
+  --color-gold-200: #ecd9a8;
+  --color-gold-300: #dcbc6f;
+  --color-gold-400: #b98a2b; /* мокъп: --gold */
+  --color-gold-500: #a2761f;
+  --color-gold-600: #8f6718;
+  --color-gold-700: #7d5a14;
+  --color-gold-900: #4f3a0d;
+
+  /* Златото на мокъпа е 2.86:1 на хартия — под прага за текст.
+     За надписи се ползва това; #b98a2b остава за рамки и печати. */
+  --color-gold-text: #8f6718;
+
+  /* ── Зелено ───────────────────────────────────────────────────────
+     Успех, потвърдено, завършен курс.                                */
+  --color-green-100: #dcefe6;
+  --color-green-200: #b6dcc9;
+  --color-green-300: #7fc0a3;
+  --color-green-400: #4a9f7c;
+  --color-green-600: #2f7d5b; /* мокъп: --green */
+  --color-green-700: #266549;
+  --color-green-900: #17402f;
 
   /* ── Семантични добавки ───────────────────────────────────────────
-     ВАЖНО: общата семантика (bg-primary, text-muted-foreground,
-     border-border ...) идва от shadcn и е дефинирана най-долу в този
-     файл. Тук са само нещата, които shadcn няма.
-
-     Жоро ползва shadcn класовете както ги знае — те вече са в цветовете
-     на NFI, защото стойностите им са завъртени по-долу.               */
+     Общата семантика (bg-primary, text-muted-foreground, border-border)
+     идва от shadcn и е дефинирана най-долу. Тук е само каквото няма. */
   --color-surface-raised: var(--color-paper-raised);
-  --color-surface-sunken: var(--color-paper-sunken);
-  /* Най-тихият цвят, който още МИНАВА 4.5:1 като текст (4.70). */
+  --color-surface-sunken: var(--color-paper-2);
   --color-subtle: var(--color-ink-500);
-  /* Зеленото от знамето (green-600) е красиво, но дава 3.60:1 — под
-     прага и като текст, и с бял текст върху него. За смислов цвят се
-     ползва 700; 600 остава за декорация (flagline). */
-  --color-success: var(--color-nfi-green-700);
-  --color-success-foreground: var(--color-paper-raised);
-  --color-warning: var(--color-nfi-gold-400);
-  --color-warning-foreground: var(--color-nfi-gold-900);
+  --color-success: var(--color-green-600);
+  --color-success-foreground: #ffffff;
+  --color-warning: var(--color-gold-400);
+  /* Мастилен текст, не gold-900: върху #b98a2b тъмнозлатното дава само
+     3.46:1, а мастиленото — 5.94:1. Самото злато остава мокъпното. */
+  --color-warning-foreground: var(--color-ink);
+  /* Границата от мокъпа: rgba(22,19,15,.14) */
+  --color-hairline: #16130f24;
 
   /* ── Шрифтове ─────────────────────────────────────────────────────
-     И двата ЗАДЪЛЖИТЕЛНО покриват кирилица + ä ö ü ß. Това е причината
-     да не са свободен избор: половината съдържание е на български,
-     другата на немски, а на едно място стоят едно до друго.
+     Мокъпът ползва Avenir Next Condensed / Avenir Next / SF Mono —
+     системни за macOS, без надеждна кирилица в мрежата. Заместени са с
+     Google шрифтове, които ЗАДЪЛЖИТЕЛНО покриват кирилица + ä ö ü ß,
+     защото сайтът е на български, а предметът е немски.
 
-     Конкретните семейства ги избира Боби в задача 2a — сменят се тук,
-     на един ред, и целият сайт тръгва след тях.                      */
+     Съответствията: Oswald ← Avenir Next Condensed (тесен, геометричен,
+     плакатен), Inter ← Avenir Next, IBM Plex Mono ← SF Mono.
+     Сменят се тук, на един ред, и целият сайт тръгва след тях.       */
+  --font-title: var(--font-oswald), "Arial Narrow", sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   /* ── Типографска скала ────────────────────────────────────────────
-     Мащаб 1.25 (голяма терца), закотвена на 16px.                    */
-  --text-2xs: 0.694rem;
+     Размерите на display-* са ПРЕНЕСЕНИ от мокъпа заедно с clamp-овете
+     и стегнатия ред (line-height под 1 за най-големите).            */
+  --text-2xs: 0.6875rem; /* 11px — kicker в мокъпа */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -124,47 +133,58 @@
   --text-4xl: 2.441rem;
   --text-5xl: 3.052rem;
   --text-6xl: 3.815rem;
-  /* Заглавието на hero-то. Свива се само на телефон. */
-  --text-hero: clamp(2.5rem, 1.2rem + 5.5vw, 5rem);
 
-  --leading-tight: 1.15;
+  /* Мокъп: .display-xl clamp(40px,7.5vw,88px), line-height .94 */
+  --text-display-xl: clamp(2.5rem, 7.5vw, 5.5rem);
+  /* Мокъп: .display-l clamp(30px,4.6vw,54px) */
+  --text-display-l: clamp(1.875rem, 4.6vw, 3.375rem);
+  /* Мокъп: .display-m clamp(22px,3vw,32px) */
+  --text-display-m: clamp(1.375rem, 3vw, 2rem);
+  /* Мокъп: .lede clamp(15px,1.8vw,18px) */
+  --text-lede: clamp(0.9375rem, 1.8vw, 1.125rem);
+
+  --leading-display: 0.94;
+  --leading-tight: 1.05;
   --leading-snug: 1.3;
-  --leading-normal: 1.6;
-  --leading-relaxed: 1.75;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
 
-  --tracking-tighter: -0.03em;
-  --tracking-tight: -0.015em;
+  --tracking-tighter: -0.01em;
+  --tracking-tight: -0.005em;
   --tracking-normal: 0;
   --tracking-wide: 0.02em;
-  /* За kicker-а — малките главни букви над заглавията. */
-  --tracking-kicker: 0.14em;
+  /* Мокъп: .kicker letter-spacing .2em */
+  --tracking-kicker: 0.2em;
+  /* Мокъп: .field label letter-spacing .16em */
+  --tracking-label: 0.16em;
 
   /* ── Форма ────────────────────────────────────────────────────────
-     Скалата --radius-sm ... --radius-4xl я строи shadcn от --radius
-     (стойността е най-долу). Тук е само стъпалото под нея.          */
-  --radius-xs: 2px;
+     Мокъпът е с ПРАВИ ръбове (border-radius:0 по полетата и бутоните).
+     Това е част от характера му — не се закръгля.                   */
+  --radius-xs: 0px;
+  --radius: 0px;
 
   /* ── Сенки ────────────────────────────────────────────────────────
-     Топли, не сиви — иначе изглеждат мръсни върху хартиения фон.     */
-  --shadow-xs: 0 1px 2px rgb(28 26 25 / 0.05);
-  --shadow-sm: 0 2px 4px rgb(28 26 25 / 0.06), 0 1px 2px rgb(28 26 25 / 0.04);
-  --shadow-md: 0 6px 16px rgb(28 26 25 / 0.08), 0 2px 4px rgb(28 26 25 / 0.04);
-  --shadow-lg: 0 16px 40px rgb(28 26 25 / 0.1), 0 4px 8px rgb(28 26 25 / 0.04);
-  --shadow-accent: 0 8px 24px rgb(212 42 34 / 0.18);
+     Пренесена от мокъпа: --shadow                                    */
+  --shadow-xs: 0 1px 0 rgb(0 0 0 / 0.03);
+  --shadow-sm: 0 1px 0 rgb(0 0 0 / 0.03), 0 8px 20px -14px rgb(22 19 15 / 0.35);
+  --shadow-md: 0 1px 0 rgb(0 0 0 / 0.03), 0 24px 60px -34px rgb(22 19 15 / 0.45);
+  --shadow-lg: 0 1px 0 rgb(0 0 0 / 0.03), 0 40px 80px -40px rgb(22 19 15 / 0.5);
 
   /* ── Движение ─────────────────────────────────────────────────────
+     Мокъп: --easing cubic-bezier(.16,1,.3,1)
      Всяка анимация ЗАДЪЛЖИТЕЛНО се изключва при prefers-reduced-motion
      (правилото е в globals.css).                                     */
-  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
-  --duration-fast: 150ms;
-  --duration-base: 250ms;
-  --duration-slow: 420ms;
+  --duration-fast: 200ms;
+  --duration-base: 350ms;
+  --duration-slow: 600ms;
 
   /* ── Оформление ───────────────────────────────────────────────────*/
   --container-prose: 68ch;
-  --container-page: 1200px;
-  --container-wide: 1440px;
+  --container-page: 1200px; /* мокъп: --maxw */
+  --container-lede: 52ch; /* мокъп: .lede max-width */
 
   /* Височината на флаг-линията — знакът на марката. */
   --size-flagline: 3px;
@@ -174,38 +194,38 @@
    Мостът към shadcn/ui
    ═══════════════════════════════════════════════════════════════════════
 
-   shadcn компонентите говорят на своя речник: bg-primary, text-muted-
-   foreground, border-border. Тук този речник се захранва с цветовете на
-   NFI — така Жоро пише стандартен shadcn код, а вижда NFI визия.
+   shadcn компонентите говорят на своя речник: bg-primary,
+   text-muted-foreground, border-border. Тук този речник се захранва с
+   цветовете на МОКЪПА — така пишем стандартен shadcn код, а виждаме
+   одобрената визия.
 
-   Тези променливи се четат от @theme inline блока в globals.css.
    Ако смениш име тук, чупиш магазина — оттам и замразяването.        */
 
 :root {
   --background: var(--color-paper);
-  --foreground: var(--color-ink-950);
+  --foreground: var(--color-ink);
 
   --card: var(--color-paper-raised);
-  --card-foreground: var(--color-ink-950);
+  --card-foreground: var(--color-ink);
   --popover: var(--color-paper-raised);
-  --popover-foreground: var(--color-ink-950);
+  --popover-foreground: var(--color-ink);
 
-  /* Основното действие е червената нишка — „Запиши се", „Плати". */
-  --primary: var(--color-nfi-red-600);
+  /* Основното действие е червената нишка — „Заяви обаждане", „Плати". */
+  --primary: var(--color-red-600);
   --primary-foreground: #ffffff;
 
-  --secondary: var(--color-paper-sunken);
-  --secondary-foreground: var(--color-ink-900);
+  --secondary: var(--color-paper-2);
+  --secondary-foreground: var(--color-ink);
 
   /* muted = ФОН; muted-foreground = вторичен текст. Не ги разменяй. */
   --muted: var(--color-ink-100);
-  --muted-foreground: var(--color-ink-600);
+  --muted-foreground: var(--color-ink-2);
 
   /* accent = светлият фон при hover, не акцентният цвят. */
-  --accent: var(--color-nfi-red-50);
-  --accent-foreground: var(--color-nfi-red-700);
+  --accent: var(--color-red-50);
+  --accent-foreground: var(--color-red-700);
 
-  --destructive: var(--color-nfi-red-700);
+  --destructive: var(--color-red-700);
   --destructive-foreground: #ffffff;
 
   /* border = декоративни разделители; input = границата на КОНТРОЛ.
@@ -213,80 +233,84 @@
      3:1 по WCAG 1.4.11. Оттам и разликата — не е недоглеждане. */
   --border: var(--color-ink-200);
   --input: var(--color-ink-400);
-  --ring: var(--color-nfi-red-600);
+  --ring: var(--color-red-600);
 
-  --radius: 0.625rem;
+  --radius: 0px;
 
   /* Табло в админа (задача 17f1). */
-  --chart-1: var(--color-nfi-red-600);
-  --chart-2: var(--color-nfi-green-600);
-  --chart-3: var(--color-nfi-gold-500);
+  --chart-1: var(--color-red-600);
+  --chart-2: var(--color-green-600);
+  --chart-3: var(--color-gold-500);
   --chart-4: var(--color-ink-500);
-  --chart-5: var(--color-nfi-red-300);
+  --chart-5: var(--color-red-300);
 
-  --sidebar: var(--color-paper-sunken);
-  --sidebar-foreground: var(--color-ink-900);
-  --sidebar-primary: var(--color-nfi-red-600);
+  --sidebar: var(--color-paper-2);
+  --sidebar-foreground: var(--color-ink);
+  --sidebar-primary: var(--color-red-600);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--color-nfi-red-50);
-  --sidebar-accent-foreground: var(--color-nfi-red-700);
+  --sidebar-accent: var(--color-red-50);
+  --sidebar-accent-foreground: var(--color-red-700);
   --sidebar-border: var(--color-ink-200);
-  --sidebar-ring: var(--color-nfi-red-600);
+  --sidebar-ring: var(--color-red-600);
 }
 
-/* Тъмният режим е за админа. Публичният сайт остава светъл — така е
-   в мокъпа, който е одобрен от клиентката. */
+/* Тъмната тема е за админа И за тъмните секции на мокъпа
+   (.section-dark). Стойностите на текста са пренесени от мокъпа:
+   #a89f8d за kicker, #b6ad9b за lede върху ink. */
 .dark {
-  --background: var(--color-ink-950);
-  --foreground: var(--color-ink-50);
+  --background: var(--color-ink);
+  --foreground: var(--color-paper);
 
-  --card: #262422;
-  --card-foreground: var(--color-ink-50);
-  --popover: #262422;
-  --popover-foreground: var(--color-ink-50);
+  --card: #221e18;
+  --card-foreground: var(--color-paper);
+  --popover: #221e18;
+  --popover-foreground: var(--color-paper);
 
-  /* По-светло червено: 600 не носи достатъчно контраст на тъмен фон. */
-  --primary: var(--color-nfi-red-400);
-  --primary-foreground: var(--color-nfi-red-950);
+  /* По-светло червено: #c11f2f върху ink дава 3.09:1. */
+  --primary: var(--color-red-on-dark);
+  --primary-foreground: var(--color-red-950);
 
   --secondary: var(--color-ink-800);
-  --secondary-foreground: var(--color-ink-50);
+  --secondary-foreground: var(--color-paper);
 
   --muted: var(--color-ink-800);
-  --muted-foreground: var(--color-ink-300);
+  --muted-foreground: #b6ad9b;
 
   --accent: var(--color-ink-800);
-  --accent-foreground: var(--color-nfi-red-300);
+  --accent-foreground: var(--color-red-300);
 
-  --destructive: var(--color-nfi-red-400);
-  --destructive-foreground: var(--color-nfi-red-950);
+  --destructive: var(--color-red-400);
+  --destructive-foreground: var(--color-red-950);
 
-  --border: #ffffff1a;
-  /* Полупрозрачно бяло дава 1.58:1 върху тъмната карта — границата на
-     полето става невидима. Плътен цвят е единственият начин да се
-     удържат 3:1 по WCAG 1.4.11. */
+  --border: #ffffff1f;
+  /* Плътен цвят: полупрозрачно бяло не удържа 3:1 за граница на поле. */
   --input: var(--color-ink-400);
-  --ring: var(--color-nfi-red-400);
+  --ring: var(--color-red-on-dark);
 
-  /* Тези три идват от @theme и без предефиниране тук тъмният режим
-     наследява светлите им стойности — а те падат на тъмен фон.
-     Проверява се с `npm run a11y:contrast`. */
-  --color-subtle: var(--color-ink-300);
-  --color-success: var(--color-nfi-green-400);
-  --color-success-foreground: var(--color-ink-950);
+  --chart-1: var(--color-red-on-dark);
+  --chart-2: var(--color-green-400);
+  --chart-3: var(--color-gold-300);
+  --chart-4: var(--color-ink-300);
+  --chart-5: var(--color-red-200);
 
-  --chart-1: var(--color-nfi-red-400);
-  --chart-2: var(--color-nfi-green-400);
-  --chart-3: var(--color-nfi-gold-300);
-  --chart-4: var(--color-ink-400);
-  --chart-5: var(--color-nfi-red-200);
-
-  --sidebar: #262422;
-  --sidebar-foreground: var(--color-ink-50);
-  --sidebar-primary: var(--color-nfi-red-400);
-  --sidebar-primary-foreground: var(--color-nfi-red-950);
+  --sidebar: #221e18;
+  --sidebar-foreground: var(--color-paper);
+  --sidebar-primary: var(--color-red-on-dark);
+  --sidebar-primary-foreground: var(--color-red-950);
   --sidebar-accent: var(--color-ink-800);
-  --sidebar-accent-foreground: var(--color-nfi-red-300);
-  --sidebar-border: #ffffff1a;
-  --sidebar-ring: var(--color-nfi-red-400);
+  --sidebar-accent-foreground: var(--color-red-300);
+  --sidebar-border: #ffffff1f;
+  --sidebar-ring: var(--color-red-on-dark);
+
+  /* Тези идват от @theme и без предефиниране тук тъмният режим
+     наследява светлите им стойности, които падат на тъмен фон. */
+  --color-subtle: var(--color-ink-300);
+  /* Светло зелено на тъмен фон, но с ТЪМЕН текст върху себе си: бял
+     върху green-400 дава само 3.61:1. */
+  --color-success: var(--color-green-300);
+  --color-success-foreground: var(--color-green-900);
+  /* Предупреждението също се обръща: тъмен текст върху светло злато. */
+  --color-warning: var(--color-gold-300);
+  --color-warning-foreground: var(--color-gold-900);
+  --color-gold-text: var(--color-gold-300);
 }

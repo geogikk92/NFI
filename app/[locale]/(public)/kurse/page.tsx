@@ -166,7 +166,7 @@ export default async function CoursesPage({ params, searchParams }: Props) {
       )}
 
       <section className="mt-20 rounded-xl border border-border bg-surface-sunken px-6 py-10 text-center">
-        <h2 className="font-display text-2xl">{t.list.testTitle}</h2>
+        <h2 className="font-title text-2xl">{t.list.testTitle}</h2>
         <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
           {t.list.testLead}
         </p>
