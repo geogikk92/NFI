@@ -20,7 +20,11 @@ const sections = [
   },
   {
     heading: "Institut",
-    links: [{ href: "/kontakt", label: "Kontakt" }],
+    links: [
+      { href: "/ueber-uns", label: "Über uns" },
+      { href: "/community", label: "Community" },
+      { href: "/kontakt", label: "Kontakt" },
+    ],
   },
   {
     heading: "Service",

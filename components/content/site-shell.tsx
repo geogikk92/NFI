@@ -25,12 +25,12 @@ import { SiteFooter } from "./site-footer";
 // страница е 404 за посетителя и е по-лоша от липсваща връзка.
 // Добавяй реда в същия commit, в който правиш страницата.
 //
-// Чакат: /uebersetzungen (задача 14), /materialien (8),
-// /ueber-uns и /community (3b).
+// Чакат: /uebersetzungen (задача 14), /materialien (8).
 const NAV_LINKS: readonly NavLink[] = [
   { href: "/kurse", label: "Kurse" },
   { href: "/einstufungstest", label: "Einstufungstest" },
   { href: "/shop", label: "Shop" },
+  { href: "/ueber-uns", label: "Über uns" },
   { href: "/kontakt", label: "Kontakt" },
 ];
 
