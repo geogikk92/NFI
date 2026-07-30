@@ -10,8 +10,23 @@ function createClient() {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
+    // Съобщението назовава И ДВАТА случая. Първата му версия казваше само
+    // „копирай .env.example като .env.local" — съвет, безполезен точно
+    // когато най-много трябва: в лога на Vercel, където .env.local няма и
+    // не може да има. Същата поправка вече беше направена в
+    // prisma.config.ts, а тук остана.
     throw new Error(
-      "Липсва DATABASE_URL. Копирай .env.example като .env.local и го попълни.",
+      [
+        "Липсва DATABASE_URL.",
+        "  • Локално: копирай .env.example като .env.local и го попълни.",
+        "  • На Vercel: Settings → Environment Variables → добави DATABASE_URL",
+        "    (pooled низът, със sslmode=verify-full) за Production, Preview и",
+        "    Development, ПОСЛЕ Deployments → ⋯ → Redeploy. Добавянето на",
+        "    променлива не пуска нов деплой само по себе си, а старият",
+        "    продължава да работи със старата среда.",
+        "  • Внимавай за представка: интеграцията с Neon създава",
+        "    NFI_DATABASE_URL, а кодът чете DATABASE_URL.",
+      ].join("\n"),
     );
   }
 
