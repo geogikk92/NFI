@@ -18,9 +18,18 @@ import { cn } from "@/lib/utils";
 interface SiteNavProps {
   locale: Locale;
   cartCount?: number;
+  /** null = никой не е влязъл. Идва от сървъра — виж SiteShell. */
+  account?: { label: string; isAdmin: boolean } | null;
+  /** Server action. Подава се отгоре, защото този файл е клиентски. */
+  onSignOut?: () => Promise<void>;
 }
 
-export function SiteNav({ locale, cartCount = 0 }: SiteNavProps) {
+export function SiteNav({
+  locale,
+  cartCount = 0,
+  account = null,
+  onSignOut,
+}: SiteNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -128,6 +137,32 @@ export function SiteNav({ locale, cartCount = 0 }: SiteNavProps) {
             </Link>
           </Button>
 
+          {/* Вход/изход. До 30.07.2026 нито едната връзка я нямаше никъде в
+              сайта — страниците съществуваха, но не се стигаха отникъде. */}
+          {account ? (
+            <div className="hidden items-center gap-2 md:flex">
+              {account.isAdmin ? (
+                <Button asChild variant="ghost" size="sm">
+                  {/* Админът е само на български и е извън /[locale]/. */}
+                  <Link href="/admin">{t.nav.adminPanel}</Link>
+                </Button>
+              ) : null}
+              <span className="max-w-32 truncate text-sm text-muted-foreground">
+                <span className="sr-only">{t.nav.signedInAs} </span>
+                {account.label}
+              </span>
+              <form action={onSignOut}>
+                <Button type="submit" variant="ghost" size="sm">
+                  {t.nav.signOut}
+                </Button>
+              </form>
+            </div>
+          ) : (
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+              <Link href={`/${locale}/anmelden`}>{t.nav.signIn}</Link>
+            </Button>
+          )}
+
           <Button asChild size="sm" className="hidden md:inline-flex">
             <Link href={`/${locale}/kontakt`}>{t.nav.consultation}</Link>
           </Button>
@@ -182,6 +217,53 @@ export function SiteNav({ locale, cartCount = 0 }: SiteNavProps) {
               </span>
               <LocaleSwitcher current={locale} label={t.nav.languageLabel} />
             </li>
+            {/* Същото и в мобилното меню: на телефон горните бутони са
+                скрити, а вход, който съществува само на голям екран, не
+                съществува за половината посетители. */}
+            {account ? (
+              <>
+                {account.isAdmin ? (
+                  <li>
+                    <Link
+                      href="/admin"
+                      onClick={() => setOpen(false)}
+                      className="block rounded-md px-3 py-3 text-base font-medium hover:bg-muted"
+                    >
+                      {t.nav.adminPanel}
+                    </Link>
+                  </li>
+                ) : null}
+                <li className="px-3 py-3">
+                  <p className="text-sm text-muted-foreground">
+                    {t.nav.signedInAs}{" "}
+                    <span className="font-medium text-foreground">
+                      {account.label}
+                    </span>
+                  </p>
+                  <form action={onSignOut} className="mt-2">
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setOpen(false)}
+                    >
+                      {t.nav.signOut}
+                    </Button>
+                  </form>
+                </li>
+              </>
+            ) : (
+              <li>
+                <Link
+                  href={`/${locale}/anmelden`}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md px-3 py-3 text-base font-medium hover:bg-muted"
+                >
+                  {t.nav.signIn}
+                </Link>
+              </li>
+            )}
+
             <li className="px-3 py-3 md:hidden">
               <Button asChild className="w-full">
                 <Link href={`/${locale}/kontakt`} onClick={() => setOpen(false)}>

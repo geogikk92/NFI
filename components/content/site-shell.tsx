@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { readCart } from "@/lib/commerce/cart-cookie";
 import { countItems } from "@/lib/commerce/cart";
 import { readConsent } from "@/lib/consent-cookie";
+import { currentUser } from "@/lib/auth/session-db";
 import { needsDecision } from "@/lib/consent";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
@@ -16,6 +17,7 @@ import {
   rejectAllCookies,
   saveCookieSelection,
 } from "@/app/[locale]/(public)/consent-actions";
+import { signOut } from "@/app/auth-actions";
 import { CookieBanner } from "./cookie-banner";
 import { SiteNav } from "./site-nav";
 import { SiteFooter } from "./site-footer";
@@ -27,7 +29,14 @@ export async function SiteShell({
   locale: Locale;
   children: ReactNode;
 }) {
-  const [cart, consent] = await Promise.all([readCart(), readConsent()]);
+  // `currentUser()` не прави страницата динамична — тя вече е такава заради
+  // двете бисквитки по-долу. Тоест цената е една заявка към базата, не смяна
+  // на стратегията за рендиране.
+  const [cart, consent, user] = await Promise.all([
+    readCart(),
+    readConsent(),
+    currentUser(),
+  ]);
   const t = getDictionary(locale);
 
   return (
@@ -41,7 +50,21 @@ export async function SiteShell({
         {t.nav.skipToContent}
       </a>
 
-      <SiteNav locale={locale} cartCount={countItems(cart)} />
+      <SiteNav
+        locale={locale}
+        cartCount={countItems(cart)}
+        account={
+          user
+            ? {
+                // Показва се името, а при липса — имейлът. Имейлът в хедъра
+                // е видим за всеки през рамото, затова името е първо.
+                label: user.name ?? user.email,
+                isAdmin: user.role === "ADMIN",
+              }
+            : null
+        }
+        onSignOut={signOut}
+      />
 
       <div id="inhalt">{children}</div>
 

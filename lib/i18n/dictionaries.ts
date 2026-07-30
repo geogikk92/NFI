@@ -27,6 +27,10 @@ const de = {
     languageLabel: "Sprache",
     cartEmpty: "leer",
     cartItems: "Artikel",
+    signIn: "Anmelden",
+    signOut: "Abmelden",
+    signedInAs: "Angemeldet als",
+    adminPanel: "Verwaltung",
   },
   footer: {
     courses: "Kurse",
@@ -68,9 +72,12 @@ const de = {
     noAccount: "Noch kein Konto?",
     toLogin: "Anmelden",
     toRegister: "Konto erstellen",
-    checkInbox: "Bitte prüfen Sie Ihr Postfach",
+    checkInbox: "Ihr Konto ist bereit",
+    // НЕ обещава писмо: доставчикът за имейли още го няма (lib/email е
+    // договорка без реализация). Текст, който казва „проверете пощата",
+    // праща човека да чака нещо, което няма да дойде.
     verifySent:
-      "Wir haben Ihnen einen Bestätigungslink geschickt. Erst danach ist Ihr Konto aktiv.",
+      "Ihr Konto ist angelegt. Sie können sich ab sofort anmelden. Die Bestätigung per E-Mail richten wir gerade ein — Sie müssen nichts weiter tun.",
     pending: "Wird gesendet…",
   },
   common: {
@@ -112,6 +119,10 @@ const bg: Dictionary = {
     languageLabel: "Език",
     cartEmpty: "празна",
     cartItems: "артикула",
+    signIn: "Вход",
+    signOut: "Изход",
+    signedInAs: "Влязъл като",
+    adminPanel: "Администрация",
   },
   footer: {
     courses: "Курсове",
@@ -153,9 +164,9 @@ const bg: Dictionary = {
     noAccount: "Още нямаш профил?",
     toLogin: "Вход",
     toRegister: "Създай профил",
-    checkInbox: "Провери пощата си",
+    checkInbox: "Профилът е готов",
     verifySent:
-      "Изпратихме ти линк за потвърждение. Профилът е активен само след него.",
+      "Профилът е създаден. Можеш да влезеш веднага. Потвърждението по имейл още се настройва — не е нужно да правиш нищо.",
     pending: "Изпраща се…",
   },
   common: {
@@ -187,6 +198,10 @@ const en: Dictionary = {
     languageLabel: "Language",
     cartEmpty: "empty",
     cartItems: "items",
+    signIn: "Sign in",
+    signOut: "Sign out",
+    signedInAs: "Signed in as",
+    adminPanel: "Administration",
   },
   footer: {
     courses: "Courses",
@@ -228,9 +243,9 @@ const en: Dictionary = {
     noAccount: "No account yet?",
     toLogin: "Sign in",
     toRegister: "Create account",
-    checkInbox: "Check your inbox",
+    checkInbox: "Your account is ready",
     verifySent:
-      "We've sent you a confirmation link. Your account is active once you follow it.",
+      "Your account is created. You can sign in right away. Email confirmation is still being set up — there is nothing else you need to do.",
     pending: "Sending…",
   },
   common: {
