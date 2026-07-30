@@ -16,15 +16,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { progressPercent, type QuizQuestion } from "@/lib/cms/level-test";
+import type { Locale } from "@/lib/i18n/config";
+import { levelTestCopy } from "@/lib/i18n/pages/level-test";
 import { cn } from "@/lib/utils";
 
 interface LevelTestQuizProps {
   questions: readonly QuizQuestion[];
+  locale: Locale;
   /** Приема отговорите и пренасочва към резултата. */
   action: (formData: FormData) => Promise<void>;
 }
 
-export function LevelTestQuiz({ questions, action }: LevelTestQuizProps) {
+export function LevelTestQuiz({
+  questions,
+  locale,
+  action,
+}: LevelTestQuizProps) {
+  const t = levelTestCopy(locale).quiz;
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const headingRef = useRef<HTMLLegendElement>(null);
@@ -44,7 +52,7 @@ export function LevelTestQuiz({ questions, action }: LevelTestQuizProps) {
   if (!question) {
     return (
       <p className="rounded-lg border border-border bg-card px-6 py-12 text-center text-muted-foreground">
-        Der Test ist gerade nicht verfügbar. Bitte versuchen Sie es später.
+        {t.unavailable}
       </p>
     );
   }
@@ -71,13 +79,13 @@ export function LevelTestQuiz({ questions, action }: LevelTestQuizProps) {
           {progressPercent(index + 1, total)}%
         </progress>
         <p className="shrink-0 text-sm text-muted-foreground">
-          Frage {index + 1} von {total}
+          {t.progress(index + 1, total)}
         </p>
       </div>
 
       {/* Обявява смяната на въпроса. */}
       <p role="status" aria-live="polite" className="sr-only">
-        Frage {index + 1} von {total}
+        {t.progress(index + 1, total)}
       </p>
 
       <form action={action} className="mt-8">
@@ -140,27 +148,26 @@ export function LevelTestQuiz({ questions, action }: LevelTestQuizProps) {
             onClick={() => go(-1)}
             disabled={index === 0}
           >
-            Zurück
+            {t.back}
           </Button>
 
           {isLast ? (
             <Button type="submit" size="lg" disabled={answeredCount === 0}>
-              Ergebnis anzeigen
+              {t.submit}
             </Button>
           ) : (
             <Button type="button" size="lg" onClick={() => go(1)}>
-              {chosen ? "Weiter" : "Überspringen"}
+              {chosen ? t.next : t.skip}
             </Button>
           )}
 
           <p className="text-sm text-muted-foreground">
-            {answeredCount} von {total} beantwortet
+            {t.answered(answeredCount, total)}
           </p>
         </div>
 
         <p className="mt-4 text-xs text-muted-foreground">
-          Sie können Fragen überspringen — das Ergebnis wird dann grober.
-          Der Test dauert etwa zehn Minuten und ist kostenlos.
+          {t.hint}
         </p>
       </form>
     </div>

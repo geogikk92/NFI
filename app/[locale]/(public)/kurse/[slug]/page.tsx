@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { CourseCard } from "@/components/content/course-card";
 import { getCourseBySlug, listRelatedCourses } from "@/lib/cms/courses";
 import { toDateTimeAttribute } from "@/lib/intl";
-import { formatMoney } from "@/lib/money";
 import { pick, toLocale } from "@/lib/i18n/config";
 import {
   courseDuration,
@@ -18,7 +17,7 @@ import {
   formatLabel,
   levelLabel,
 } from "@/lib/i18n/pages/courses";
-import { dateLong, decimal, moneyTag } from "@/lib/i18n/pages/formats";
+import { dateLong, decimal } from "@/lib/i18n/pages/formats";
 
 // Двете полета идват от един и същ адрес — /de/kurse/a1-abendkurs.
 type Props = { params: Promise<{ locale: string; slug: string }> };
@@ -132,18 +131,12 @@ export default async function CoursePage({ params }: Props) {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-xl border border-border bg-card p-6">
-            {course.priceCents !== null ? (
-              <>
-                <p className="text-3xl font-semibold">
-                  {formatMoney(course.priceCents, moneyTag(locale))}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t.priceNote}
-                </p>
-              </>
-            ) : (
-              <p className="text-xl font-semibold">{t.priceOnRequest}</p>
-            )}
+            {/* БЕЗ цена — мокъпът я оставя за разговора. Курсът не се
+                купува онлайн: единственото действие е заявка за обаждане,
+                значи няма поръчка и PAngV не иска цена тук. */}
+            <p className="font-title text-xl font-bold leading-snug">
+              {t.priceInTalk}
+            </p>
 
             <Separator className="my-6" />
 

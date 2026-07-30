@@ -45,7 +45,11 @@ export default async function EinstufungstestPage({ params }: Props) {
         ) : (
           // Самите въпроси идват от базата на немски, а обвивката на
           // въпросника е чужда територия (задача 6) — тя се превежда там.
-          <LevelTestQuiz questions={questions} action={submitLevelTest} />
+          <LevelTestQuiz
+            questions={questions}
+            locale={locale}
+            action={submitLevelTest}
+          />
         )}
       </div>
     </main>

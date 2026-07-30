@@ -61,8 +61,7 @@ const de = {
     reviewsHeading: "Bewertungen",
     reviews: (rating: string, count: number) =>
       `${rating} von 5 · ${count} ${count === 1 ? "Bewertung" : "Bewertungen"}`,
-    priceNote: "inkl. MwSt. · gesamter Kurs",
-    priceOnRequest: "Preis auf Anfrage",
+    priceInTalk: "Den Preis erfährst du im kostenlosen Gespräch",
     level: "Niveau",
     format: "Format",
     scope: "Umfang",
@@ -80,8 +79,7 @@ const de = {
     start: "Start:",
     group: "Gruppe:",
     groupValue: (count: number) => `max. ${count} Teilnehmende`,
-    priceNote: "inkl. MwSt. · gesamter Kurs",
-    priceOnRequest: "Preis auf Anfrage",
+    priceInTalk: "Den Preis erfährst du im kostenlosen Gespräch",
   },
 };
 
@@ -136,8 +134,7 @@ const bg: CoursesCopy = {
     reviewsHeading: "Оценки",
     reviews: (rating: string, count: number) =>
       `${rating} от 5 · ${count} ${count === 1 ? "оценка" : "оценки"}`,
-    priceNote: "с ДДС · за целия курс",
-    priceOnRequest: "Цена по запитване",
+    priceInTalk: "Цената научаваш в безплатния разговор",
     level: "Ниво",
     format: "Формат",
     scope: "Обем",
@@ -155,8 +152,7 @@ const bg: CoursesCopy = {
     start: "Начало:",
     group: "Група:",
     groupValue: (count: number) => `най-много ${count} участници`,
-    priceNote: "с ДДС · за целия курс",
-    priceOnRequest: "Цена по запитване",
+    priceInTalk: "Цената научаваш в безплатния разговор",
   },
 };
 
@@ -209,8 +205,7 @@ const en: CoursesCopy = {
     reviewsHeading: "Reviews",
     reviews: (rating: string, count: number) =>
       `${rating} out of 5 · ${count} ${count === 1 ? "review" : "reviews"}`,
-    priceNote: "incl. VAT · whole course",
-    priceOnRequest: "Price on request",
+    priceInTalk: "You get the price in the free call",
     level: "Level",
     format: "Format",
     scope: "Scope",
@@ -228,8 +223,7 @@ const en: CoursesCopy = {
     start: "Start:",
     group: "Group:",
     groupValue: (count: number) => `max. ${count} participants`,
-    priceNote: "incl. VAT · whole course",
-    priceOnRequest: "Price on request",
+    priceInTalk: "You get the price in the free call",
   },
 };
 

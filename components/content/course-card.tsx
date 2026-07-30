@@ -8,7 +8,6 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { toDateTimeAttribute } from "@/lib/intl";
-import { formatMoney } from "@/lib/money";
 // Само тип — стойност оттук би довлякла Prisma до всеки, който внесе картата.
 import type { CourseSummary } from "@/lib/cms/courses";
 import { pick, type Locale } from "@/lib/i18n/config";
@@ -18,7 +17,7 @@ import {
   formatLabel,
   levelLabel,
 } from "@/lib/i18n/pages/courses";
-import { dateShort, moneyTag } from "@/lib/i18n/pages/formats";
+import { dateShort } from "@/lib/i18n/pages/formats";
 
 interface CourseCardProps {
   course: CourseSummary;
@@ -97,16 +96,13 @@ export function CourseCard({ course, locale }: CourseCardProps) {
       </CardContent>
 
       <CardFooter>
-        {course.priceCents !== null ? (
-          <div>
-            <p className="text-lg font-semibold">
-              {formatMoney(course.priceCents, moneyTag(locale))}
-            </p>
-            <p className="text-xs text-muted-foreground">{t.priceNote}</p>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">{t.priceOnRequest}</p>
-        )}
+        {/* БЕЗ цена — така е в мокъпа: „Цената научаваш в безплатния
+            разговор, където заедно преценяваме и нивото ти."
+            Курсът не се купува онлайн, а през заявка за обаждане, затова
+            PAngV не изисква цена преди поръчката (няма поръчка тук).
+            Ако някога курс стане купуем от количката, цената ТРЯБВА да е
+            видима преди бутона — виж docs/ПРАВНИ-ИЗИСКВАНИЯ.md §4.4. */}
+        <p className="text-sm text-muted-foreground">{t.priceInTalk}</p>
       </CardFooter>
     </Card>
   );

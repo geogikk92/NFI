@@ -4,14 +4,25 @@ import type { Locale } from "@/lib/i18n/config";
 import { resultCopy as resultCopyDe, type CourseLevel } from "@/lib/cms/level-test";
 
 const de = {
+  quiz: {
+    progress: (n: number, total: number) => `Frage ${n} von ${total}`,
+    back: "Zurück",
+    next: "Weiter",
+    skip: "Überspringen",
+    submit: "Ergebnis anzeigen",
+    answered: (n: number, total: number) => `${n} von ${total} beantwortet`,
+    hint: "Du kannst Fragen überspringen — das Ergebnis wird dann grober. Acht Fragen, etwa fünf Minuten, kostenlos.",
+    unavailable: "Der Test ist gerade nicht verfügbar. Bitte versuche es später.",
+  },
+
   test: {
     metaTitle: "Einstufungstest",
     metaDescription:
-      "In zehn Minuten wissen Sie, auf welchem Niveau Sie stehen — kostenlos und ohne Anmeldung.",
+      "Acht Fragen, etwa fünf Minuten — und du weißt, wo du stehst. Ohne E-Mail, ohne Anmeldung.",
     kicker: "Einstufungstest",
     title: "Wo stehen Sie im Deutschen?",
     lead:
-      "Acht Fragen, etwa zehn Minuten. Keine Anmeldung, kein Ergebnis, das Sie festlegt — nur ein Ausgangspunkt für das Gespräch.",
+      "Acht Fragen, keine Tricks. Am Ende sagen wir dir dein Niveau und welcher Kurs passt. Ohne E-Mail und ohne Anmeldung; das Ergebnis speichern wir anonym, um dir den richtigen Kurs zu zeigen.",
     unavailableTitle: "Der Test ist gerade nicht verfügbar",
     unavailableBody:
       "Wir stellen die Fragen zusammen. Melden Sie sich — wir schätzen Ihr Niveau auch im Gespräch ein.",
@@ -42,14 +53,25 @@ const de = {
 type LevelTestCopy = typeof de;
 
 const bg: LevelTestCopy = {
+  quiz: {
+    progress: (n: number, total: number) => `Въпрос ${n} от ${total}`,
+    back: "Назад",
+    next: "Напред",
+    skip: "Пропусни",
+    submit: "Виж резултата",
+    answered: (n: number, total: number) => `${n} от ${total} отговорени`,
+    hint: "Можеш да пропускаш въпроси — тогава резултатът е по-груб. Осем въпроса, около пет минути, безплатно.",
+    unavailable: "Тестът не е достъпен в момента. Опитай по-късно.",
+  },
+
   test: {
     metaTitle: "Тест за ниво",
     metaDescription:
-      "За десет минути разбираш на какво ниво си — безплатно и без регистрация.",
+      "Осем въпроса, около пет минути — и знаеш къде си. Без имейл, без регистрация.",
     kicker: "Тест за ниво",
     title: "На какво ниво си по немски?",
     lead:
-      "Осем въпроса, около десет минути. Без регистрация и без резултат, който те обвързва — само отправна точка за разговора.",
+      "Осем въпроса, без хитрини. Накрая ти казваме нивото и кой курс ти пасва. Без имейл и без регистрация; резултатът се пази анонимно, за да ти покажем подходящия курс.",
     unavailableTitle: "Тестът в момента не е достъпен",
     unavailableBody:
       "Подготвяме въпросите. Обади ни се — преценяваме нивото и в разговор.",
@@ -78,14 +100,25 @@ const bg: LevelTestCopy = {
 };
 
 const en: LevelTestCopy = {
+  quiz: {
+    progress: (n: number, total: number) => `Question ${n} of ${total}`,
+    back: "Back",
+    next: "Next",
+    skip: "Skip",
+    submit: "See result",
+    answered: (n: number, total: number) => `${n} of ${total} answered`,
+    hint: "You can skip questions — the result will just be rougher. Eight questions, about five minutes, free.",
+    unavailable: "The test is unavailable right now. Please try again later.",
+  },
+
   test: {
     metaTitle: "Placement test",
     metaDescription:
-      "Ten minutes and you'll know your level — free of charge, no sign-up.",
+      "Eight questions, about five minutes — and you'll know where you stand. No email, no sign-up.",
     kicker: "Placement test",
     title: "Where do you stand in German?",
     lead:
-      "Eight questions, about ten minutes. No sign-up, no result that pins you down — just a starting point for the conversation.",
+      "Eight questions, no tricks. At the end we tell you your level and which course fits. No email and no sign-up; we store the result anonymously to show you the right course.",
     unavailableTitle: "The test is not available right now",
     unavailableBody:
       "We're putting the questions together. Get in touch — we can also assess your level in conversation.",
