@@ -376,3 +376,75 @@ describe("findShippingZone", () => {
     expect(findShippingZone(disabled, "DE")).toBeNull();
   });
 });
+
+describe("задънената улица в количката", () => {
+  // Спрян от продажба продукт изчезва от `lines`, тоест за него няма ред и
+  // няма бутон „Премахни". Страницата може да предложи изход САМО ако
+  // проблемът носи productId. Тези тестове пазят точно този договор.
+
+  const spryan: CatalogProduct = { ...pdf, id: "p-spryan", published: false };
+
+  it("проблемът за спрян продукт носи productId", () => {
+    const cart = priceCart(
+      [spryan],
+      [{ productId: "p-spryan", quantity: 1 }],
+      base,
+    );
+
+    const problem = cart.problems.find((p) => p.code === "UNPUBLISHED");
+    expect(problem).toBeDefined();
+    expect(problem && "productId" in problem && problem.productId).toBe(
+      "p-spryan",
+    );
+  });
+
+  it("спрян продукт НЕ се появява в редовете", () => {
+    const cart = priceCart(
+      [spryan],
+      [{ productId: "p-spryan", quantity: 1 }],
+      base,
+    );
+    expect(cart.lines).toHaveLength(0);
+  });
+
+  it("отпаднат ли ВСИЧКИ редове, проблемите оцеляват", () => {
+    // Тук беше най-лошото: страницата гледаше lines.length === 0 и
+    // рендираше „количката е празна" — при пълна количка. Проблемите
+    // трябва да преживеят връщането на празната количка, иначе човекът
+    // няма нито обяснение, нито изход.
+    const cart = priceCart(
+      [spryan],
+      [{ productId: "p-spryan", quantity: 1 }],
+      base,
+    );
+
+    expect(cart.lines).toHaveLength(0);
+    expect(cart.problems.length).toBeGreaterThan(0);
+    expect(cart.problems.some((p) => p.code === "EMPTY")).toBe(false);
+  });
+
+  it("непознат продукт също носи productId", () => {
+    // Изтрит от базата продукт, останал в бисквитката отпреди месец.
+    const cart = priceCart([], [{ productId: "p-nyama", quantity: 1 }], base);
+
+    const problem = cart.problems.find((p) => p.code === "UNKNOWN_PRODUCT");
+    expect(problem && "productId" in problem && problem.productId).toBe(
+      "p-nyama",
+    );
+  });
+
+  it("изчерпан продукт носи productId и количката не се плаща", () => {
+    const izcherpan: CatalogProduct = { ...book, id: "p-nula", stock: 0 };
+    const cart = priceCart(
+      [izcherpan],
+      [{ productId: "p-nula", quantity: 1 }],
+      base,
+    );
+
+    const problem = cart.problems.find((p) => p.code === "OUT_OF_STOCK");
+    expect(problem && "productId" in problem && problem.productId).toBe(
+      "p-nula",
+    );
+    expect(isCheckoutable(cart)).toBe(false);
+  });
+});

@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { readCart } from "@/lib/commerce/cart-cookie";
 import { priceCartFromDb } from "@/lib/commerce/catalog";
-import { isCheckoutable } from "@/lib/commerce/pricing";
+import { isCheckoutable, type PricedCart } from "@/lib/commerce/pricing";
 import { formatMoney } from "@/lib/money";
-import { toLocale } from "@/lib/i18n/config";
+import { toLocale, type Locale } from "@/lib/i18n/config";
 import { shopCopy } from "@/lib/i18n/pages/shop";
 import { moneyTag } from "@/lib/i18n/pages/formats";
 import { removeFromCartForm, updateCartQuantityForm } from "../actions";
@@ -25,6 +25,62 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: shopCopy(toLocale(locale)).cart.metaTitle,
     robots: { index: false, follow: false },
   };
+}
+
+/**
+ * Проблемите на количката, всеки с изход от него.
+ *
+ * Дотук те се показваха само в НЕпразния клон и само като текст. Двете
+ * заедно правеха задънена улица: `priceCart` изхвърля спрян от продажба
+ * продукт от `lines`, значи за него няма ред и няма бутон „Премахни", а
+ * `isCheckoutable` остава false завинаги. Отпаднеха ли всички редове,
+ * страницата дори рендираше „количката е празна" — при пълна количка.
+ *
+ * Затова тук всеки проблем с `productId`, за който НЯМА видим ред, носи
+ * собствен бутон. Действието е същото, което трие обикновен ред.
+ */
+function CartProblems({
+  problems,
+  visibleIds,
+  locale,
+  removeLabel,
+}: {
+  problems: PricedCart["problems"];
+  visibleIds: ReadonlySet<string>;
+  locale: Locale;
+  removeLabel: string;
+}) {
+  if (problems.length === 0) return null;
+
+  return (
+    <ul className="mt-6 space-y-2" role="alert">
+      {problems.map((problem) => {
+        const stuckId =
+          "productId" in problem && !visibleIds.has(problem.productId)
+            ? problem.productId
+            : null;
+
+        return (
+          <li
+            key={problem.code + problem.message}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+          >
+            <span>{problem.message}</span>
+
+            {stuckId ? (
+              <form action={removeFromCartForm}>
+                <input type="hidden" name="locale" value={locale} />
+                <input type="hidden" name="productId" value={stuckId} />
+                <Button type="submit" size="sm" variant="outline">
+                  {removeLabel}
+                </Button>
+              </form>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 export default async function CartPage({ params }: Props) {
@@ -45,6 +101,7 @@ export default async function CartPage({ params }: Props) {
   });
 
   const isEmpty = cart.lines.length === 0;
+  const visibleIds = new Set(cart.lines.map((line) => line.productId));
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
@@ -53,7 +110,21 @@ export default async function CartPage({ params }: Props) {
 
       {isEmpty ? (
         <div className="mt-12 rounded-xl border border-border bg-card px-6 py-16 text-center">
-          <p className="text-muted-foreground">{t.empty}</p>
+          {/* „Празна количка" при НАЛИЧНИ проблеми е лъжа: артикулите ги
+              има, просто не могат да се продадат. Затова причината се
+              казва, а бутонът до нея я маха. */}
+          {cart.problems.length === 0 ? (
+            <p className="text-muted-foreground">{t.empty}</p>
+          ) : (
+            <div className="mx-auto max-w-lg text-left">
+              <CartProblems
+                problems={cart.problems}
+                visibleIds={visibleIds}
+                locale={locale}
+                removeLabel={t.remove}
+              />
+            </div>
+          )}
           <Button asChild className="mt-6">
             <Link href={`/${locale}/shop`}>{t.toShop}</Link>
           </Button>
@@ -130,18 +201,12 @@ export default async function CartPage({ params }: Props) {
               ))}
             </ul>
 
-            {cart.problems.length > 0 ? (
-              <ul className="mt-6 space-y-2" role="alert">
-                {cart.problems.map((problem) => (
-                  <li
-                    key={problem.code + problem.message}
-                    className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-                  >
-                    {problem.message}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <CartProblems
+              problems={cart.problems}
+              visibleIds={visibleIds}
+              locale={locale}
+              removeLabel={t.remove}
+            />
           </section>
 
           <aside className="lg:sticky lg:top-8 lg:self-start">
