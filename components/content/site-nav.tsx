@@ -147,10 +147,13 @@ export function SiteNav({
                   <Link href="/admin">{t.nav.adminPanel}</Link>
                 </Button>
               ) : null}
-              <span className="max-w-32 truncate text-sm text-muted-foreground">
+              <Link
+                href={`/${locale}/profil`}
+                className="max-w-32 truncate rounded-md px-2 py-1 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
                 <span className="sr-only">{t.nav.signedInAs} </span>
                 {account.label}
-              </span>
+              </Link>
               <form action={onSignOut}>
                 <Button type="submit" variant="ghost" size="sm">
                   {t.nav.signOut}
@@ -233,6 +236,15 @@ export function SiteNav({
                     </Link>
                   </li>
                 ) : null}
+                <li>
+                  <Link
+                    href={`/${locale}/profil`}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-md px-3 py-3 text-base font-medium hover:bg-muted"
+                  >
+                    {t.nav.myAccount}
+                  </Link>
+                </li>
                 <li className="px-3 py-3">
                   <p className="text-sm text-muted-foreground">
                     {t.nav.signedInAs}{" "}

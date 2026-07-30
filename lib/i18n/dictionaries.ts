@@ -31,6 +31,7 @@ const de = {
     signOut: "Abmelden",
     signedInAs: "Angemeldet als",
     adminPanel: "Verwaltung",
+    myAccount: "Mein Konto",
   },
   footer: {
     courses: "Kurse",
@@ -123,6 +124,7 @@ const bg: Dictionary = {
     signOut: "Изход",
     signedInAs: "Влязъл като",
     adminPanel: "Администрация",
+    myAccount: "Моят профил",
   },
   footer: {
     courses: "Курсове",
@@ -202,6 +204,7 @@ const en: Dictionary = {
     signOut: "Sign out",
     signedInAs: "Signed in as",
     adminPanel: "Administration",
+    myAccount: "My account",
   },
   footer: {
     courses: "Courses",
