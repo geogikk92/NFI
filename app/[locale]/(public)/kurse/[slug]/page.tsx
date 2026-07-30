@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CourseCard } from "@/components/content/course-card";
+import { JsonLd } from "@/components/content/json-ld";
 import { getCourseBySlug, listRelatedCourses } from "@/lib/cms/courses";
 import { toDateTimeAttribute } from "@/lib/intl";
 import { pick, toLocale } from "@/lib/i18n/config";
@@ -18,6 +19,11 @@ import {
   levelLabel,
 } from "@/lib/i18n/pages/courses";
 import { dateLong, decimal } from "@/lib/i18n/pages/formats";
+import {
+  breadcrumbSchema,
+  courseSchema,
+  graph,
+} from "@/lib/seo/structured-data";
 
 // Двете полета идват от един и същ адрес — /de/kurse/a1-abendkurs.
 type Props = { params: Promise<{ locale: string; slug: string }> };
@@ -77,6 +83,29 @@ export default async function CoursePage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
+      {/* Course + CourseInstance е двойката за образователни rich
+          results. БЕЗ offers/price: цената нарочно не се показва на
+          страницата, значи не бива да е и в markup-а. */}
+      <JsonLd
+        data={graph(
+          courseSchema(locale, {
+            slug: course.slug,
+            name: title,
+            description: summary,
+            level: course.level,
+            format: course.format,
+            durationWeeks: course.durationWeeks,
+            hoursPerWeek: course.hoursPerWeek,
+            maxParticipants: course.maxParticipants,
+            startsAt: course.startsAt,
+          }),
+          breadcrumbSchema([
+            { name: t.coursesLink, path: `/${locale}/kurse` },
+            { name: title, path: `/${locale}/kurse/${course.slug}` },
+          ]),
+        )}
+      />
+
       <nav aria-label={t.breadcrumb} className="text-sm text-muted-foreground">
         <Link href={`/${locale}/kurse`} className="hover:text-primary">
           {t.coursesLink}

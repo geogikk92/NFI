@@ -13,7 +13,15 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
+import { JsonLd } from "@/components/content/json-ld";
 import { localeAlternates } from "@/lib/i18n/alternates";
+import {
+  founderSchema,
+  graph,
+  organizationSchema,
+  reviewsSchema,
+  websiteSchema,
+} from "@/lib/seo/structured-data";
 import { toLocale } from "@/lib/i18n/config";
 import { homeCopy } from "@/lib/i18n/pages/home";
 
@@ -37,6 +45,20 @@ export default async function HomePage({ params }: Props) {
 
   return (
     <main>
+      {/* Структурирани данни. Маркира се САМО видимото: институтът,
+          Василена и четирите отзива, които стоят по-долу на страницата.
+          Оценката „4.9" НЕ се маркира — тя идва от Facebook общността, а
+          видимите отзиви са четири; несъответстващ reviewCount е точно
+          причината Google да махне rich results. */}
+      <JsonLd
+        data={graph(
+          organizationSchema(locale),
+          websiteSchema(locale),
+          founderSchema(locale),
+          reviewsSchema(t.reviews.items),
+        )}
+      />
+
       {/* ── 1 · HERO ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-(--container-page) items-center gap-12 px-6 py-16 lg:grid-cols-[1.15fr_1fr] lg:py-24">
