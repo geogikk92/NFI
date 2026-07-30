@@ -10,31 +10,59 @@
 
 import { db } from "../lib/db";
 import { LEGAL_TEXT_VERSIONS } from "../lib/legal";
+import { hashPassword } from "../lib/auth/password";
+
+/**
+ * Паролата за РАЗРАБОТКА на сийднатите профили.
+ *
+ * Стои открито в кода нарочно и това е безопасно точно защото сийдът
+ * отказва да тръгне при NODE_ENV=production. В живата база паролата се
+ * задава с отделна команда, която не пази нищо:
+ *
+ *     DATABASE_URL="…" npm run admin:password -- admin@nfi.local
+ *
+ * Преди 30.07.2026 тези профили бяха БЕЗ парола изобщо — понеже /admin
+ * тогава не проверяваше кой влиза, никой не забеляза.
+ */
+const DEV_PASSWORD = "nfi-lokalna-parola";
 
 async function seedUsers() {
+  // Хешира се веднъж за двата профила: scrypt при N=16384 иска ~80 ms и
+  // два пъти по 80 ms в сийда се усещат.
+  const passwordHash = await hashPassword(DEV_PASSWORD);
+
   const admin = await db.user.upsert({
     where: { email: "admin@nfi.local" },
-    update: {},
+    // `update` НЕ е празен: при повторен сийд върху съществуваща база
+    // празният update оставя стария (или липсващия) хеш и профилът пак не
+    // влиза никъде. Същият капан вече изяде английските преводи веднъж.
+    update: { passwordHash },
     create: {
       email: "admin@nfi.local",
       name: "Василена",
       role: "ADMIN",
       locale: "bg",
       emailVerified: new Date(),
+      passwordHash,
     },
   });
 
   const student = await db.user.upsert({
     where: { email: "student@nfi.local" },
-    update: {},
+    update: { passwordHash },
     create: {
       email: "student@nfi.local",
       name: "Max Mustermann",
       role: "STUDENT",
       locale: "de",
       emailVerified: new Date(),
+      passwordHash,
     },
   });
+
+  console.log(
+    `  Профили: admin@nfi.local и student@nfi.local, парола „${DEV_PASSWORD}" (само за разработка).`,
+  );
 
   return { admin, student };
 }

@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin/guard";
 import { AdminNav } from "./(components)/admin-nav";
+import { signOut } from "@/app/auth-actions";
 
 export const metadata: Metadata = {
   title: {
@@ -72,13 +73,26 @@ export default async function AdminLayout({
 
           {/* Кой е влязъл се вижда постоянно: панелът показва лични данни и
               човекът трябва да знае с чий профил работи. */}
-          <p className="border-t border-sidebar-border px-6 py-4 text-xs text-muted-foreground">
-            Профил
-            <br />
-            <span className="text-sidebar-foreground">
-              {admin.name ?? admin.email}
-            </span>
-          </p>
+          <div className="border-t border-sidebar-border px-6 py-4">
+            <p className="text-xs text-muted-foreground">
+              Профил
+              <br />
+              <span className="text-sidebar-foreground">
+                {admin.name ?? admin.email}
+              </span>
+            </p>
+
+            {/* Форма, а не връзка: изходът променя състояние и не бива да
+                става с GET. Виж коментара в app/auth-actions.ts. */}
+            <form action={signOut} className="mt-3">
+              <button
+                type="submit"
+                className="text-xs font-medium text-sidebar-foreground underline underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                Изход
+              </button>
+            </form>
+          </div>
         </aside>
 
         <main

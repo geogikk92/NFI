@@ -9,7 +9,6 @@
 // Виж бележките в register-form.tsx — правилата са същите.
 
 import { useActionState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -62,25 +61,6 @@ export function LoginForm({ locale, action }: LoginFormProps) {
         </div>
       ) : null}
 
-      {state.status === "unavailable" ? (
-        <div
-          ref={summaryRef}
-          tabIndex={-1}
-          role="alert"
-          className="rounded-lg border-2 border-dashed border-warning bg-warning/10 px-5 py-4"
-        >
-          <p className="text-sm font-semibold">{texts.loginPendingTitle}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{state.message}</p>
-          <p className="mt-3 text-sm">
-            <Link
-              href={`/${locale}/kontakt`}
-              className="font-medium underline hover:text-primary"
-            >
-              {texts.loginPendingCta}
-            </Link>
-          </p>
-        </div>
-      ) : null}
 
       <div className="grid gap-2">
         <label htmlFor="login-email" className="text-sm font-medium">

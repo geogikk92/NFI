@@ -2,29 +2,28 @@
 
 // ТЕРИТОРИЯ НА ЖОРО · задача „Регистрация и вход" — вход.
 //
-// ⚠️ ВХОДЪТ ОЩЕ НЕ Е ВКЛЮЧЕН И ТОВА СЕ КАЗВА ЧЕСТНО.
+// Входът РАБОТИ от 30.07.2026. Сесията е ред в таблицата Session, а не JWT:
+// триеш реда, човекът е навън в същия миг. Виж lib/auth/session.ts за
+// защо не е Auth.js, макар пакетът да е инсталиран.
 //
-// Създаването на сесия е ОТДЕЛНА задача: иска решения по AUTH_SECRET,
-// стратегията на сесията (database срещу jwt), Credentials provider-а и
-// закачането в middleware.ts — а middleware.ts е чужд файл. Затова тук няма
-// нито `signIn`, нито проверка на паролата срещу базата.
+// Разпределението на отговорностите:
+//   • тук            — формата: валидация, съобщения, пренасочване;
+//   • login-db.ts    — самоличност: парола, изтрит профил, презапис на хеш;
+//   • session-db.ts  — сесия: токен, бисквитка, изход.
 //
-// ЗАЩО ВЪОБЩЕ СЪЩЕСТВУВА: формата за регистрация сочи „вече имате профил?"
-// някъде. Страница, която казва какво става, е по-добра от 404 и много
-// по-добра от форма, която мълчаливо не прави нищо. Полетата се валидират
-// истински, за да не се променя нищо във формата, когато сесията дойде.
-//
-// КОГАТО ДОЙДЕ ЗАДАЧАТА ЗА Auth.js, тук се сменя ЕДНО място — маркирано е
-// по-долу. Проверката на паролата е готова: verifyPassword и
-// verifyAgainstNothing в lib/auth/password.ts.
+// Валидацията при ВХОД е нарочно по-хлабава от тази при регистрация — виж
+// коментара над схемата.
 
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { toLocale } from "@/lib/i18n/config";
 import { getAuthTexts } from "@/lib/i18n/pages/auth";
 import { LOCALE_FIELD } from "@/lib/auth/register";
+import { authenticate } from "@/lib/auth/login-db";
+import { createSession } from "@/lib/auth/session-db";
 
 export interface LoginFormState {
-  status: "idle" | "error" | "unavailable";
+  status: "idle" | "error";
   fieldErrors?: { email?: string; password?: string };
   message?: string;
   /** Вписаното се връща, за да не се губи. БЕЗ паролата. */
@@ -74,15 +73,30 @@ export async function signInWithPassword(
     };
   }
 
-  // ┌───────────────────────────────────────────────────────────────────┐
-  // │ ТУК влиза `await signIn("credentials", { … })`, когато Auth.js е  │
-  // │ конфигуриран. Дотогава не се обръщаме към базата: проверка на     │
-  // │ парола без сесия не влиза никого и само дава на външен човек      │
-  // │ начин да пита „има ли такъв профил".                              │
-  // └───────────────────────────────────────────────────────────────────┘
-  return {
-    status: "unavailable",
-    message: texts.loginPendingBody,
-    values: { email: parsed.data.email },
-  };
+  const outcome = await authenticate(parsed.data.email, parsed.data.password);
+
+  if (outcome.kind === "failed") {
+    return {
+      status: "error",
+      message: texts.loginFailed,
+      values: { email: parsed.data.email },
+    };
+  }
+
+  if (outcome.kind === "locked") {
+    return {
+      status: "error",
+      message: texts.loginLocked,
+      values: { email: parsed.data.email },
+    };
+  }
+
+  await createSession(outcome.userId);
+
+  // Пренасочването е по РОЛЯ, а не по параметър от адреса. Липсата на
+  // ?next= не е пропуск: параметър, който казва „води ме тук след вход",
+  // е класическият open redirect и иска отделна проверка на всяка
+  // стойност. Няма нужда от него — пазачът на /admin връща 404, не
+  // пренасочва към вход.
+  redirect(outcome.role === "ADMIN" ? "/admin" : `/${locale}`);
 }

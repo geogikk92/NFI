@@ -65,10 +65,22 @@ const de = {
   loginEmailHint: "Die Adresse, mit der Sie sich registriert haben.",
   loginErrorEmail: "Bitte prüfen Sie Ihre E-Mail-Adresse.",
   loginErrorPassword: "Bitte geben Sie Ihr Passwort ein.",
+  /**
+   * ЕДНО съобщение за двата случая — непознат имейл и грешна парола.
+   * Разделени, формата се превръща в справка кой има профил при нас: чужд
+   * човек въвежда адрес и по отговора разбира дали клиентът е наш.
+   */
+  loginFailed:
+    "E-Mail-Adresse oder Passwort stimmen nicht. Bitte versuchen Sie es erneut.",
+  loginLocked:
+    "Dieses Konto ist nicht aktiv. Bitte melden Sie sich bei uns.",
 
   /**
-   * Входът още не е включен — сесията и AUTH_SECRET са отделна задача.
-   * Текстът казва това ЧЕСТНО, вместо да имитира неуспешен вход.
+   * Текстовете от времето, когато входът не работеше.
+   *
+   * ЗАПАЗЕНИ нарочно: същият вид бележка ще потрябва при спиране за
+   * поддръжка. Не се показват никъде — формата вече влиза наистина
+   * (30.07.2026).
    */
   loginPendingTitle: "Die Anmeldung ist noch nicht freigeschaltet",
   // Без обещан срок („in wenigen Tagen"): датата не е потвърдена от клиента,
@@ -128,6 +140,8 @@ const bg: AuthTexts = {
   loginEmailHint: "Адресът, с който си се регистрирал.",
   loginErrorEmail: "Провери имейл адреса.",
   loginErrorPassword: "Въведи паролата.",
+  loginFailed: "Имейлът или паролата не съвпадат. Опитай пак.",
+  loginLocked: "Профилът не е активен. Потърси ни.",
 
   loginPendingTitle: "Входът още не е пуснат",
   loginPendingBody:
@@ -180,6 +194,8 @@ const en: AuthTexts = {
   loginEmailHint: "The address you registered with.",
   loginErrorEmail: "Please check your email address.",
   loginErrorPassword: "Please enter your password.",
+  loginFailed: "Email or password does not match. Please try again.",
+  loginLocked: "This account is not active. Please get in touch.",
 
   loginPendingTitle: "Signing in is not switched on yet",
   loginPendingBody:
