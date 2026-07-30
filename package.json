@@ -22,7 +22,8 @@
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "admin:password": "tsx scripts/set-admin-password.ts",
-    "e2e:vhod": "node e2e/vhod.mjs"
+    "e2e:vhod": "node e2e/vhod.mjs",
+    "e2e:registraciya": "node e2e/registraciya.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
