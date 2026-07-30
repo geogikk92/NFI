@@ -45,10 +45,12 @@ async function seedCourses() {
       slug: "deutsch-a1-abendkurs",
       title: "Немски A1 · вечерен курс",
       titleDe: "Deutsch A1 · Abendkurs",
+      titleEn: "German A1 · evening course",
       level: "A1" as const,
       format: "PRESENCE" as const,
       summary: "За начинаещи без предварителни знания.",
       summaryDe: "Für Anfänger ohne Vorkenntnisse.",
+      summaryEn: "For complete beginners, no prior knowledge needed.",
       priceCents: 39000,
       durationWeeks: 12,
       hoursPerWeek: 4,
@@ -59,10 +61,12 @@ async function seedCourses() {
       slug: "deutsch-b1-online",
       title: "Немски B1 · онлайн",
       titleDe: "Deutsch B1 · online",
+      titleEn: "German B1 · online",
       level: "B1" as const,
       format: "ONLINE" as const,
       summary: "Онлайн курс с преподавател на живо.",
-      summaryDe: "Онлайн-Kurs mit Lehrkraft in Echtzeit.",
+      summaryDe: "Online-Kurs mit Lehrkraft in Echtzeit.",
+      summaryEn: "Online course with a live teacher.",
       priceCents: 45000,
       durationWeeks: 10,
       hoursPerWeek: 4,
@@ -72,10 +76,12 @@ async function seedCourses() {
       slug: "pruefungsvorbereitung-b2",
       title: "Подготовка за изпит B2",
       titleDe: "Prüfungsvorbereitung B2",
+      titleEn: "B2 exam preparation",
       level: "B2" as const,
       format: "HYBRID" as const,
       summary: "Целенасочена подготовка за сертификатния изпит.",
       summaryDe: "Gezielte Vorbereitung auf die Zertifikatsprüfung.",
+      summaryEn: "Focused preparation for the certificate exam.",
       priceCents: 52000,
       durationWeeks: 8,
       hoursPerWeek: 6,
@@ -84,9 +90,13 @@ async function seedCourses() {
   ];
 
   for (const course of courses) {
+    // `update` НЕ е празен нарочно: сийдът трябва да донася нови полета
+    // (напр. английските преводи) и в база, която вече е сийдната. С
+    // `update: {}` съществуващият ред остава без превод и /en показва
+    // немско съдържание.
     await db.course.upsert({
       where: { slug: course.slug },
-      update: {},
+      update: course,
       create: { ...course, published: true, publishedAt: new Date() },
     });
   }
@@ -96,11 +106,12 @@ async function seedProducts() {
   // Дигитален: подлежи на Widerruf съгласие преди сваляне (§356 Abs. 5).
   const workbook = await db.product.upsert({
     where: { slug: "arbeitsheft-a1-pdf" },
-    update: {},
+    update: { titleEn: "Workbook A1 (PDF)" },
     create: {
       slug: "arbeitsheft-a1-pdf",
       title: "Работна тетрадка A1 (PDF)",
       titleDe: "Arbeitsheft A1 (PDF)",
+      titleEn: "Workbook A1 (PDF)",
       type: "DIGITAL",
       priceCents: 1200,
       vatCategory: "ELECTRONIC",
@@ -129,11 +140,12 @@ async function seedProducts() {
   // Физически: има тегло, значи и доставка по зони.
   await db.product.upsert({
     where: { slug: "lehrbuch-a1" },
-    update: {},
+    update: { titleEn: "Coursebook A1 (print)" },
     create: {
       slug: "lehrbuch-a1",
       title: "Учебник A1 (печатно издание)",
       titleDe: "Lehrbuch A1 (gedruckt)",
+      titleEn: "Coursebook A1 (print)",
       type: "PHYSICAL",
       priceCents: 2800,
       vatCategory: "GOODS",
