@@ -15,6 +15,7 @@ const sections = [
       { href: "/kurse", label: "Alle Kurse" },
       { href: "/kurse?level=A1", label: "Für Anfänger" },
       { href: "/kurse?level=B2", label: "Prüfungsvorbereitung" },
+      { href: "/einstufungstest", label: "Einstufungstest" },
     ],
   },
   {

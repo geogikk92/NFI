@@ -146,6 +146,103 @@ async function seedProducts() {
   });
 }
 
+async function seedLevelTest() {
+  // Примерни въпроси, за да работи потокът. НЕ са методически изчистени —
+  // истинските минават през Василена като преподавател (виж риска
+  // „съдържанието идва отвън" в ПЛАН.md).
+  const questions = [
+    {
+      position: 1,
+      level: "A1" as const,
+      prompt: "Wie ___ Sie?",
+      options: [
+        { id: "a", text: "heißen", correct: true },
+        { id: "b", text: "heißt", correct: false },
+        { id: "c", text: "heiße", correct: false },
+      ],
+    },
+    {
+      position: 2,
+      level: "A1" as const,
+      prompt: "Ich komme ___ Bulgarien.",
+      options: [
+        { id: "a", text: "von", correct: false },
+        { id: "b", text: "aus", correct: true },
+        { id: "c", text: "nach", correct: false },
+      ],
+    },
+    {
+      position: 3,
+      level: "A2" as const,
+      prompt: "Gestern ___ ich im Kino.",
+      options: [
+        { id: "a", text: "bin", correct: false },
+        { id: "b", text: "war", correct: true },
+        { id: "c", text: "habe", correct: false },
+      ],
+    },
+    {
+      position: 4,
+      level: "A2" as const,
+      prompt: "Der Film, ___ wir gesehen haben, war gut.",
+      options: [
+        { id: "a", text: "den", correct: true },
+        { id: "b", text: "dem", correct: false },
+        { id: "c", text: "der", correct: false },
+      ],
+    },
+    {
+      position: 5,
+      level: "B1" as const,
+      prompt: "Wenn ich Zeit ___, würde ich mehr lesen.",
+      options: [
+        { id: "a", text: "habe", correct: false },
+        { id: "b", text: "hätte", correct: true },
+        { id: "c", text: "hatte", correct: false },
+      ],
+    },
+    {
+      position: 6,
+      level: "B1" as const,
+      prompt: "Das Projekt muss bis Freitag ___ werden.",
+      options: [
+        { id: "a", text: "abgeschlossen", correct: true },
+        { id: "b", text: "abschließen", correct: false },
+        { id: "c", text: "abschließend", correct: false },
+      ],
+    },
+    {
+      position: 7,
+      level: "B2" as const,
+      prompt: "___ der schwierigen Lage blieb er ruhig.",
+      options: [
+        { id: "a", text: "Wegen", correct: false },
+        { id: "b", text: "Trotz", correct: true },
+        { id: "c", text: "Während", correct: false },
+      ],
+    },
+    {
+      position: 8,
+      level: "C1" as const,
+      prompt: "Seine Argumentation ist zwar schlüssig, ___ nicht überzeugend.",
+      options: [
+        { id: "a", text: "aber", correct: false },
+        { id: "b", text: "jedoch", correct: true },
+        { id: "c", text: "denn", correct: false },
+      ],
+    },
+  ];
+
+  for (const question of questions) {
+    const existing = await db.levelTestQuestion.findFirst({
+      where: { position: question.position },
+    });
+    if (!existing) {
+      await db.levelTestQuestion.create({ data: question });
+    }
+  }
+}
+
 async function seedShipping() {
   const zones = [
     {
@@ -225,6 +322,7 @@ async function main() {
   const { admin } = await seedUsers();
   await seedCourses();
   await seedProducts();
+  await seedLevelTest();
   await seedShipping();
   await seedDiscounts();
   await seedPages();
@@ -235,6 +333,7 @@ async function main() {
     продукти: await db.product.count(),
     "зони за доставка": await db.shippingZone.count(),
     отстъпки: await db.discount.count(),
+    "въпроси в теста": await db.levelTestQuestion.count(),
     страници: await db.page.count(),
   };
 
