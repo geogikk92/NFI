@@ -7,6 +7,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Oswald, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+import { headers } from "next/headers";
+import { LOCALE_TAGS, toLocale } from "@/lib/i18n/config";
 
 // ВСИЧКИ шрифтове ЗАДЪЛЖИТЕЛНО носят кирилица и ä ö ü ß: сайтът е на
 // български, а предметът е немски, и двете азбуки стоят едно до друго.
@@ -57,11 +59,24 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Езикът идва от главата, която middleware.ts вече слага („x-nfi-locale").
+  // Механизмът съществуваше, но никой не го четеше: тук стоеше твърдо
+  // lang="bg" за ВСИЧКИ езици.
+  //
+  // Защо има значение, след като app/[locale]/layout.tsx слага езика на
+  // <div>: този <div> обхваща тялото, но НЕ и <head>. Заглавието на
+  // страницата — това, което екранният четец изговаря пръв и което се
+  // чува в списъка с раздели — оставаше български за целия немски сайт.
+  //
+  // Резервната стойност е DEFAULT_LOCALE: /admin и страниците за грешка са
+  // извън обхвата на middleware-а и са на български.
+  const locale = toLocale((await headers()).get("x-nfi-locale"));
+
   return (
     // Шрифтовите променливи стоят на <html>, НЕ на <body>. Причината е
     // тънка и струваше цял ден с грешен шрифт: `--font-title` в
@@ -70,7 +85,7 @@ export default function RootLayout({
     // вложеният var() е невалиден и ЦЯЛАТА стойност става празна —
     // заглавията падат на Times, без никаква грешка в конзолата.
     <html
-      lang="bg"
+      lang={LOCALE_TAGS[locale]}
       suppressHydrationWarning
       className={`${inter.variable} ${oswald.variable} ${plexMono.variable}`}
     >

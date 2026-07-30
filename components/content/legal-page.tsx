@@ -22,7 +22,20 @@ export function LegalPage({ title, version, children }: LegalPageProps) {
   const versionDate = new Date(version);
 
   return (
-    <main className="mx-auto max-w-(--container-page) px-6 py-16">
+    // `lang="de"` на цялата страница — WCAG 2.1 AA, критерий 3.1.2 „Език на
+    // частите".
+    //
+    // Текстовете тук са и ще останат на НЕМСКИ: те са правни документи по
+    // немско право (§5 DDG, BGB) и превод на тях не е превод, а нов
+    // документ с друга правна тежест. Но страницата се отваря и на
+    // /bg/impressum, и на /en/impressum, където app/[locale]/layout.tsx
+    // обявява български или английски.
+    //
+    // Без този атрибут екранният четец изговаря немски текст с български
+    // глас — „Verantwortlich für den Inhalt" звучи като безсмислица и не се
+    // разбира от никого. Същото решение вече е взето и в обратната посока:
+    // app/admin/layout.tsx слага lang="bg" върху немския <html>.
+    <main lang="de" className="mx-auto max-w-(--container-page) px-6 py-16">
       <span className="flagline w-16" aria-hidden />
 
       <header className="mt-6">
