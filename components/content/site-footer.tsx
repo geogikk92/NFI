@@ -6,29 +6,26 @@
 
 import Link from "next/link";
 
+// ПРАВИЛО: тук влиза само СЪЩЕСТВУВАЩА страница — 404 от футъра е
+// по-лошо от липсващ ред. Чакащите страници са изброени в site-shell.tsx.
 const sections = [
   {
     heading: "Kurse",
     links: [
       { href: "/kurse", label: "Alle Kurse" },
       { href: "/kurse?level=A1", label: "Für Anfänger" },
-      { href: "/einstufungstest", label: "Einstufungstest" },
+      { href: "/kurse?level=B2", label: "Prüfungsvorbereitung" },
     ],
   },
   {
     heading: "Institut",
-    links: [
-      { href: "/ueber-uns", label: "Über uns" },
-      { href: "/kontakt", label: "Kontakt" },
-      { href: "/community", label: "Community" },
-    ],
+    links: [{ href: "/kontakt", label: "Kontakt" }],
   },
   {
     heading: "Service",
     links: [
       { href: "/shop", label: "Shop" },
-      { href: "/uebersetzungen", label: "Übersetzungen" },
-      { href: "/materialien", label: "Kostenlose Materialien" },
+      { href: "/warenkorb", label: "Warenkorb" },
     ],
   },
   {

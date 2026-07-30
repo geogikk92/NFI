@@ -20,12 +20,17 @@ import { SiteNav, type NavLink } from "./site-nav";
 import { SiteFooter } from "./site-footer";
 
 // Минава през CMS в задача 18c. Дотогава е тук, на едно място.
+//
+// ПРАВИЛО: тук влиза само СЪЩЕСТВУВАЩА страница. Връзка към ненаправена
+// страница е 404 за посетителя и е по-лоша от липсваща връзка.
+// Добавяй реда в същия commit, в който правиш страницата.
+//
+// Чакат: /uebersetzungen (задача 14, Жоро), /materialien (8, Боби),
+// /ueber-uns и /community (3b, Боби), /einstufungstest (6, Боби).
 const NAV_LINKS: readonly NavLink[] = [
   { href: "/kurse", label: "Kurse" },
-  { href: "/uebersetzungen", label: "Übersetzungen" },
   { href: "/shop", label: "Shop" },
-  { href: "/materialien", label: "Materialien" },
-  { href: "/ueber-uns", label: "Über uns" },
+  { href: "/kontakt", label: "Kontakt" },
 ];
 
 export async function SiteShell({ children }: { children: ReactNode }) {
