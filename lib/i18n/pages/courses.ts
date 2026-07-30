@@ -32,6 +32,21 @@ const de = {
   hoursPerWeek: (count: number) => `${count} Std./Woche`,
 
   list: {
+    mockupTitle: "Von A1 bis C1 — mit lebendiger Verbindung, keine Aufzeichnungen.",
+    mockupLede:
+      "Alle Gruppen starten am 1. September 2026. Der Unterricht ist live (GoTo), abends, abgestimmt auf berufstätige Menschen. Den Preis erfährst du im kostenlosen Gespräch, in dem wir zusammen auch dein Niveau einschätzen.",
+    factsHeading: "Kurz gefasst",
+    facts: [
+      { label: "Start", value: "1. Sept. 2026" },
+      { label: "Format", value: "live · GoTo" },
+      { label: "Gruppen", value: "8–10 Personen" },
+      { label: "Wann", value: "abends · Di+Do" },
+    ],
+    pickHeading: "Wähle, wo du anfängst",
+    pickLede: "Fünf Niveaus, ein Faden: vom Alphabet bis zur Universität.",
+    schedule: "Di+Do 19:00–20:30 · 8–10 Personen · 14 Wochen",
+    mostWanted: "am gefragtesten",
+    details: "Details",
     metaTitle: "Kurse",
     metaDescription:
       "Deutschkurse von A1 bis C2 — Präsenz, Online und Hybrid. Kleine Gruppen, Prüfungsvorbereitung.",
@@ -50,7 +65,7 @@ const de = {
     emptyShowAll: "Alle Kurse zeigen",
     testTitle: "Sie wissen nicht, welches Niveau passt?",
     testLead:
-      "Der Einstufungstest dauert etwa zehn Minuten und sagt Ihnen, wo Sie stehen.",
+      "Der Einstufungstest dauert etwa fünf Minuten und sagt dir, wo du stehst.",
     testCta: "Zum Einstufungstest",
   },
 
@@ -105,6 +120,21 @@ const bg: CoursesCopy = {
   hoursPerWeek: (count: number) => `${count} ч/седмица`,
 
   list: {
+    mockupTitle: "От A1 до C1 — с жива връзка, не записи.",
+    mockupLede:
+      "Всички групи стартират на 1 септември 2026. Занятията са на живо (GoTo), вечер, съобразени с работещи хора. Цената научаваш в безплатния разговор, където заедно преценяваме и нивото ти.",
+    factsHeading: "Накратко",
+    facts: [
+      { label: "Старт", value: "1 септ. 2026" },
+      { label: "Формат", value: "на живо · GoTo" },
+      { label: "Групи", value: "8–10 души" },
+      { label: "Кога", value: "вечер · вт+чт" },
+    ],
+    pickHeading: "Избери откъде тръгваш",
+    pickLede: "Пет нива, една нишка: от азбуката до университета.",
+    schedule: "вт+чт 19:00–20:30 · 8–10 души · 14 седмици",
+    mostWanted: "най-търсен",
+    details: "Детайли",
     metaTitle: "Курсове",
     metaDescription:
       "Курсове по немски от A1 до C2 — присъствено, онлайн и хибридно. Малки групи, подготовка за изпит.",
@@ -123,7 +153,7 @@ const bg: CoursesCopy = {
     emptyShowAll: "Покажи всички курсове",
     testTitle: "Не знаеш кое ниво е за теб?",
     testLead:
-      "Тестът за ниво отнема около десет минути и ти казва откъде да започнеш.",
+      "Тестът за ниво отнема около пет минути и ти казва откъде да започнеш.",
     testCta: "Към теста за ниво",
   },
 
@@ -176,6 +206,21 @@ const en: CoursesCopy = {
   hoursPerWeek: (count: number) => `${count} hrs/week`,
 
   list: {
+    mockupTitle: "From A1 to C1 — live, not recordings.",
+    mockupLede:
+      "All groups start on 1 September 2026. Lessons are live (GoTo), in the evening, built around people who work. You get the price in the free call, where we also assess your level together.",
+    factsHeading: "In short",
+    facts: [
+      { label: "Starts", value: "1 Sept 2026" },
+      { label: "Format", value: "live · GoTo" },
+      { label: "Groups", value: "8–10 people" },
+      { label: "When", value: "evenings · Tue+Thu" },
+    ],
+    pickHeading: "Choose where you start",
+    pickLede: "Five levels, one thread: from the alphabet to university.",
+    schedule: "Tue+Thu 19:00–20:30 · 8–10 people · 14 weeks",
+    mostWanted: "most requested",
+    details: "Details",
     metaTitle: "Courses",
     metaDescription:
       "German courses from A1 to C2 — in person, online and hybrid. Small groups, exam preparation.",
@@ -194,7 +239,7 @@ const en: CoursesCopy = {
     emptyShowAll: "Show all courses",
     testTitle: "Not sure which level fits?",
     testLead:
-      "The placement test takes about ten minutes and tells you where you stand.",
+      "The placement test takes about five minutes and tells you where you stand.",
     testCta: "Take the placement test",
   },
 
@@ -260,3 +305,17 @@ export function courseDuration(
 
   return parts.length > 0 ? parts.join(" · ") : null;
 }
+
+/**
+ * Немските имена на нивата — от мокъпа: „A1 Anfänger", „B1 Mittelstufe".
+ * НЕ се превеждат: те са самите официални названия по CEFR в немската
+ * образователна система и точно така ги вижда клиентът в институция.
+ */
+export const LEVEL_GERMAN_NAMES: Record<string, string> = {
+  A1: "Anfänger",
+  A2: "Grundstufe",
+  B1: "Mittelstufe",
+  B2: "Aufbaustufe",
+  C1: "Oberstufe",
+  C2: "Oberstufe",
+};

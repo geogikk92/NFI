@@ -61,14 +61,48 @@ export default async function CoursesPage({ params, searchParams }: Props) {
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
-      <header className="max-w-2xl">
-        <span className="flagline w-20" aria-hidden />
-        <p className="kicker mt-6">{t.list.kicker}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight">
-          {t.list.title}
-        </h1>
-        <p className="mt-4 text-lg text-muted-foreground">{t.list.lead}</p>
+      {/* Заглавието, подзаглавието и блокът „Накратко" са пренесени от
+          мокъпа: там страницата отговаря на четирите въпроса, които човек
+          задава първи — кога, как, колко голяма група, по кои дни. */}
+      <header className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-end">
+        <div className="max-w-2xl">
+          <span className="flagline w-20" aria-hidden />
+          <p className="kicker mt-6">
+            <span className="kicker-sq" aria-hidden />
+            {t.list.kicker}
+          </p>
+          <h1 className="mt-4 font-title text-(length:--text-display-l) font-bold leading-tight">
+            {t.list.mockupTitle}
+          </h1>
+          <p className="mt-5 max-w-(--container-lede) text-(length:--text-lede) leading-relaxed text-muted-foreground">
+            {t.list.mockupLede}
+          </p>
+        </div>
+
+        <div className="border border-border bg-card p-6">
+          <h2 className="font-mono text-2xs uppercase tracking-kicker text-muted-foreground">
+            {t.list.factsHeading}
+          </h2>
+          <dl className="mt-4 space-y-3 text-sm">
+            {t.list.facts.map((fact) => (
+              <div
+                key={fact.label}
+                className="flex items-baseline justify-between gap-4 border-b border-border pb-2 last:border-0 last:pb-0"
+              >
+                <dt className="text-muted-foreground">{fact.label}</dt>
+                <dd className="text-right font-medium">{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </header>
+
+      <div className="mt-16">
+        <h2 className="font-title text-(length:--text-display-m) font-bold leading-tight">
+          {t.list.pickHeading}
+        </h2>
+        <p className="mt-3 text-muted-foreground">{t.list.pickLede}</p>
+      </div>
 
       {/* Филтърът е връзки, не бутони: състоянието живее в адреса, значи
           страницата се споделя и работи без JavaScript.

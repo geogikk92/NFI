@@ -37,7 +37,7 @@ export default async function UeberUnsPage({ params }: Props) {
         </h1>
         {/* Двуезичността е обещанието на марката, не украса — затова тези
             два реда стоят на двата езика при всеки избран език. */}
-        <div className="duo mt-6 text-lg">
+        <div className="bilingual mt-6 text-lg">
           <p lang="de">
             Wir unterrichten Deutsch für Menschen, die in Deutschland ankommen
             wollen — nicht nur sprachlich.

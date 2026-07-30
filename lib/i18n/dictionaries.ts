@@ -44,46 +44,6 @@ const de = {
     tagline: "Sprachen verbinden.",
     vatNote: "Alle Preise inkl. gesetzlicher MwSt.",
   },
-  home: {
-    kicker: "Nürnberger Fremdsprachen Institut",
-    heroTitle: "Deutsch lernen, wirklich ankommen",
-    heroLead:
-      "Sprachkurse von A1 bis C2, Prüfungsvorbereitung und beglaubigte Übersetzungen — von Lehrkräften, die beide Sprachen kennen.",
-    heroPrimary: "Kurse ansehen",
-    heroSecondary: "Niveau testen",
-    threadTitle: "Der rote Faden",
-    threadLead:
-      "Vom ersten Wort bis zum Zertifikat — und zu den Papieren, die Sie dafür brauchen.",
-    step1Title: "Niveau klären",
-    step1Body: "Zehn Minuten Test oder ein Gespräch. Danach wissen Sie, wo Sie stehen.",
-    step2Title: "Kurs finden",
-    step2Body: "Kleine Gruppen, Präsenz oder online. Wir sagen offen, was passt.",
-    step3Title: "Prüfung schaffen",
-    step3Body: "Gezielte Vorbereitung auf die Zertifikate, die Ämter und Arbeitgeber verlangen.",
-    step4Title: "Papiere erledigen",
-    step4Body: "Beglaubigte Übersetzungen Ihrer Dokumente — im selben Haus.",
-    coursesTitle: "Kurse für jedes Niveau",
-    coursesLead: "Von den ersten Wörtern bis zur Prüfungsreife.",
-    coursesAll: "Alle Kurse ansehen",
-    whyTitle: "Warum das NFI",
-    why1Title: "Beide Sprachen im Haus",
-    why1Body:
-      "Unsere Lehrkräfte erklären Deutsch aus der Perspektive Ihrer Muttersprache — nicht mit Händen und Füßen.",
-    why2Title: "Kleine Gruppen",
-    why2Body:
-      "Höchstens zwölf Teilnehmende. Sie kommen zu Wort, jede Stunde.",
-    why3Title: "Alles an einem Ort",
-    why3Body:
-      "Kurs, Prüfungsvorbereitung, Materialien und beglaubigte Übersetzungen — ohne Behördenmarathon.",
-    testTitle: "Sie wissen nicht, wo Sie stehen?",
-    testLead:
-      "Der Einstufungstest dauert etwa zehn Minuten, ist kostenlos und verpflichtet zu nichts.",
-    testCta: "Zum Einstufungstest",
-    contactTitle: "Sprechen wir darüber",
-    contactLead:
-      "Erzählen Sie uns, was Sie erreichen wollen. Wir rufen zurück — unverbindlich und ohne Zahlung.",
-    contactCta: "Rückruf anfragen",
-  },
   auth: {
     registerTitle: "Konto erstellen",
     registerLead:
@@ -169,45 +129,6 @@ const bg: Dictionary = {
     tagline: "Езиците свързват.",
     vatNote: "Всички цени са с включено ДДС.",
   },
-  home: {
-    kicker: "Нюрнбергски институт за чужди езици",
-    heroTitle: "Научи немски, установи се наистина",
-    heroLead:
-      "Езикови курсове от A1 до C2, подготовка за изпити и заверени преводи — от преподаватели, които знаят и двата езика.",
-    heroPrimary: "Виж курсовете",
-    heroSecondary: "Провери нивото си",
-    threadTitle: "Червената нишка",
-    threadLead:
-      "От първата дума до сертификата — и до документите, които ти трябват за него.",
-    step1Title: "Изясняваме нивото",
-    step1Body: "Десет минути тест или разговор. После знаеш откъде започваш.",
-    step2Title: "Намираме курса",
-    step2Body: "Малки групи, присъствено или онлайн. Казваме честно кое е подходящо.",
-    step3Title: "Взимаш изпита",
-    step3Body: "Целенасочена подготовка за сертификатите, които искат институциите и работодателите.",
-    step4Title: "Уреждаме документите",
-    step4Body: "Заверени преводи на документите ти — на същото място.",
-    coursesTitle: "Курсове за всяко ниво",
-    coursesLead: "От първите думи до изпитна готовност.",
-    coursesAll: "Всички курсове",
-    whyTitle: "Защо НФИ",
-    why1Title: "И двата езика под един покрив",
-    why1Body:
-      "Преподавателите обясняват немския през твоя майчин език — не с ръкомахане.",
-    why2Title: "Малки групи",
-    why2Body: "Най-много дванайсет души. Стигаш до думата всеки час.",
-    why3Title: "Всичко на едно място",
-    why3Body:
-      "Курс, подготовка за изпит, материали и заверени преводи — без обиколка по институции.",
-    testTitle: "Не знаеш откъде да започнеш?",
-    testLead:
-      "Тестът за ниво отнема около десет минути, безплатен е и не те обвързва с нищо.",
-    testCta: "Към теста за ниво",
-    contactTitle: "Да го обсъдим",
-    contactLead:
-      "Разкажи ни какво искаш да постигнеш. Обаждаме се — без обвързване и без плащане.",
-    contactCta: "Заяви обаждане",
-  },
   auth: {
     registerTitle: "Създаване на профил",
     registerLead:
@@ -282,45 +203,6 @@ const en: Dictionary = {
     cookieSettings: "Cookie settings",
     tagline: "Languages connect.",
     vatNote: "All prices include VAT.",
-  },
-  home: {
-    kicker: "Nuremberg Institute of Foreign Languages",
-    heroTitle: "Learn German, actually settle in",
-    heroLead:
-      "Language courses from A1 to C2, exam preparation and certified translations — taught by people who know both languages.",
-    heroPrimary: "Browse courses",
-    heroSecondary: "Test your level",
-    threadTitle: "The red thread",
-    threadLead:
-      "From your first word to the certificate — and to the paperwork you need for it.",
-    step1Title: "Find your level",
-    step1Body: "A ten-minute test or a conversation. Either way you'll know where you stand.",
-    step2Title: "Pick the course",
-    step2Body: "Small groups, in person or online. We'll tell you honestly what fits.",
-    step3Title: "Pass the exam",
-    step3Body: "Focused preparation for the certificates authorities and employers ask for.",
-    step4Title: "Sort the paperwork",
-    step4Body: "Certified translations of your documents — under the same roof.",
-    coursesTitle: "Courses for every level",
-    coursesLead: "From first words to exam readiness.",
-    coursesAll: "See all courses",
-    whyTitle: "Why NFI",
-    why1Title: "Both languages in house",
-    why1Body:
-      "Our teachers explain German through your own language — not through gestures.",
-    why2Title: "Small groups",
-    why2Body: "Twelve people at most. You get to speak, every lesson.",
-    why3Title: "Everything in one place",
-    why3Body:
-      "Course, exam prep, materials and certified translations — without the run-around.",
-    testTitle: "Not sure where you stand?",
-    testLead:
-      "The placement test takes about ten minutes, costs nothing and commits you to nothing.",
-    testCta: "Take the placement test",
-    contactTitle: "Let's talk it through",
-    contactLead:
-      "Tell us what you want to achieve. We'll call you back — no strings, no payment.",
-    contactCta: "Request a callback",
   },
   auth: {
     registerTitle: "Create an account",

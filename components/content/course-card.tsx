@@ -5,13 +5,13 @@
 // които вече знаят локала, а второ разчитане би се разминало с адреса.
 
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { toDateTimeAttribute } from "@/lib/intl";
 // Само тип — стойност оттук би довлякла Prisma до всеки, който внесе картата.
 import type { CourseSummary } from "@/lib/cms/courses";
 import { pick, type Locale } from "@/lib/i18n/config";
 import {
+  LEVEL_GERMAN_NAMES,
   courseDuration,
   coursesCopy,
   formatLabel,
@@ -25,7 +25,11 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, locale }: CourseCardProps) {
-  const t = coursesCopy(locale).card;
+  const copy = coursesCopy(locale);
+  const t = copy.card;
+  // B1 е „най-търсеното ниво" в мокъпа — това е продуктово твърдение на
+  // клиентката, не догадка, затова стои само на B1.
+  const isMostWanted = course.level === "B1";
   const title = pick(locale, {
     bg: course.title,
     de: course.titleDe,
@@ -46,9 +50,23 @@ export function CourseCard({ course, locale }: CourseCardProps) {
     <Card className="group relative flex h-full flex-col transition-shadow hover:shadow-md">
       <CardContent className="flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{levelLabel(locale, course.level)}</Badge>
-          <Badge variant="outline">{formatLabel(locale, course.format)}</Badge>
+          {/* Буквата на нивото е едра и в злато — в мокъпа тя е първото,
+              което окото хваща в реда. До нея стои немското название,
+              защото точно него човекът вижда в институция. */}
+          <span className="font-title text-2xl font-bold leading-none text-gold-text">
+            {course.level}
+          </span>
+          <span className="font-mono text-2xs uppercase tracking-kicker text-muted-foreground">
+            {LEVEL_GERMAN_NAMES[course.level] ?? ""}
+          </span>
+          {isMostWanted ? (
+            <span className="tag tag-red ml-auto">{copy.list.mostWanted}</span>
+          ) : null}
         </div>
+
+        <p className="mt-3 text-sm text-muted-foreground">
+          {formatLabel(locale, course.format)} · {levelLabel(locale, course.level)}
+        </p>
 
         <h3 className="mt-4 font-title text-xl leading-snug">
           {/* Цялата карта е кликаема, но връзката е една — иначе екранният
@@ -102,7 +120,15 @@ export function CourseCard({ course, locale }: CourseCardProps) {
             PAngV не изисква цена преди поръчката (няма поръчка тук).
             Ако някога курс стане купуем от количката, цената ТРЯБВА да е
             видима преди бутона — виж docs/ПРАВНИ-ИЗИСКВАНИЯ.md §4.4. */}
-        <p className="text-sm text-muted-foreground">{t.priceInTalk}</p>
+        <div>
+          {/* Разписанието е от мокъпа и е еднакво за всички групи. Когато
+              курсовете получат собствени часове в базата, това се сменя с
+              полета от реда. */}
+          <p className="font-mono text-2xs uppercase tracking-kicker text-muted-foreground">
+            {copy.list.schedule}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t.priceInTalk}</p>
+        </div>
       </CardFooter>
     </Card>
   );

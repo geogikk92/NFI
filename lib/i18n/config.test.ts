@@ -125,7 +125,8 @@ describe("речниците са пълни", () => {
 
     expect(bg.nav.courses).not.toBe(de.nav.courses);
     expect(en.nav.courses).not.toBe(de.nav.courses);
-    expect(bg.home.heroTitle).not.toBe(de.home.heroTitle);
-    expect(en.home.heroTitle).not.toBe(de.home.heroTitle);
+    expect(bg.auth.registerTitle).not.toBe(de.auth.registerTitle);
+    expect(en.auth.registerTitle).not.toBe(de.auth.registerTitle);
+    expect(bg.footer.legal).not.toBe(de.footer.legal);
   });
 });

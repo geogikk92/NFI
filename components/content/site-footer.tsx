@@ -72,7 +72,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </p>
             {/* Двуезичността е обещанието на марката — стои и във футъра,
                 независимо от избрания език. */}
-            <div className="duo mt-5 text-sm">
+            <div className="bilingual mt-5 text-sm">
               <p lang="de">Sprachen verbinden.</p>
               <p lang="bg">Езиците свързват.</p>
             </div>

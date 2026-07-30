@@ -89,7 +89,7 @@ export default async function KontaktPage({ params, searchParams }: Props) {
             {/* Двуезичността е обещанието на института — тук е на място и
                 НЕ следва избрания език: показва се и на двата, защото
                 това е самото съобщение. */}
-            <div className="duo text-sm">
+            <div className="bilingual text-sm">
               <p lang="de">Wir beraten auf Deutsch und Bulgarisch.</p>
               <p lang="bg">Консултираме на немски и български.</p>
             </div>
