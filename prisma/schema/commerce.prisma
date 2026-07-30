@@ -35,9 +35,11 @@ model Product {
   slug    String @unique
   title   String
   titleDe String?
+  titleEn String?
 
   description   String? @db.Text
   descriptionDe String? @db.Text
+  descriptionEn String? @db.Text
 
   type ProductType
 

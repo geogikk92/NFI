@@ -30,17 +30,23 @@ enum CourseFormat {
 model Course {
   id    String @id @default(cuid())
   slug  String @unique
+  /// БЪЛГАРСКИ. Админът е на български, затова тази колона е винаги
+  /// попълнена и служи за последен резервен вариант при липсващ превод.
   title String
-  /// Немското заглавие. Сайтът е двуезичен от край до край.
+  /// Немски — основният език на сайта.
   titleDe String?
+  /// Английски.
+  titleEn String?
 
   level  CourseLevel
   format CourseFormat
 
-  summary     String?
-  description String? @db.Text
-  summaryDe   String?
+  summary       String?
+  description   String? @db.Text
+  summaryDe     String?
   descriptionDe String? @db.Text
+  summaryEn     String?
+  descriptionEn String? @db.Text
 
   /// В центове. Никога Float — закръгляването на парите е тествано отделно.
   priceCents Int?
@@ -187,9 +193,11 @@ model FreeMaterial {
   slug  String @unique
   title String
   titleDe String?
+  titleEn String?
 
   description   String? @db.Text
   descriptionDe String? @db.Text
+  descriptionEn String? @db.Text
 
   kind MaterialKind
 

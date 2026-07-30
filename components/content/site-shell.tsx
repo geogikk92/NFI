@@ -1,61 +1,54 @@
-// ТЕРИТОРИЯ НА БОБИ · задача 2b.
-// Писано от Жоро, докато Боби е в отпуск.
+// Обвивката на публичната част.
 //
-// Обвивката на публичната част. Нарочно НЕ е в app/layout.tsx — той е
-// замразен и важи и за админа, който няма нужда от тази навигация.
-// Ползва се от app/(public)/layout.tsx и app/(shop)/layout.tsx.
+// Нарочно НЕ е в app/layout.tsx — той важи и за админа, който няма нужда
+// от тази навигация и е винаги на български.
+// Ползва се от app/[locale]/(public)/layout.tsx и (shop)/layout.tsx.
 
 import type { ReactNode } from "react";
 import { readCart } from "@/lib/commerce/cart-cookie";
 import { countItems } from "@/lib/commerce/cart";
 import { readConsent } from "@/lib/consent-cookie";
 import { needsDecision } from "@/lib/consent";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/config";
 import {
   acceptAllCookies,
   rejectAllCookies,
   saveCookieSelection,
-} from "@/app/(public)/consent-actions";
+} from "@/app/[locale]/(public)/consent-actions";
 import { CookieBanner } from "./cookie-banner";
-import { SiteNav, type NavLink } from "./site-nav";
+import { SiteNav } from "./site-nav";
 import { SiteFooter } from "./site-footer";
 
-// Минава през CMS в задача 18c. Дотогава е тук, на едно място.
-//
-// ПРАВИЛО: тук влиза само СЪЩЕСТВУВАЩА страница. Връзка към ненаправена
-// страница е 404 за посетителя и е по-лоша от липсваща връзка.
-// Добавяй реда в същия commit, в който правиш страницата.
-//
-// Чакат: /uebersetzungen (задача 14), /materialien (8).
-const NAV_LINKS: readonly NavLink[] = [
-  { href: "/kurse", label: "Kurse" },
-  { href: "/einstufungstest", label: "Einstufungstest" },
-  { href: "/shop", label: "Shop" },
-  { href: "/ueber-uns", label: "Über uns" },
-  { href: "/kontakt", label: "Kontakt" },
-];
-
-export async function SiteShell({ children }: { children: ReactNode }) {
+export async function SiteShell({
+  locale,
+  children,
+}: {
+  locale: Locale;
+  children: ReactNode;
+}) {
   const [cart, consent] = await Promise.all([readCart(), readConsent()]);
+  const t = getDictionary(locale);
 
   return (
     <>
-      {/* Първото нещо във фокусната верига — изискване по WCAG 2.4.1.
-          Скрит е, докато не се фокусира с Tab. */}
+      {/* Първото нещо във фокусната верига — WCAG 2.4.1. Скрито е,
+          докато не се фокусира с Tab. */}
       <a
         href="#inhalt"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
       >
-        Zum Inhalt springen
+        {t.nav.skipToContent}
       </a>
 
-      <SiteNav links={NAV_LINKS} cartCount={countItems(cart)} />
+      <SiteNav locale={locale} cartCount={countItems(cart)} />
 
       <div id="inhalt">{children}</div>
 
-      <SiteFooter />
+      <SiteFooter locale={locale} />
 
       {/* Банерът се рендира само докато няма решение — иначе виси в DOM-а
-          и се обявява от екранния четец на всяка страница. */}
+          и се обявява от четеца на всяка страница. */}
       {needsDecision(consent) ? (
         <CookieBanner
           onAcceptAll={acceptAllCookies}

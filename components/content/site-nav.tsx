@@ -1,33 +1,43 @@
 "use client";
 
-// ТЕРИТОРИЯ НА БОБИ · задача 2b — мобилна и настолна навигация.
+// Настолна и мобилна навигация.
 //
-// Писано от Жоро, докато Боби е в отпуск. Клон zhoro/za-bobi-dizajn-sistema.
-//
-// Клиентски компонент е само защото мобилното меню има състояние. Съдържанието
-// на връзките идва отвън, за да може да мине през CMS в задача 18c.
+// Клиентски компонент е само защото мобилното меню има състояние.
+// Речникът се подава готов от сървъра — така преводите не пътуват два пъти.
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/config";
+import { LocaleSwitcher } from "./locale-switcher";
 import { cn } from "@/lib/utils";
 
-export interface NavLink {
-  href: string;
-  label: string;
-}
-
 interface SiteNavProps {
-  links: readonly NavLink[];
+  locale: Locale;
   cartCount?: number;
 }
 
-export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
+export function SiteNav({ locale, cartCount = 0 }: SiteNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const t = getDictionary(locale);
+
+  // ПРАВИЛО: тук влиза само СЪЩЕСТВУВАЩА страница. Връзка към ненаправена
+  // страница е 404 и е по-лоша от липсваща връзка. Чакат:
+  // /uebersetzungen (задача 14), /materialien (8).
+  const links = [
+    { href: `/${locale}/kurse`, label: t.nav.courses },
+    { href: `/${locale}/einstufungstest`, label: t.nav.levelTest },
+    { href: `/${locale}/shop`, label: t.nav.shop },
+    { href: `/${locale}/ueber-uns`, label: t.nav.about },
+    { href: `/${locale}/kontakt`, label: t.nav.contact },
+  ];
+
+  const isActive = (href: string) => pathname.startsWith(href);
 
   // Escape затваря менюто и връща фокуса на бутона. Без връщането фокусът
   // пада в началото на документа и човекът с клавиатура се губи.
@@ -45,23 +55,20 @@ export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  // Смяната на страница затваря менюто. Иначе при навигация с браузърните
+  // Смяната на страница затваря менюто — иначе при навигация с браузърните
   // бутони то остава отворено над новото съдържание.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
-
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       {/* Флаг-линията е знакът на марката и стои над всичко. */}
       <span className="flagline block w-full rounded-none" aria-hidden />
 
-      <div className="mx-auto flex max-w-(--container-page) items-center gap-6 px-6 py-4">
+      <div className="mx-auto flex max-w-(--container-page) items-center gap-4 px-6 py-4">
         <Link
-          href="/"
+          href={`/${locale}`}
           className="flex items-center gap-2 font-display text-xl font-semibold"
         >
           {/* Временният знак „N" — сменя се за минути, когато дойде логото. */}
@@ -75,8 +82,7 @@ export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
           <span className="sr-only">Nürnberger Fremdsprachen Institut</span>
         </Link>
 
-        {/* Настолна навигация */}
-        <nav aria-label="Hauptnavigation" className="ml-auto hidden lg:block">
+        <nav aria-label={t.nav.mainNav} className="ml-auto hidden lg:block">
           <ul className="flex items-center gap-1">
             {links.map((link) => (
               <li key={link.href}>
@@ -98,27 +104,34 @@ export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
+          <div className="hidden sm:block">
+            <LocaleSwitcher current={locale} label={t.nav.languageLabel} />
+          </div>
+
           <Button asChild variant="ghost" size="sm">
-            <Link href="/warenkorb">
-              Warenkorb
+            <Link href={`/${locale}/warenkorb`}>
+              <span className="hidden sm:inline">{t.nav.cart}</span>
+              <span className="sm:hidden" aria-hidden>
+                🛒
+              </span>
               {cartCount > 0 ? (
                 <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-xs font-semibold text-primary-foreground">
                   {cartCount}
                 </span>
               ) : null}
               <span className="sr-only">
+                {t.nav.cart}
                 {cartCount > 0
-                  ? `, ${cartCount} Artikel`
-                  : ", leer"}
+                  ? `, ${cartCount} ${t.nav.cartItems}`
+                  : `, ${t.nav.cartEmpty}`}
               </span>
             </Link>
           </Button>
 
-          <Button asChild size="sm" className="hidden sm:inline-flex">
-            <Link href="/kontakt">Beratung</Link>
+          <Button asChild size="sm" className="hidden md:inline-flex">
+            <Link href={`/${locale}/kontakt`}>{t.nav.consultation}</Link>
           </Button>
 
-          {/* Мобилен превключвател */}
           <Button
             ref={toggleRef}
             type="button"
@@ -131,19 +144,18 @@ export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
           >
             {open ? <X aria-hidden /> : <Menu aria-hidden />}
             <span className="sr-only">
-              {open ? "Menü schließen" : "Menü öffnen"}
+              {open ? t.nav.menuClose : t.nav.menuOpen}
             </span>
           </Button>
         </div>
       </div>
 
-      {/* Мобилно меню. Рендира се само отворено — затворено не бива да е
-          във фокусната верига, а `hidden` елемент няма как да се фокусира
-          случайно. */}
+      {/* Мобилното меню се рендира само отворено — затворено не бива да е
+          във фокусната верига. */}
       {open ? (
         <nav
           id="mobile-nav"
-          aria-label="Hauptnavigation"
+          aria-label={t.nav.mainNav}
           className="border-t border-border lg:hidden"
         >
           <ul className="mx-auto max-w-(--container-page) px-4 py-2">
@@ -164,10 +176,16 @@ export function SiteNav({ links, cartCount = 0 }: SiteNavProps) {
                 </Link>
               </li>
             ))}
-            <li className="px-3 py-3 sm:hidden">
+            <li className="flex items-center justify-between px-3 py-3 sm:hidden">
+              <span className="text-sm text-muted-foreground">
+                {t.nav.languageLabel}
+              </span>
+              <LocaleSwitcher current={locale} label={t.nav.languageLabel} />
+            </li>
+            <li className="px-3 py-3 md:hidden">
               <Button asChild className="w-full">
-                <Link href="/kontakt" onClick={() => setOpen(false)}>
-                  Beratung
+                <Link href={`/${locale}/kontakt`} onClick={() => setOpen(false)}>
+                  {t.nav.consultation}
                 </Link>
               </Button>
             </li>

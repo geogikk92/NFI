@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { HONEYPOT_FIELD } from "@/lib/cms/call-requests";
 import type {
   CallRequestFormState,
-} from "@/app/(public)/kontakt/actions";
+} from "@/app/[locale]/(public)/kontakt/actions";
 
 interface CallRequestFormProps {
   action: (

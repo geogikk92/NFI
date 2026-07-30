@@ -17,7 +17,7 @@ import { Play, ShieldOff } from "lucide-react";
 import { readConsent } from "@/lib/consent-cookie";
 import { hasConsent, type ConsentCategory } from "@/lib/consent";
 import { Button } from "@/components/ui/button";
-import { acceptConsentCategory } from "@/app/(public)/consent-actions";
+import { acceptConsentCategory } from "@/app/[locale]/(public)/consent-actions";
 
 interface ConsentGateProps {
   category: Exclude<ConsentCategory, "necessary">;
