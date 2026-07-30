@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ProductCover } from "@/components/commerce/product-cover";
 import { listProducts } from "@/lib/commerce/catalog";
 import { formatMoney } from "@/lib/money";
 import { pick, toLocale } from "@/lib/i18n/config";
@@ -52,7 +51,7 @@ export default async function ShopPage({ params }: Props) {
           {t.empty}
         </p>
       ) : (
-        <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-12 divide-y divide-border border-y border-border">
           {products.map((product) => {
             const soldOut = product.stock !== null && product.stock <= 0;
             const title = pick(locale, {
@@ -67,64 +66,68 @@ export default async function ShopPage({ params }: Props) {
             });
 
             return (
-              <li key={product.id}>
-                {/* `relative` е ЗАДЪЛЖИТЕЛНО: заглавието разпъва
-                    `after:inset-0` върху цялата карта и без позициониран
-                    родител то се мери спрямо целия документ. Досега това
-                    не се виждаше само защото Card има `overflow-hidden` и
-                    го отрязва — тоест работеше по случайност. */}
-                <Card className="relative flex h-full flex-col">
-                  <CardContent className="flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <h2 className="font-title text-xl leading-snug">
-                        <Link
-                          href={`/${locale}/shop/${product.slug}`}
-                          className="after:absolute after:inset-0 hover:text-primary"
-                        >
-                          {title}
-                        </Link>
-                      </h2>
-                      <Badge variant={product.type === "DIGITAL" ? "secondary" : "outline"}>
-                        {product.type === "DIGITAL"
-                          ? t.badgeDownload
-                          : t.badgeShipping}
-                      </Badge>
-                    </div>
+              <li
+                key={product.id}
+                className="flex flex-wrap gap-5 py-6 sm:flex-nowrap"
+              >
+                {/* Типографската корица — материалите нямат снимки.
+                    Декоративна е: всичко в нея се повтаря като истински
+                    текст отдясно, затова е aria-hidden. */}
+                <div className="w-[clamp(5.5rem,27%,7.5rem)] shrink-0">
+                  <ProductCover
+                    color={product.coverColor}
+                    brand={product.coverBrand}
+                    eyebrow={product.coverEyebrow}
+                    coverTitle={product.coverTitle}
+                    meta={product.coverMeta}
+                    fallback={{
+                      bg: product.title,
+                      de: product.titleDe,
+                      en: product.titleEn,
+                    }}
+                    locale={locale}
+                  />
+                </div>
 
-                    {description ? (
-                      <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-                        {description}
-                      </p>
-                    ) : null}
-                  </CardContent>
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <p className="font-mono text-2xs uppercase tracking-kicker text-muted-foreground">
+                    {product.type === "DIGITAL" ? t.badgeDownload : t.badgeShipping}
+                  </p>
 
-                  <CardFooter className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-lg font-semibold">
-                        {formatMoney(product.priceCents, moneyTag(locale))}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t.vatNote}
-                      </p>
-                    </div>
+                  <h2 className="font-title text-xl font-bold leading-tight sm:text-2xl">
+                    <Link
+                      href={`/${locale}/shop/${product.slug}`}
+                      className="hover:text-primary"
+                    >
+                      {title}
+                    </Link>
+                  </h2>
+
+                  {description ? (
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {description}
+                    </p>
+                  ) : null}
+
+                  <div className="mt-2 flex flex-wrap items-center gap-4">
+                    <span className="font-title text-xl font-bold">
+                      {formatMoney(product.priceCents, moneyTag(locale))}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {t.vatNote}
+                    </span>
 
                     {soldOut ? (
-                      <Badge variant="outline">{t.soldOut}</Badge>
+                      <span className="tag">{t.soldOut}</span>
                     ) : (
-                      <Button asChild size="sm" variant="outline">
+                      <Button asChild size="sm">
                         <Link href={`/${locale}/shop/${product.slug}`}>
                           {t.details}
-                          {/* „Details" сам по себе си не казва за кой
-                              продукт — четецът обявява целия ред. */}
-                          <span className="sr-only">
-                            {" "}
-                            {t.detailsFor(title)}
-                          </span>
                         </Link>
                       </Button>
                     )}
-                  </CardFooter>
-                </Card>
+                  </div>
+                </div>
               </li>
             );
           })}

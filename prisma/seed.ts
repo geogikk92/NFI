@@ -106,7 +106,14 @@ async function seedProducts() {
   // Дигитален: подлежи на Widerruf съгласие преди сваляне (§356 Abs. 5).
   const workbook = await db.product.upsert({
     where: { slug: "arbeitsheft-a1-pdf" },
-    update: { titleEn: "Workbook A1 (PDF)" },
+    update: {
+      titleEn: "Workbook A1 (PDF)",
+      coverColor: "INK",
+      coverBrand: "NFI · Arbeitsheft",
+      coverEyebrow: "Grundstufe",
+      coverTitle: "Arbeitsheft A1",
+      coverMeta: "120 Seiten · A1",
+    },
     create: {
       slug: "arbeitsheft-a1-pdf",
       title: "Работна тетрадка A1 (PDF)",
@@ -115,6 +122,12 @@ async function seedProducts() {
       type: "DIGITAL",
       priceCents: 1200,
       vatCategory: "ELECTRONIC",
+      // Типографска корица — в мокъпа материалите нямат снимки.
+      coverColor: "INK",
+      coverBrand: "NFI · Arbeitsheft",
+      coverEyebrow: "Grundstufe",
+      coverTitle: "Arbeitsheft A1",
+      coverMeta: "120 Seiten · A1",
       published: true,
       publishedAt: new Date(),
       sortOrder: 1,
@@ -140,7 +153,14 @@ async function seedProducts() {
   // Физически: има тегло, значи и доставка по зони.
   await db.product.upsert({
     where: { slug: "lehrbuch-a1" },
-    update: { titleEn: "Coursebook A1 (print)" },
+    update: {
+      titleEn: "Coursebook A1 (print)",
+      coverColor: "GREEN",
+      coverBrand: "NFI · Lehrbuch",
+      coverEyebrow: "Kursbuch",
+      coverTitle: "Deutsch A1",
+      coverMeta: "gedruckt · A1",
+    },
     create: {
       slug: "lehrbuch-a1",
       title: "Учебник A1 (печатно издание)",
@@ -149,6 +169,11 @@ async function seedProducts() {
       type: "PHYSICAL",
       priceCents: 2800,
       vatCategory: "GOODS",
+      coverColor: "GREEN",
+      coverBrand: "NFI · Lehrbuch",
+      coverEyebrow: "Kursbuch",
+      coverTitle: "Deutsch A1",
+      coverMeta: "gedruckt · A1",
       weightGrams: 450,
       stock: 25,
       published: true,
@@ -156,6 +181,63 @@ async function seedProducts() {
       sortOrder: 2,
     },
   });
+}
+
+async function seedMoreProducts() {
+  // Двата материала от мокъпа (magazin.html) — с червена и златна корица,
+  // за да е видим целият рафт. Цените са от мокъпа.
+  const extra = [
+    {
+      slug: "verben-mit-praeposition",
+      title: "500-те глагола с предлози",
+      titleDe: "Verben mit Präposition",
+      titleEn: "500 verbs with prepositions",
+      description:
+        "Глаголите, при които все се колебаеш кой предлог и кой падеж идват след тях. Всеки с по едно примерно изречение.",
+      descriptionDe:
+        "Die Verben, bei denen man immer zögert, welche Präposition und welcher Fall folgen. Jedes mit einem Beispielsatz.",
+      descriptionEn:
+        "The verbs where you always hesitate which preposition and case follow. Each with one example sentence.",
+      type: "DIGITAL" as const,
+      priceCents: 2400,
+      vatCategory: "ELECTRONIC" as const,
+      coverColor: "RED" as const,
+      coverBrand: "NFI · Wortschatz",
+      coverEyebrow: "Verben",
+      coverTitle: "Verben mit Präposition",
+      coverMeta: "500 Verben · A2–B2",
+      sortOrder: 3,
+    },
+    {
+      slug: "uebungen-praepositionen",
+      title: "Упражнения: предлози и падежи",
+      titleDe: "Übungen: Präpositionen und Fälle",
+      titleEn: "Exercises: prepositions and cases",
+      description:
+        "Сто упражнения с отговори, подредени по трудност. За хора, които разбират правилото, но се спъват в говора.",
+      descriptionDe:
+        "Hundert Übungen mit Lösungen, nach Schwierigkeit geordnet. Für Menschen, die die Regel verstehen, aber im Sprechen stocken.",
+      descriptionEn:
+        "A hundred exercises with answers, ordered by difficulty. For people who know the rule but stumble when speaking.",
+      type: "DIGITAL" as const,
+      priceCents: 1800,
+      vatCategory: "ELECTRONIC" as const,
+      coverColor: "GOLD" as const,
+      coverBrand: "NFI · Übungen",
+      coverEyebrow: "Übungsheft",
+      coverTitle: "Präpositionen",
+      coverMeta: "100 Übungen · A2–B1",
+      sortOrder: 4,
+    },
+  ];
+
+  for (const product of extra) {
+    await db.product.upsert({
+      where: { slug: product.slug },
+      update: product,
+      create: { ...product, published: true, publishedAt: new Date() },
+    });
+  }
 }
 
 async function seedLevelTest() {
@@ -334,6 +416,7 @@ async function main() {
   const { admin } = await seedUsers();
   await seedCourses();
   await seedProducts();
+  await seedMoreProducts();
   await seedLevelTest();
   await seedShipping();
   await seedDiscounts();

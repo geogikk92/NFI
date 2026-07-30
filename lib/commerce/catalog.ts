@@ -48,6 +48,11 @@ const PRODUCT_CARD_FIELDS = {
   stock: true,
   published: true,
   coverMediaId: true,
+  coverColor: true,
+  coverBrand: true,
+  coverEyebrow: true,
+  coverTitle: true,
+  coverMeta: true,
   sortOrder: true,
 } as const;
 
@@ -66,6 +71,12 @@ export type ProductCard = {
   weightGrams: number | null;
   stock: number | null;
   coverMediaId: string | null;
+  /** Типографската корица — материалите нямат снимки (мокъп: magazin.html). */
+  coverColor: "INK" | "RED" | "GREEN" | "GOLD";
+  coverBrand: string | null;
+  coverEyebrow: string | null;
+  coverTitle: string | null;
+  coverMeta: string | null;
 };
 
 /** Публичният каталог — само публикуваните. */
@@ -90,6 +101,11 @@ export async function listProducts(): Promise<ProductCard[]> {
     weightGrams: row.weightGrams,
     stock: row.stock,
     coverMediaId: row.coverMediaId,
+    coverColor: row.coverColor,
+    coverBrand: row.coverBrand,
+    coverEyebrow: row.coverEyebrow,
+    coverTitle: row.coverTitle,
+    coverMeta: row.coverMeta,
   }));
 }
 
@@ -120,6 +136,11 @@ export async function getProductBySlug(
     weightGrams: row.weightGrams,
     stock: row.stock,
     coverMediaId: row.coverMediaId,
+    coverColor: row.coverColor,
+    coverBrand: row.coverBrand,
+    coverEyebrow: row.coverEyebrow,
+    coverTitle: row.coverTitle,
+    coverMeta: row.coverMeta,
     files: row.files,
   };
 }

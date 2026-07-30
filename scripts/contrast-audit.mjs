@@ -116,6 +116,12 @@ const PAIRS = [
   ["граница на поле", "--input", "--background", NONTEXT],
   ["фокусен пръстен", "--ring", "--background", NONTEXT],
   ["фокусен пръстен в карта", "--ring", "--card", NONTEXT],
+  // Типографските корици на материалите (мокъп: magazin.html). Всяка е
+  // цветен блок с текст върху себе си, значи е самостоятелна двойка.
+  ["корица ink", "--color-paper", "--color-ink", TEXT],
+  ["корица red", "--color-paper-raised", "--color-red-600", TEXT],
+  ["корица green", "--color-paper-raised", "--color-green-600", TEXT],
+  ["корица gold", "--color-ink", "--color-gold-400", TEXT],
   ["sidebar текст", "--sidebar-foreground", "--sidebar", TEXT],
   ["sidebar акцент", "--sidebar-accent-foreground", "--sidebar-accent", TEXT],
 ];

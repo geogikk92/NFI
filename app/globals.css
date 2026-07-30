@@ -271,6 +271,92 @@
     color: var(--color-paper);
   }
 
+  /* ── cover ────────────────────────────────────────────────────────
+     ТИПОГРАФСКА корица — пренесена от мокъпа (magazin.html).
+
+     Учебните материали на NFI нямат снимки: корицата е цветен блок с
+     текст, като немски учебник. Това е нарочно решение на мокъпа и
+     работи по-добре от стокови снимки — всяка корица е разпознаваема,
+     без да чакаме фотограф.
+
+     Мащабира се с container queries (cqi), не с vw: една и същa корица
+     стои и в тесен рафт, и голяма на детайлната страница, без отделни
+     размери за всеки контейнер.                                       */
+  .cover {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    container-type: inline-size;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: clamp(0.5rem, 3cqi, 0.9375rem);
+    overflow: hidden;
+    padding: clamp(0.8125rem, 6.5cqi, 1.5rem) clamp(0.8125rem, 6.5cqi, 1.5rem)
+      clamp(1.125rem, 8cqi, 1.75rem);
+    color: #fff;
+  }
+
+  .cover-ink {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .cover-red {
+    background: var(--color-red-600);
+  }
+  .cover-green {
+    background: var(--color-green-600);
+  }
+  /* Златната корица иска ТЪМЕН текст: бяло върху #b98a2b дава 2.4:1. */
+  .cover-gold {
+    background: var(--color-gold-400);
+    color: var(--color-ink);
+  }
+
+  .cover-brand {
+    font-family: var(--font-mono);
+    font-size: clamp(0.4375rem, 3.4cqi, 0.6875rem);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.78;
+  }
+
+  .cover-mid {
+    align-self: end;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.3125rem, 2.4cqi, 0.625rem);
+  }
+
+  .cover-eyebrow {
+    font-family: var(--font-mono);
+    font-size: clamp(0.4375rem, 3.4cqi, 0.6875rem);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  .cover-title {
+    font-family: var(--font-title);
+    font-weight: 700;
+    font-size: clamp(1.1875rem, 17cqi, 3.25rem);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+  }
+
+  .cover-meta {
+    font-family: var(--font-mono);
+    font-size: clamp(0.4375rem, 3.2cqi, 0.6875rem);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.78;
+  }
+
+  /* Флаг-линията долу на корицата — знакът на марката върху всеки материал. */
+  .cover .flagline {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+  }
+
   /* ── prose ────────────────────────────────────────────────────────
      Типографски слой за дълъг текст: правни страници, описания на
      курсове, статии. Собствен, не плъгин — типографията е сърцето на
