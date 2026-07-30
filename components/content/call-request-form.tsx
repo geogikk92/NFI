@@ -164,8 +164,22 @@ export function CallRequestForm({
             type="tel"
             autoComplete="tel"
             defaultValue={values.phone}
-            aria-describedby="phone-hint"
+            aria-invalid={errors.phone ? true : undefined}
+            // И двете: подсказката остава полезна и когато има грешка.
+            // Редът е нарочен — четецът първо казва какво е сбъркано.
+            aria-describedby={
+              errors.phone ? "phone-error phone-hint" : "phone-hint"
+            }
           />
+          {/* Без този клон полето можеше да СГРЕШИ, но не и да го покаже:
+              схемата дава „phone-too-long" и невалиден формат, а формата
+              рендираше грешки само за име, имейл и съобщение. Резултатът
+              беше задънена улица — „провери полетата" и нищо оцветено. */}
+          {errors.phone ? (
+            <p id="phone-error" className="text-sm text-destructive">
+              {errors.phone}
+            </p>
+          ) : null}
           <p id="phone-hint" className="text-xs text-muted-foreground">
             {t.phoneHint}
           </p>
@@ -177,8 +191,16 @@ export function CallRequestForm({
             id="preferredTime"
             name="preferredTime"
             defaultValue={values.preferredTime}
-            aria-describedby="time-hint"
+            aria-invalid={errors.preferredTime ? true : undefined}
+            aria-describedby={
+              errors.preferredTime ? "time-error time-hint" : "time-hint"
+            }
           />
+          {errors.preferredTime ? (
+            <p id="time-error" className="text-sm text-destructive">
+              {errors.preferredTime}
+            </p>
+          ) : null}
           <p id="time-hint" className="text-xs text-muted-foreground">
             {t.timeHint}
           </p>
