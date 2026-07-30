@@ -13,9 +13,13 @@ export const metadata: Metadata = {
   description: "Lehrbücher, Arbeitshefte und digitale Materialien des NFI.",
 };
 
-// Каталогът се мени рядко — 5 минути кеш пестят заявки, без да остаряват
-// цените осезаемо. Плащането така или иначе сверява цената наново.
-export const revalidate = 300;
+// БЕЗ revalidate: SiteShell чете бисквитки (брояч на количката, cookie
+// решение), а `cookies()` прави маршрута динамичен — какъвто и кеш да се
+// обяви тук, той не действа. Проверено в изхода на `npm run build`:
+// маршрутът е ƒ (Dynamic), не ○ (Static).
+//
+// Не е загуба за checkout-а — цената така или иначе се сверява наново от
+// базата при всяко плащане (виж lib/commerce/pricing.ts).
 
 export default async function ShopPage() {
   const products = await listProducts();

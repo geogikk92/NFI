@@ -132,6 +132,140 @@
     color: var(--color-muted-foreground);
   }
 
+  /* ── prose ────────────────────────────────────────────────────────
+     Типографски слой за дълъг текст: правни страници, описания на
+     курсове, статии. Собствен, не плъгин — типографията е сърцето на
+     дизайн-системата и Боби я контролира от токените.
+
+     Мярката е ~68ch (--container-prose): под 45 знака окото скача, над
+     85 губи реда. Немските съставни думи изискват пренасяне, иначе
+     „Widerrufsbelehrung" разкъсва колоната.                          */
+  .prose {
+    max-width: var(--container-prose);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--color-foreground);
+    hyphens: auto;
+  }
+
+  .prose > * + * {
+    margin-top: 1.25em;
+  }
+
+  .prose h2 {
+    margin-top: 2.5em;
+    font-size: var(--text-2xl);
+    line-height: var(--leading-snug);
+  }
+
+  .prose h3 {
+    margin-top: 2em;
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+  }
+
+  .prose h4 {
+    margin-top: 1.75em;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: 600;
+  }
+
+  /* Първото заглавие не бива да отблъсква съдържанието надолу. */
+  .prose > :first-child {
+    margin-top: 0;
+  }
+
+  .prose a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    /* Подчертаването се дърпа под шрифтовата линия, за да не реже
+       низходящите елементи на буквите (g, y, ß). */
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  .prose a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  .prose strong {
+    font-weight: 600;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.5em;
+  }
+
+  .prose ul {
+    list-style: disc;
+  }
+
+  .prose ol {
+    list-style: decimal;
+  }
+
+  .prose li + li {
+    margin-top: 0.5em;
+  }
+
+  .prose li::marker {
+    color: var(--color-subtle);
+  }
+
+  .prose blockquote {
+    padding-left: 1.25em;
+    border-left: 2px solid var(--color-primary);
+    font-style: italic;
+    color: var(--color-muted-foreground);
+  }
+
+  .prose hr {
+    margin-top: 3em;
+    margin-bottom: 3em;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .prose code {
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
+
+  /* Таблиците в правен текст (напр. срокове за съхранение) трябва да
+     скролират сами, а не да разпъват страницата на телефон. */
+  .prose .table-wrap {
+    overflow-x: auto;
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+
+  .prose th,
+  .prose td {
+    padding: 0.6em 0.8em;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .prose th {
+    font-weight: 600;
+  }
+
+  /* Раздел с адрес — Impressum-ът се чете като блок, не като абзац. */
+  .prose address {
+    font-style: normal;
+    line-height: var(--leading-normal);
+  }
+
   /* ── grain ────────────────────────────────────────────────────────
      Хартиената текстура. SVG шум, вграден — без мрежова заявка.     */
   .grain::before {
