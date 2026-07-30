@@ -31,12 +31,21 @@ async function seedUsers() {
   // два пъти по 80 ms в сийда се усещат.
   const passwordHash = await hashPassword(DEV_PASSWORD);
 
+  // `update` е ПРАЗЕН по отношение на паролата — и това е поправка на
+  // дефект, живял един час на 30.07.2026.
+  //
+  // Първо сложих `update: { passwordHash }` по аналогия с курсовете, където
+  // празният update изяде английските преводи. Но при парола аналогията е
+  // точно обратна: повторен сийд върху база, в която Василена вече си е
+  // задала истинска парола, би я върнал на стойността от този файл — а тя
+  // е ПУБЛИКУВАНА В ХРАНИЛИЩЕТО. Деплой документът пък казва сийдът да се
+  // пуска локално срещу продукционния низ.
+  //
+  // Затова паролата се дава само при СЪЗДАВАНЕ, а по-долу — и на профил,
+  // който още няма никаква.
   const admin = await db.user.upsert({
     where: { email: "admin@nfi.local" },
-    // `update` НЕ е празен: при повторен сийд върху съществуваща база
-    // празният update оставя стария (или липсващия) хеш и профилът пак не
-    // влиза никъде. Същият капан вече изяде английските преводи веднъж.
-    update: { passwordHash },
+    update: {},
     create: {
       email: "admin@nfi.local",
       name: "Василена",
@@ -49,7 +58,7 @@ async function seedUsers() {
 
   const student = await db.user.upsert({
     where: { email: "student@nfi.local" },
-    update: { passwordHash },
+    update: {},
     create: {
       email: "student@nfi.local",
       name: "Max Mustermann",
@@ -60,8 +69,25 @@ async function seedUsers() {
     },
   });
 
+  // Профил БЕЗ никаква парола получава тази за разработка. Такива са
+  // редовете, създадени от по-стар сийд, преди входът да съществува —
+  // без това те не влизат никъде и изглеждат като счупен вход.
+  const withoutPassword = [admin, student].filter((u) => !u.passwordHash);
+  if (withoutPassword.length > 0) {
+    await db.user.updateMany({
+      where: { id: { in: withoutPassword.map((u) => u.id) } },
+      data: { passwordHash },
+    });
+    console.log(
+      `  Дадена парола за разработка на ${withoutPassword.length} профил(а) без такава.`,
+    );
+  }
+
   console.log(
-    `  Профили: admin@nfi.local и student@nfi.local, парола „${DEV_PASSWORD}" (само за разработка).`,
+    `  Профили: admin@nfi.local и student@nfi.local. Парола за разработка: „${DEV_PASSWORD}"`,
+  );
+  console.log(
+    "  СЪЩЕСТВУВАЩА парола НЕ се пипа — за смяна: npm run admin:password",
   );
 
   return { admin, student };
@@ -436,10 +462,65 @@ async function seedPages() {
   }
 }
 
-async function main() {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Сийдът не се пуска срещу продукция.");
+/**
+ * Предпазителят срещу продукция.
+ *
+ * ПРЕДИШНАТА версия проверяваше NODE_ENV === "production" и НЕ вършеше
+ * работа: деплой документът казва „пусни го ЛОКАЛНО срещу продукционния
+ * низ", а локално NODE_ENV не е production. Тоест предпазителят се
+ * задействаше точно в случая, който няма как да се случи, и мълчеше в
+ * този, който документираме.
+ *
+ * Сега се гледа КЪДЕ сочи връзката, а не къде се изпълнява кодът —
+ * единственото, което наистина има значение.
+ */
+function assertNotProduction(): void {
+  const url = process.env.DATABASE_URL ?? "";
+
+  // Празно име на хост при неразбираем низ → третира се като чуждо.
+  let host = "";
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    host = "";
   }
+
+  const isLocal =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host.endsWith(".local") ||
+    // docker-compose имена на услуги
+    host === "db" ||
+    host === "postgres";
+
+  if (isLocal) return;
+
+  // Изричното разрешение е ЕДИНСТВЕНИЯТ път навън. Пише се на ръка, което
+  // значи, че човекът е прочел какво прави.
+  if (process.env.ALLOW_REMOTE_SEED === "da-znam-kakvo-pravja") return;
+
+  throw new Error(
+    [
+      "",
+      "Сийдът отказва да пише в НЕлокална база.",
+      `  Хост: ${host || "(неразпознат)"}`,
+      "",
+      "  Сийдът създава примерни курсове и продукти и профили с",
+      "  ПУБЛИКУВАНА В ХРАНИЛИЩЕТО парола. В жива база това е инцидент.",
+      "",
+      "  За първоначално пълнене на празна продукционна база:",
+      "    ALLOW_REMOTE_SEED=da-znam-kakvo-pravja DATABASE_URL=… npm run db:seed",
+      "",
+      "  За парола на админа НЕ ползвай сийда, а:",
+      "    DATABASE_URL=… npm run admin:password -- <имейл>",
+      "",
+    ].join("\n"),
+  );
+}
+
+async function main() {
+  assertNotProduction();
 
   const { admin } = await seedUsers();
   await seedCourses();
