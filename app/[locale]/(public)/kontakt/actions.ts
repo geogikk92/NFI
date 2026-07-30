@@ -10,6 +10,7 @@ import {
   checkSpam,
 } from "@/lib/cms/call-requests";
 import { toLocale } from "@/lib/i18n/config";
+import { clientIp } from "@/lib/request-ip";
 import {
   contactFormCopy,
   translateFieldError,
@@ -28,23 +29,6 @@ export interface CallRequestFormState {
   message?: string;
   /** Вписаното се връща, за да не се губи при грешка. */
   values?: Record<string, string>;
-}
-
-/**
- * Истинският IP зад обратен прокси.
- *
- * Vercel слага x-forwarded-for; първият адрес е клиентът, останалите са
- * прокситата. Взима се само първият — иначе ограничението по IP се
- * заобикаля с подправена глава.
- */
-async function clientIp(): Promise<string | null> {
-  const store = await headers();
-  const forwarded = store.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  return store.get("x-real-ip");
 }
 
 export async function submitCallRequest(

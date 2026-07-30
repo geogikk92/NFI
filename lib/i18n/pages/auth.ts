@@ -74,6 +74,8 @@ const de = {
     "E-Mail-Adresse oder Passwort stimmen nicht. Bitte versuchen Sie es erneut.",
   loginLocked:
     "Dieses Konto ist nicht aktiv. Bitte melden Sie sich bei uns.",
+  loginTooMany:
+    "Zu viele Versuche. Bitte warten Sie 15 Minuten — oder rufen Sie uns an, wir helfen sofort.",
 
   /**
    * Текстовете от времето, когато входът не работеше.
@@ -142,6 +144,8 @@ const bg: AuthTexts = {
   loginErrorPassword: "Въведи паролата.",
   loginFailed: "Имейлът или паролата не съвпадат. Опитай пак.",
   loginLocked: "Профилът не е активен. Потърси ни.",
+  loginTooMany:
+    "Твърде много опити. Изчакай 15 минути — или ни се обади, помагаме веднага.",
 
   loginPendingTitle: "Входът още не е пуснат",
   loginPendingBody:
@@ -196,6 +200,8 @@ const en: AuthTexts = {
   loginErrorPassword: "Please enter your password.",
   loginFailed: "Email or password does not match. Please try again.",
   loginLocked: "This account is not active. Please get in touch.",
+  loginTooMany:
+    "Too many attempts. Please wait 15 minutes — or call us, we'll help right away.",
 
   loginPendingTitle: "Signing in is not switched on yet",
   loginPendingBody:

@@ -14,6 +14,7 @@
 // Валидацията при ВХОД е нарочно по-хлабава от тази при регистрация — виж
 // коментара над схемата.
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { toLocale } from "@/lib/i18n/config";
@@ -21,6 +22,7 @@ import { getAuthTexts } from "@/lib/i18n/pages/auth";
 import { LOCALE_FIELD } from "@/lib/auth/register";
 import { authenticate } from "@/lib/auth/login-db";
 import { createSession } from "@/lib/auth/session-db";
+import { clientIp } from "@/lib/request-ip";
 
 export interface LoginFormState {
   status: "idle" | "error";
@@ -73,7 +75,23 @@ export async function signInWithPassword(
     };
   }
 
-  const outcome = await authenticate(parsed.data.email, parsed.data.password);
+  const [ip, store] = await Promise.all([clientIp(), headers()]);
+
+  const outcome = await authenticate(parsed.data.email, parsed.data.password, {
+    ip,
+    userAgent: store.get("user-agent"),
+  });
+
+  // Съобщението казва ЧЕСТНО, че опитите са много, вместо да се преструва
+  // на грешна парола. Иначе човек, който наистина си е забравил паролата,
+  // остава да опитва и да не разбира защо нищо не се променя.
+  if (outcome.kind === "rate-limited") {
+    return {
+      status: "error",
+      message: texts.loginTooMany,
+      values: { email: parsed.data.email },
+    };
+  }
 
   if (outcome.kind === "failed") {
     return {

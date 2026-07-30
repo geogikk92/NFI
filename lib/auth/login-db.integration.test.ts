@@ -6,7 +6,7 @@
 
 import { afterAll, describe, expect, it } from "vitest";
 import { db } from "../db";
-import { authenticate } from "./login-db";
+import { authenticate, LOGIN_MAX_FAILURES } from "./login-db";
 import { hashPassword } from "./password";
 
 const suite = process.env.DATABASE_URL ? describe : describe.skip;
@@ -107,6 +107,102 @@ suite("вход срещу истинска база", () => {
       expect((await authenticate(email, "каквото")).kind).toBe("failed");
     } finally {
       await db.user.delete({ where: { id: user.id } });
+    }
+  });
+});
+
+suite("ограничение на опитите", () => {
+  const IP = `203.0.113.${process.pid % 250}`;
+
+  async function clearAttempts() {
+    await db.auditLog.deleteMany({ where: { ip: IP } });
+  }
+
+  it("под прага пуска нормално", async () => {
+    await clearAttempts();
+    try {
+      for (let i = 0; i < LOGIN_MAX_FAILURES - 1; i++) {
+        await authenticate("admin@nfi.local", "греши", { ip: IP, userAgent: null });
+      }
+      const outcome = await authenticate("admin@nfi.local", DEV_PASSWORD, {
+        ip: IP,
+        userAgent: null,
+      });
+      expect(outcome.kind).toBe("ok");
+    } finally {
+      await clearAttempts();
+    }
+  });
+
+  it("над прага спира ДОРИ вярната парола", async () => {
+    await clearAttempts();
+    try {
+      for (let i = 0; i < LOGIN_MAX_FAILURES; i++) {
+        await authenticate("admin@nfi.local", "греши", { ip: IP, userAgent: null });
+      }
+      // Вярната парола също се спира: иначе подборът просто продължава,
+      // докато уцели.
+      const outcome = await authenticate("admin@nfi.local", DEV_PASSWORD, {
+        ip: IP,
+        userAgent: null,
+      });
+      expect(outcome.kind).toBe("rate-limited");
+    } finally {
+      await clearAttempts();
+    }
+  });
+
+  it("ограничението е по IP, не по имейл — чужд адрес не се заключва", async () => {
+    await clearAttempts();
+    try {
+      for (let i = 0; i < LOGIN_MAX_FAILURES + 5; i++) {
+        await authenticate("admin@nfi.local", "греши", { ip: IP, userAgent: null });
+      }
+      // Същият имейл от ДРУГ адрес влиза. Иначе всеки непознат може да
+      // заключи чужд профил с десет грешни пароли.
+      const outcome = await authenticate("admin@nfi.local", DEV_PASSWORD, {
+        ip: "198.51.100.7",
+        userAgent: null,
+      });
+      expect(outcome.kind).toBe("ok");
+    } finally {
+      await clearAttempts();
+      await db.auditLog.deleteMany({ where: { ip: "198.51.100.7" } });
+    }
+  });
+
+  it("без IP не ограничава — иначе цял офис зад прокси се заключва", async () => {
+    const outcome = await authenticate("admin@nfi.local", DEV_PASSWORD, {
+      ip: null,
+      userAgent: null,
+    });
+    expect(outcome.kind).toBe("ok");
+  });
+
+  it("успешният вход НЕ пише в дневника", async () => {
+    await clearAttempts();
+    try {
+      await authenticate("admin@nfi.local", DEV_PASSWORD, { ip: IP, userAgent: null });
+      const count = await db.auditLog.count({ where: { ip: IP } });
+      expect(count).toBe(0);
+    } finally {
+      await clearAttempts();
+    }
+  });
+
+  it("неуспехът записва имейла и агента за разследване", async () => {
+    await clearAttempts();
+    try {
+      await authenticate("njakoj@primer.bg", "греши", {
+        ip: IP,
+        userAgent: "TestBot/1.0",
+      });
+      const row = await db.auditLog.findFirst({ where: { ip: IP } });
+      expect(row?.action).toBe("auth.login.failed");
+      expect(row?.actorEmail).toBe("njakoj@primer.bg");
+      expect(row?.userAgent).toBe("TestBot/1.0");
+    } finally {
+      await clearAttempts();
     }
   });
 });
