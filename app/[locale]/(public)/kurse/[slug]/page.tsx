@@ -3,6 +3,8 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DataUnavailable } from "@/components/content/data-unavailable";
+import { loadOrExplain } from "@/lib/db-health";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,7 +55,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CoursePage({ params }: Props) {
   const { locale: raw, slug } = await params;
   const locale = toLocale(raw);
-  const course = await getCourseBySlug(slug);
+  const loaded = await loadOrExplain(() => getCourseBySlug(slug));
+  const course = loaded.ok ? loaded.data : null;
+
+    // При недостъпна база НЕ се вика notFound(): 404 казва „такъв курс няма",
+  // което е лъжа — курсът си съществува, ние не можем да го прочетем. А и
+  // търсачката приема 404 буквално и маха адреса от индекса.
+  if (!loaded.ok) {
+    return (
+      <main className="mx-auto max-w-(--container-page) px-6 py-16">
+        <DataUnavailable locale={locale} reason={loaded.reason} />
+      </main>
+    );
+  }
 
   if (!course) notFound();
 

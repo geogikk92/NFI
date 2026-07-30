@@ -6,6 +6,8 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DataUnavailable } from "@/components/content/data-unavailable";
+import { loadOrExplain } from "@/lib/db-health";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,17 +41,32 @@ export default async function ErgebnisPage({ params }: Props) {
   const locale = toLocale(raw);
   const t = levelTestCopy(locale).result;
 
-  const result = await db.levelTestResult.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      score: true,
-      maxScore: true,
-      resultLevel: true,
-      answers: true,
-      createdAt: true,
-    },
-  });
+  const loaded = await loadOrExplain(() =>
+    db.levelTestResult.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        score: true,
+        maxScore: true,
+        resultLevel: true,
+        answers: true,
+        createdAt: true,
+      },
+    }),
+  );
+
+  // Недостъпна база НЕ дава 404: „такъв резултат няма" е лъжа —
+  // резултатът си съществува, ние не можем да го прочетем. А човекът
+  // тъкмо е попълнил цял тест и линкът може да е споделен.
+  if (!loaded.ok) {
+    return (
+      <main className="mx-auto max-w-(--container-page) px-6 py-16">
+        <DataUnavailable locale={locale} reason={loaded.reason} />
+      </main>
+    );
+  }
+
+  const result = loaded.data;
 
   if (!result) notFound();
 

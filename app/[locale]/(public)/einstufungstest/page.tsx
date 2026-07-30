@@ -3,6 +3,8 @@
 import type { Metadata } from "next";
 import { LevelTestQuiz } from "@/components/content/level-test-quiz";
 import { EmptyState } from "@/components/content/states";
+import { DataUnavailable } from "@/components/content/data-unavailable";
+import { loadOrExplain } from "@/lib/db-health";
 import { listQuizQuestions } from "@/lib/cms/level-test-db";
 import { localeAlternates } from "@/lib/i18n/alternates";
 import { toLocale } from "@/lib/i18n/config";
@@ -23,7 +25,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EinstufungstestPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = levelTestCopy(locale).test;
-  const questions = await listQuizQuestions();
+  // Разграничава „няма въпроси" от „няма база". Без това страницата
+  // хвърляше и Vercel връщаше 500 — единственият маршрут на сайта, който
+  // не се държеше прилично при недостъпна база.
+  const loaded = await loadOrExplain(() => listQuizQuestions());
+  const questions = loaded.ok ? loaded.data : [];
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
@@ -37,7 +43,9 @@ export default async function EinstufungstestPage({ params }: Props) {
       </header>
 
       <div className="mt-12">
-        {questions.length === 0 ? (
+        {!loaded.ok ? (
+          <DataUnavailable locale={locale} reason={loaded.reason} />
+        ) : questions.length === 0 ? (
           <EmptyState
             title={t.unavailableTitle}
             description={t.unavailableBody}
