@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["fra1"],
+  "regions": [
+    "fra1"
+  ],
   "framework": "nextjs",
-  "buildCommand": "prisma migrate deploy && next build --turbopack",
+  "buildCommand": "node scripts/migrate-if-configured.mjs && next build --turbopack",
   "crons": []
 }

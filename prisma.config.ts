@@ -12,15 +12,22 @@ if (existsSync(".env.local")) {
 
 const url = process.env.DATABASE_URL;
 
-// Prisma казва само „datasource.url property is required", което не
-// подсказва КЪДЕ липсва. Това съобщение казва и двата случая.
+// ПРЕДУПРЕЖДАВА, но НЕ хвърля. Причината е конкретна и я платих с един
+// провален деплой: `prisma generate` се вика от postinstall и НЕ се
+// нуждае от datasource. Ако тук се хвърли, пада целият `npm install` —
+// тоест деплоят умира преди билда, а значи и преди пазача в
+// scripts/migrate-if-configured.mjs да може да свърши работата си.
+//
+// Съобщението стои, защото Prisma казва само „datasource.url property is
+// required", което не подсказва КЪДЕ липсва.
 if (!url) {
-  throw new Error(
+  console.warn(
     "Липсва DATABASE_URL.\n" +
       "  • Локално: копирай .env.example като .env.local и го попълни.\n" +
       "  • На Vercel: Settings → Environment Variables → добави DATABASE_URL\n" +
       "    (pooled connection низът, не директният) за Production, Preview\n" +
-      "    и Development. Виж docs/ДЕПЛОЙ.md.",
+      "    и Development. Виж docs/ДЕПЛОЙ.md.\n" +
+      "  `prisma generate` работи и без него; migrate/studio — не.",
   );
 }
 
@@ -34,5 +41,8 @@ export default defineConfig({
     // променливи. На Vercel не се вика — сийдването е ръчно решение.
     seed: "tsx --env-file=.env.local prisma/seed.ts",
   },
-  datasource: { url },
+  // Подава се само когато го има. Празен низ е по-лош от липсваща
+  // стойност: Prisma го приема като валиден и гърми по-навътре, с
+  // грешка за протокол вместо за липсваща променлива.
+  ...(url ? { datasource: { url } } : {}),
 });

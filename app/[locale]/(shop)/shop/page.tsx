@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ProductCover } from "@/components/commerce/product-cover";
 import { listProducts } from "@/lib/commerce/catalog";
+import { DataUnavailable } from "@/components/content/data-unavailable";
+import { loadOrExplain } from "@/lib/db-health";
 import { formatMoney } from "@/lib/money";
 import { pick, toLocale } from "@/lib/i18n/config";
 import { shopCopy } from "@/lib/i18n/pages/shop";
@@ -18,6 +20,16 @@ import { localeAlternates } from "@/lib/i18n/alternates";
 //
 // Не е загуба за checkout-а — цената така или иначе се сверява наново от
 // базата при всяко плащане (виж lib/commerce/pricing.ts).
+
+// Данните идват от базата, а Prisma заявките НЕ се кешират като fetch —
+// без това страницата се изпича веднъж при билда и остава такава завинаги.
+// Тоест курс, добавен от админ панела, никога не се появява на сайта.
+//
+// 300 s е компромис: списъкът с курсове не се мени всеки час, а половин
+// час застояване е неприемливо за цена. Втори ефект: ако при билда база
+// е липсвала, страницата се самоизлекува 5 минути след като се появи,
+// вместо да чака нов деплой.
+export const revalidate = 300;
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -33,7 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ShopPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = shopCopy(locale).list;
-  const products = await listProducts();
+  const loaded = await loadOrExplain(() => listProducts());
+  const products = loaded.ok ? loaded.data : [];
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
@@ -46,7 +59,11 @@ export default async function ShopPage({ params }: Props) {
         <p className="mt-4 text-muted-foreground">{t.lead}</p>
       </header>
 
-      {products.length === 0 ? (
+      {!loaded.ok ? (
+        <div className="mt-12">
+          <DataUnavailable locale={locale} reason={loaded.reason} />
+        </div>
+      ) : products.length === 0 ? (
         <p className="mt-16 rounded-lg border border-border bg-card px-6 py-12 text-center text-muted-foreground">
           {t.empty}
         </p>

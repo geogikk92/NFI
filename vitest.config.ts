@@ -5,6 +5,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./", import.meta.url)),
+      // Без това нито един server-only модул не може да се тества:
+      // пакетът хвърля при внасяне. Виж test-stubs/server-only.ts.
+      "server-only": fileURLToPath(
+        new URL("./test-stubs/server-only.ts", import.meta.url),
+      ),
     },
   },
   test: {

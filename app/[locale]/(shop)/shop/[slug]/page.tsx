@@ -22,6 +22,16 @@ import { addToCartForm } from "../../actions";
 // Двете полета идват от един адрес — /de/shop/lehrbuch-a1.
 type Params = { params: Promise<{ locale: string; slug: string }> };
 
+// Данните идват от базата, а Prisma заявките НЕ се кешират като fetch —
+// без това страницата се изпича веднъж при билда и остава такава завинаги.
+// Тоест курс, добавен от админ панела, никога не се появява на сайта.
+//
+// 300 s е компромис: списъкът с курсове не се мени всеки час, а половин
+// час застояване е неприемливо за цена. Втори ефект: ако при билда база
+// е липсвала, страницата се самоизлекува 5 минути след като се появи,
+// вместо да чака нов деплой.
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale: raw, slug } = await params;
   const locale = toLocale(raw);

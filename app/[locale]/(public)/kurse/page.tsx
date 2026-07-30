@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/content/course-card";
 import { EmptyState } from "@/components/content/states";
+import { DataUnavailable } from "@/components/content/data-unavailable";
+import { loadOrExplain } from "@/lib/db-health";
 import {
   COURSE_LEVELS,
   countCoursesByLevel,
@@ -27,6 +29,16 @@ import { cn } from "@/lib/utils";
 // количката в клиентски компонент, Partial Prerendering, или кеш на
 // заявките с unstable_cache. Решението е на Боби — това е негова
 // територия и зависи от дизайна на навигацията.
+
+// Данните идват от базата, а Prisma заявките НЕ се кешират като fetch —
+// без това страницата се изпича веднъж при билда и остава такава завинаги.
+// Тоест курс, добавен от админ панела, никога не се появява на сайта.
+//
+// 300 s е компромис: списъкът с курсове не се мени всеки час, а половин
+// час застояване е неприемливо за цена. Втори ефект: ако при билда база
+// е липсвала, страницата се самоизлекува 5 минути след като се появи,
+// вместо да чака нов деплой.
+export const revalidate = 300;
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -52,12 +64,23 @@ export default async function CoursesPage({ params, searchParams }: Props) {
   const level = parseLevel(query.level);
   const format = parseFormat(query.format);
 
-  const [courses, counts] = await Promise.all([
-    listCourses({ level, format }),
-    // Броевете уважават филтъра по формат — иначе „A1 (1)" стои над нула
-    // резултата при ?format=ONLINE.
-    countCoursesByLevel({ format }),
-  ]);
+  // Разграничава „няма курсове" от „няма база": двете дават празен
+  // списък, но първото е нормално, а второто е счупен деплой.
+  const loaded = await loadOrExplain(() =>
+    Promise.all([
+      listCourses({ level, format }),
+      // Броевете уважават филтъра по формат — иначе „A1 (1)" стои над нула
+      // резултата при ?format=ONLINE.
+      countCoursesByLevel({ format }),
+    ]),
+  );
+
+  const [courses, counts] = loaded.ok
+    ? loaded.data
+    : [[], Object.fromEntries(COURSE_LEVELS.map((l) => [l, 0])) as Record<
+        (typeof COURSE_LEVELS)[number],
+        number
+      >];
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
@@ -173,7 +196,11 @@ export default async function CoursesPage({ params, searchParams }: Props) {
         {t.list.found(courses.length)}
       </p>
 
-      {courses.length === 0 ? (
+      {!loaded.ok ? (
+        <div className="mt-6">
+          <DataUnavailable locale={locale} reason={loaded.reason} />
+        </div>
+      ) : courses.length === 0 ? (
         <EmptyState
           className="mt-6"
           title={t.list.emptyTitle}
