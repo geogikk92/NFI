@@ -89,6 +89,11 @@ export function LevelTestQuiz({
       </p>
 
       <form action={action} className="mt-8">
+        {/* Езикът пътува с формата: действието пренасочва към резултата и
+            без това пресмята езика от Accept-Language, тоест немец, попълнил
+            целия тест, вижда резултата си на български. */}
+        <input type="hidden" name="locale" value={locale} />
+
         {/* Всички досегашни отговори пътуват с формуляра — точкуването е
             на сървъра, клиентът само събира избора. */}
         {Object.entries(answers).map(([questionId, optionId]) => (

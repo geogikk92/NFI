@@ -145,6 +145,7 @@ export default async function ProductPage({ params }: Params) {
 
             {/* Формуляр, не onClick — работи и без JavaScript. */}
             <form action={addToCartForm} className="mt-6">
+              <input type="hidden" name="locale" value={locale} />
               <input type="hidden" name="productId" value={product.id} />
               <input type="hidden" name="quantity" value={1} />
               <Button type="submit" className="w-full" size="lg" disabled={soldOut}>

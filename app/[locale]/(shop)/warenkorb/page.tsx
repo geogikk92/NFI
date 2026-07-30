@@ -87,6 +87,7 @@ export default async function CartPage({ params }: Props) {
                   </div>
 
                   <form action={updateCartQuantityForm} className="flex items-center gap-2">
+                    <input type="hidden" name="locale" value={locale} />
                     <input type="hidden" name="productId" value={line.productId} />
                     <label
                       htmlFor={`qty-${line.productId}`}
@@ -113,6 +114,7 @@ export default async function CartPage({ params }: Props) {
                   </p>
 
                   <form action={removeFromCartForm}>
+                    <input type="hidden" name="locale" value={locale} />
                     <input type="hidden" name="productId" value={line.productId} />
                     <Button
                       type="submit"

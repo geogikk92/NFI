@@ -70,22 +70,36 @@ export const currentUser = cache(async (): Promise<SessionUser | null> => {
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
-  const session = await db.session.findUnique({
-    where: { sessionToken: hashSessionToken(token) },
-    select: {
-      expires: true,
-      user: {
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          locale: true,
-          deletedAt: true,
+  // Заявката е в try: `currentUser()` се вика от SiteShell, тоест от
+  // обвивката на ВСЯКА публична страница. Хвърли ли тук, паднала база
+  // изкарва 500 на целия сайт — включително на Impressum и Datenschutz,
+  // които по §5 DDG трябва да са достъпни.
+  //
+  // Отказът е в посока „не е влязъл", а не „влязъл е": това е безопасната
+  // посока. Пазачът на админа тогава отказва достъп, което е правилното
+  // поведение при база, на която не може да се вярва.
+  let session;
+  try {
+    session = await db.session.findUnique({
+      where: { sessionToken: hashSessionToken(token) },
+      select: {
+        expires: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            locale: true,
+            deletedAt: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Сесията не може да се прочете (базата не отговаря):", error);
+    return null;
+  }
 
   if (!session) return null;
 

@@ -5,6 +5,8 @@
 import { redirect } from "next/navigation";
 import { answersSchema, scoreTest, type Answers } from "@/lib/cms/level-test";
 import { listQuizQuestions, saveTestResult } from "@/lib/cms/level-test-db";
+import { toLocale } from "@/lib/i18n/config";
+import { LOCALE_FIELD } from "@/lib/auth/register";
 
 /**
  * Точкува и записва, после пренасочва към резултата.
@@ -32,5 +34,9 @@ export async function submitLevelTest(formData: FormData): Promise<void> {
 
   // Резултатът се чете по id от адреса, не се носи в сесия — така линкът
   // може да се сподели и да се отвори пак.
-  redirect(`/einstufungstest/ergebnis/${saved.id}`);
+  // С езиков префикс. Без него middleware-ът преизчислява езика от
+  // Accept-Language и човек, попълнил цял тест на немски, вижда резултата
+  // си на български — виж коментара в (shop)/actions.ts.
+  const locale = toLocale(formData.get(LOCALE_FIELD));
+  redirect(`/${locale}/einstufungstest/ergebnis/${saved.id}`);
 }
