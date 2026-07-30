@@ -13,14 +13,18 @@
 // маркупът тръгва вече изчистен.
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Play, ShieldOff } from "lucide-react";
 import { readConsent } from "@/lib/consent-cookie";
 import { hasConsent, type ConsentCategory } from "@/lib/consent";
 import { Button } from "@/components/ui/button";
+import type { Locale } from "@/lib/i18n/config";
+import { consentCopy } from "@/lib/i18n/pages/consent";
 import { acceptConsentCategory } from "@/app/[locale]/(public)/consent-actions";
 
 interface ConsentGateProps {
   category: Exclude<ConsentCategory, "necessary">;
+  locale: Locale;
   /** Кой доставчик — изписва се в заместителя, за да е информирано съгласието. */
   provider: string;
   /** Заглавие на съдържанието, за заместителя. */
@@ -30,11 +34,13 @@ interface ConsentGateProps {
 
 export async function ConsentGate({
   category,
+  locale,
   provider,
   title,
   children,
 }: ConsentGateProps) {
   const consent = await readConsent();
+  const t = consentCopy(locale).gate;
 
   if (hasConsent(consent, category)) {
     return <>{children}</>;
@@ -47,12 +53,11 @@ export async function ConsentGate({
       </span>
 
       <p className="mt-4 font-medium">
-        {title ? `„${title}" ist nicht geladen` : "Inhalt nicht geladen"}
+        {title ? `„${title}“ ${t.notLoaded}` : t.notLoadedGeneric}
       </p>
 
       <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-        Dieser Inhalt kommt von {provider}. Beim Laden erhält {provider} Ihre
-        IP-Adresse. Deshalb laden wir ihn erst, wenn Sie zustimmen.
+        {t.explain(provider)}
       </p>
 
       {/* Формуляр, не onClick — работи и без JavaScript.
@@ -62,17 +67,19 @@ export async function ConsentGate({
         <input type="hidden" name="category" value={category} />
         <Button type="submit" variant="outline">
           <Play aria-hidden />
-          Laden und zustimmen
+          {t.loadAndAccept}
         </Button>
       </form>
 
       <p className="mt-3 text-xs text-muted-foreground">
-        Die Zustimmung gilt für externe Inhalte auf der gesamten Seite und
-        ist unter{" "}
-        <a href="/cookies" className="underline hover:text-primary">
-          Cookie-Einstellungen
-        </a>{" "}
-        jederzeit widerrufbar.
+        {t.revokeNote}{" "}
+        <Link
+          href={`/${locale}/cookies`}
+          className="underline hover:text-primary"
+        >
+          {t.revokeLink}
+        </Link>
+        {t.revokeTail}
       </p>
     </div>
   );

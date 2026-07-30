@@ -13,7 +13,14 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function DatenschutzPage() {
+// Езикът се приема само за да е подписът същият като на останалите
+// страници под [locale]. НЕ се ползва: текстът е немски НАРОЧНО и чака
+// юрист — преводът му би създал втора редакция, която никой не е одобрил.
+type Props = { params: Promise<{ locale: string }> };
+
+export default async function DatenschutzPage({ params }: Props) {
+  await params;
+
   return (
     <LegalPage
       title="Datenschutzerklärung"

@@ -6,6 +6,7 @@
 
 import { db } from "@/lib/db";
 import type { VatCategory } from "@/lib/legal";
+import { DEFAULT_LOCALE, pick, type Locale } from "@/lib/i18n/config";
 import {
   priceCart,
   type CartItemInput,
@@ -36,8 +37,10 @@ const PRODUCT_CARD_FIELDS = {
   slug: true,
   title: true,
   titleDe: true,
+  titleEn: true,
   description: true,
   descriptionDe: true,
+  descriptionEn: true,
   type: true,
   priceCents: true,
   vatCategory: true,
@@ -51,10 +54,13 @@ const PRODUCT_CARD_FIELDS = {
 export type ProductCard = {
   id: string;
   slug: string;
+  /** БЪЛГАРСКИ — админът въвежда на него, затова е последният резервен. */
   title: string;
   titleDe: string | null;
+  titleEn: string | null;
   description: string | null;
   descriptionDe: string | null;
+  descriptionEn: string | null;
   type: "DIGITAL" | "PHYSICAL";
   priceCents: number;
   weightGrams: number | null;
@@ -75,8 +81,10 @@ export async function listProducts(): Promise<ProductCard[]> {
     slug: row.slug,
     title: row.title,
     titleDe: row.titleDe,
+    titleEn: row.titleEn,
     description: row.description,
     descriptionDe: row.descriptionDe,
+    descriptionEn: row.descriptionEn,
     type: row.type,
     priceCents: row.priceCents,
     weightGrams: row.weightGrams,
@@ -103,8 +111,10 @@ export async function getProductBySlug(
     slug: row.slug,
     title: row.title,
     titleDe: row.titleDe,
+    titleEn: row.titleEn,
     description: row.description,
     descriptionDe: row.descriptionDe,
+    descriptionEn: row.descriptionEn,
     type: row.type,
     priceCents: row.priceCents,
     weightGrams: row.weightGrams,
@@ -120,6 +130,13 @@ export interface PriceCartFromDbInput {
   discountCode?: string | null;
   ossThresholdExceeded?: boolean;
   now?: Date;
+  /**
+   * Езикът на КЛИЕНТА. Определя на кой език излиза заглавието на реда —
+   * а то отива в OrderItem.titleSnapshot и накрая във фактурата.
+   * По подразбиране немски: клиентите са в Германия и всяко извикване
+   * отпреди многоезичието трябва да дава същия резултат.
+   */
+  locale?: Locale;
 }
 
 /**
@@ -148,6 +165,7 @@ export async function priceCartFromDb(
         id: true,
         title: true,
         titleDe: true,
+        titleEn: true,
         type: true,
         priceCents: true,
         vatCategory: true,
@@ -164,12 +182,19 @@ export async function priceCartFromDb(
       : Promise.resolve(null),
   ]);
 
+  const locale = input.locale ?? DEFAULT_LOCALE;
+
   const catalog: CatalogProduct[] = products.map((product) => ({
     id: product.id,
-    // Немското заглавие печели: клиентите са в Германия, а това заглавие
-    // отива и в OrderItem.titleSnapshot, тоест накрая във фактурата.
-    // Когато дойде превключване на езика, тук се подава locale.
-    title: product.titleDe ?? product.title,
+    // Заглавието следва езика на КЛИЕНТА, защото оттук минава в
+    // OrderItem.titleSnapshot и накрая във фактурата — фактура на език,
+    // който купувачът не чете, е негодна. При липсващ превод pick() пада
+    // на немското, после на българското (админът го въвежда винаги).
+    title: pick(locale, {
+      bg: product.title,
+      de: product.titleDe,
+      en: product.titleEn,
+    }),
     kind: product.type,
     priceCents: product.priceCents,
     vatCategory: toVatCategory(product.vatCategory),

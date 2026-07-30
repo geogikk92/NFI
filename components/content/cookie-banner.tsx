@@ -11,18 +11,23 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { Locale } from "@/lib/i18n/config";
+import { consentCopy } from "@/lib/i18n/pages/consent";
 
 interface CookieBannerProps {
+  locale: Locale;
   onAcceptAll: () => Promise<void>;
   onRejectAll: () => Promise<void>;
   onSaveSelection: (formData: FormData) => Promise<void>;
 }
 
 export function CookieBanner({
+  locale,
   onAcceptAll,
   onRejectAll,
   onSaveSelection,
 }: CookieBannerProps) {
+  const t = consentCopy(locale).banner;
   const [showDetails, setShowDetails] = useState(false);
   const firstOptionRef = useRef<HTMLButtonElement>(null);
   // Пази от кражба на фокуса при първия рендер: банерът стои последен в
@@ -45,16 +50,19 @@ export function CookieBanner({
     >
       <div className="mx-auto max-w-(--container-page) px-6 py-6">
         <h2 id="cookie-titel" className="font-display text-xl">
-          Cookies und externe Inhalte
+          {t.title}
         </h2>
 
         <p id="cookie-text" className="mt-3 max-w-prose text-sm text-muted-foreground">
-          Technisch notwendige Cookies (Sitzung, Warenkorb, diese Auswahl)
-          setzen wir immer. Externe Videos und Statistik laden wir erst mit
-          Ihrer Einwilligung — bis dahin werden sie{" "}
-          <strong>nicht geladen</strong>, nicht nur ausgeblendet.{" "}
-          <Link href="/datenschutz" className="underline hover:text-primary">
-            Datenschutzerklärung
+          {t.body} <strong>{t.bodyStrong}</strong>
+          {t.bodyTail}{" "}
+          {/* Връзката носи езика — иначе middleware пренасочва по
+              Accept-Language и човекът излиза на друг език. */}
+          <Link
+            href={`/${locale}/datenschutz`}
+            className="underline hover:text-primary"
+          >
+            {t.privacyLink}
           </Link>
         </p>
 
@@ -65,11 +73,11 @@ export function CookieBanner({
             Двата основни бутона са нарочно с еднакъв вид и тежест. */}
         <div className="mt-6 flex flex-wrap gap-3">
           <form action={onAcceptAll}>
-            <Button type="submit">Alle akzeptieren</Button>
+            <Button type="submit">{t.acceptAll}</Button>
           </form>
           <form action={onRejectAll}>
             <Button type="submit" variant="outline">
-              Alle ablehnen
+              {t.rejectAll}
             </Button>
           </form>
           <Button
@@ -82,7 +90,7 @@ export function CookieBanner({
               setShowDetails((value) => !value);
             }}
           >
-            {showDetails ? "Weniger anzeigen" : "Einstellungen"}
+            {showDetails ? t.settingsLess : t.settings}
           </Button>
         </div>
 
@@ -96,16 +104,15 @@ export function CookieBanner({
           hidden={!showDetails}
           className="mt-6"
         >
-          <div role="group" aria-label="Cookie-Kategorien" className="space-y-4">
+          <div role="group" aria-label={t.categories} className="space-y-4">
             <div className="flex items-start gap-3">
               <Checkbox id="necessary" checked disabled aria-readonly />
               <div className="grid gap-1">
                 <label htmlFor="necessary" className="text-sm font-medium">
-                  Notwendig · immer aktiv
+                  {t.necessaryLabel}
                 </label>
                 <p className="text-sm text-muted-foreground">
-                  Sitzung, Warenkorb und Ihre Cookie-Entscheidung. Ohne diese
-                  funktioniert die Seite nicht.
+                  {t.necessaryBody}
                 </p>
               </div>
             </div>
@@ -120,11 +127,10 @@ export function CookieBanner({
               />
               <div className="grid gap-1">
                 <label htmlFor="functional" className="text-sm font-medium">
-                  Externe Inhalte
+                  {t.functionalLabel}
                 </label>
                 <p className="text-sm text-muted-foreground">
-                  Videos von Vimeo und GoTo. Ohne Einwilligung erscheint an
-                  ihrer Stelle ein Platzhalter.
+                  {t.functionalBody}
                 </p>
               </div>
             </div>
@@ -133,17 +139,17 @@ export function CookieBanner({
               <Checkbox id="analytics" name="analytics" />
               <div className="grid gap-1">
                 <label htmlFor="analytics" className="text-sm font-medium">
-                  Statistik
+                  {t.analyticsLabel}
                 </label>
                 <p className="text-sm text-muted-foreground">
-                  Anonyme Auswertung, welche Seiten gelesen werden.
+                  {t.analyticsBody}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="mt-6">
-            <Button type="submit">Auswahl speichern</Button>
+            <Button type="submit">{t.save}</Button>
           </div>
         </form>
       </div>

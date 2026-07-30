@@ -13,22 +13,31 @@ import { Separator } from "@/components/ui/separator";
 import { CourseCard } from "@/components/content/course-card";
 import { CallRequestForm } from "@/components/content/call-request-form";
 import { db } from "@/lib/db";
-import { LEVELS, resultCopy, type CourseLevel } from "@/lib/cms/level-test";
+import { LEVELS, type CourseLevel } from "@/lib/cms/level-test";
 import { suggestCoursesForLevel } from "@/lib/cms/level-test-db";
-import { LEVEL_LABELS } from "@/lib/cms/courses";
-import { formatPercent } from "@/lib/intl";
+import { toLocale } from "@/lib/i18n/config";
+import { levelLabel } from "@/lib/i18n/pages/courses";
+import { levelTestCopy, testResultCopy } from "@/lib/i18n/pages/level-test";
+import { percent } from "@/lib/i18n/pages/formats";
 import { submitCallRequest } from "../../../kontakt/actions";
 
-export const metadata: Metadata = {
-  title: "Ihr Ergebnis",
-  // Личен резултат — не влиза в търсачките.
-  robots: { index: false, follow: false },
-};
+// Двете полета идват от един адрес — /de/einstufungstest/ergebnis/<id>.
+type Props = { params: Promise<{ locale: string; id: string }> };
 
-type Props = { params: Promise<{ id: string }> };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+
+  return {
+    title: levelTestCopy(toLocale(locale)).result.metaTitle,
+    // Личен резултат — не влиза в търсачките.
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function ErgebnisPage({ params }: Props) {
-  const { id } = await params;
+  const { locale: raw, id } = await params;
+  const locale = toLocale(raw);
+  const t = levelTestCopy(locale).result;
 
   const result = await db.levelTestResult.findUnique({
     where: { id },
@@ -45,7 +54,7 @@ export default async function ErgebnisPage({ params }: Props) {
   if (!result) notFound();
 
   const level = result.resultLevel as CourseLevel;
-  const copy = resultCopy(level);
+  const copy = testResultCopy(locale, level);
   const courses = await suggestCoursesForLevel(level);
   const ratio = result.maxScore > 0 ? result.score / result.maxScore : 0;
 
@@ -59,7 +68,7 @@ export default async function ErgebnisPage({ params }: Props) {
       <span className="flagline w-20" aria-hidden />
 
       <header className="mt-6">
-        <p className="kicker">Ihr Ergebnis</p>
+        <p className="kicker">{t.kicker}</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight">
           {copy.headline}
         </h1>
@@ -69,19 +78,21 @@ export default async function ErgebnisPage({ params }: Props) {
       <div className="mt-10 rounded-xl border border-border bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Eingeschätztes Niveau</p>
-            <p className="mt-1 font-display text-3xl">{LEVEL_LABELS[level]}</p>
+            <p className="text-sm text-muted-foreground">{t.estimatedLevel}</p>
+            <p className="mt-1 font-display text-3xl">
+              {levelLabel(locale, level)}
+            </p>
           </div>
           <Badge variant="secondary" className="text-base">
-            {result.score} / {result.maxScore} Punkte ·{" "}
-            {formatPercent(ratio)}
+            {t.score(result.score, result.maxScore)} ·{" "}
+            {percent(locale, ratio)}
           </Badge>
         </div>
 
         {byLevel ? (
           <>
             <Separator className="my-6" />
-            <h2 className="text-sm font-semibold">Nach Niveau</h2>
+            <h2 className="text-sm font-semibold">{t.byLevelHeading}</h2>
             <ul className="mt-4 space-y-2">
               {LEVELS.filter((item) => (byLevel[item]?.possible ?? 0) > 0).map(
                 (item) => {
@@ -102,7 +113,7 @@ export default async function ErgebnisPage({ params }: Props) {
                       </span>
                       {/* Числото е текстово, не само лента — WCAG 1.4.1. */}
                       <span className="w-24 shrink-0 text-right text-muted-foreground">
-                        {bucket.earned} von {bucket.possible}
+                        {t.outOf(bucket.earned, bucket.possible)}
                       </span>
                     </li>
                   );
@@ -113,35 +124,29 @@ export default async function ErgebnisPage({ params }: Props) {
         ) : null}
 
         <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
-          Das Ergebnis ist eine Einschätzung, keine Prüfung. Im Gespräch
-          schauen wir gemeinsam, welcher Kurs wirklich passt.
+          {t.disclaimer}
         </p>
       </div>
 
       {courses.length > 0 ? (
         <section className="mt-14" aria-labelledby="passende-kurse">
           <h2 id="passende-kurse" className="font-display text-2xl">
-            Passende Kurse
+            {t.matchingCourses}
           </h2>
           <ul className="mt-6 grid gap-6 sm:grid-cols-2">
             {courses.map((course) => (
               <li key={course.id}>
-                <CourseCard course={course} />
+                <CourseCard course={course} locale={locale} />
               </li>
             ))}
           </ul>
         </section>
       ) : (
         <section className="mt-14 rounded-xl border border-border bg-surface-sunken px-6 py-8">
-          <h2 className="font-display text-xl">
-            Für {level} ist gerade kein Kurs geplant
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            Melden Sie sich — wir finden eine Lösung, auch als
-            Einzelunterricht.
-          </p>
+          <h2 className="font-display text-xl">{t.noCourseTitle(level)}</h2>
+          <p className="mt-2 text-muted-foreground">{t.noCourseBody}</p>
           <Button asChild className="mt-5">
-            <Link href="/kurse">Alle Kurse ansehen</Link>
+            <Link href={`/${locale}/kurse`}>{t.allCourses}</Link>
           </Button>
         </section>
       )}
@@ -149,15 +154,18 @@ export default async function ErgebnisPage({ params }: Props) {
       {/* Третият източник на заявки за обаждане (LEVEL_TEST). */}
       <section className="mt-16" aria-labelledby="beratung">
         <h2 id="beratung" className="font-display text-2xl">
-          Sollen wir Sie zurückrufen?
+          {t.callbackTitle}
         </h2>
         <p className="mt-3 max-w-prose text-muted-foreground">
-          Wir gehen Ihr Ergebnis durch, klären offene Fragen und reservieren
-          Ihren Platz. Unverbindlich und ohne Zahlung.
+          {t.callbackBody}
         </p>
 
         <div className="mt-8">
-          <CallRequestForm action={submitCallRequest} source="LEVEL_TEST" />
+          <CallRequestForm
+            action={submitCallRequest}
+            source="LEVEL_TEST"
+            locale={locale}
+          />
         </div>
       </section>
     </main>

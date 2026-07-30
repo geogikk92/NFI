@@ -51,6 +51,7 @@ export async function SiteShell({
           и се обявява от четеца на всяка страница. */}
       {needsDecision(consent) ? (
         <CookieBanner
+          locale={locale}
           onAcceptAll={acceptAllCookies}
           onRejectAll={rejectAllCookies}
           onSaveSelection={saveCookieSelection}

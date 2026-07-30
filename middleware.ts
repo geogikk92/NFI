@@ -49,6 +49,14 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // Двубуквен пръв сегмент, който НЕ е наш език (/fr/kurse), е заявка за
+  // неподдържан език — не голо съдържание. Пренасочването му би дало
+  // /de/fr/kurse, тоест 404 след излишно пренасочване; търсачките броят
+  // такива вериги. По-честно е да падне веднага.
+  if (segments.length > 0 && /^[a-z]{2}(-[a-z]{2})?$/i.test(segments[0])) {
+    return NextResponse.rewrite(new URL("/404-unbekannte-sprache", request.url));
+  }
+
   // Голият път се пренасочва към предпочитания език.
   const preferred = localeFromAcceptLanguage(
     request.headers.get("accept-language"),

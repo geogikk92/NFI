@@ -8,19 +8,15 @@ import { CourseCard } from "@/components/content/course-card";
 import { EmptyState } from "@/components/content/states";
 import {
   COURSE_LEVELS,
-  LEVEL_LABELS,
   countCoursesByLevel,
   listCourses,
   parseFormat,
   parseLevel,
 } from "@/lib/cms/courses";
+import { localeAlternates } from "@/lib/i18n/alternates";
+import { toLocale } from "@/lib/i18n/config";
+import { coursesCopy, levelLabel } from "@/lib/i18n/pages/courses";
 import { cn } from "@/lib/utils";
-
-export const metadata: Metadata = {
-  title: "Kurse",
-  description:
-    "Deutschkurse von A1 bis C2 — Präsenz, Online und Hybrid. Kleine Gruppen, Prüfungsvorbereitung.",
-};
 
 // БЕЗ revalidate — той няма да подейства и само заблуждава.
 // SiteShell чете бисквитки (брояч на количката, cookie решение), а
@@ -33,15 +29,28 @@ export const metadata: Metadata = {
 // територия и зависи от дизайна на навигацията.
 
 type Props = {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{ level?: string; format?: string }>;
 };
 
-export default async function CoursesPage({ searchParams }: Props) {
-  const params = await searchParams;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = coursesCopy(toLocale(locale)).list;
+
+  return {
+    alternates: localeAlternates(toLocale(locale), "kurse"),
+    title: t.metaTitle, description: t.metaDescription };
+}
+
+export default async function CoursesPage({ params, searchParams }: Props) {
+  const locale = toLocale((await params).locale);
+  const query = await searchParams;
+  const t = coursesCopy(locale);
+
   // Непозната стойност в адреса се игнорира, вместо да гърми — адресите
   // се споделят и редактират на ръка.
-  const level = parseLevel(params.level);
-  const format = parseFormat(params.format);
+  const level = parseLevel(query.level);
+  const format = parseFormat(query.format);
 
   const [courses, counts] = await Promise.all([
     listCourses({ level, format }),
@@ -54,14 +63,11 @@ export default async function CoursesPage({ searchParams }: Props) {
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
       <header className="max-w-2xl">
         <span className="flagline w-20" aria-hidden />
-        <p className="kicker mt-6">Kurse</p>
+        <p className="kicker mt-6">{t.list.kicker}</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight">
-          Deutsch lernen in Nürnberg
+          {t.list.title}
         </h1>
-        <p className="mt-4 text-lg text-muted-foreground">
-          Von den ersten Wörtern bis zur Prüfung — in kleinen Gruppen, mit
-          Lehrkräften, die beide Sprachen kennen.
-        </p>
+        <p className="mt-4 text-lg text-muted-foreground">{t.list.lead}</p>
       </header>
 
       {/* Филтърът е връзки, не бутони: състоянието живее в адреса, значи
@@ -69,11 +75,15 @@ export default async function CoursesPage({ searchParams }: Props) {
 
           Връзките ПАЗЯТ другия филтър — иначе избор на ниво тихо изхвърля
           избрания формат и човекът вижда резултати, които не е поискал. */}
-      <nav aria-label="Nach Niveau filtern" className="mt-12">
+      <nav aria-label={t.list.filterLabel} className="mt-12">
         <ul className="flex flex-wrap gap-2">
           <li>
             <Link
-              href={format ? `/kurse?format=${format}` : "/kurse"}
+              href={
+                format
+                  ? `/${locale}/kurse?format=${format}`
+                  : `/${locale}/kurse`
+              }
               aria-current={!level ? "true" : undefined}
               className={cn(
                 "inline-flex rounded-full border px-4 py-2 text-sm font-medium transition-colors",
@@ -82,15 +92,15 @@ export default async function CoursesPage({ searchParams }: Props) {
                   : "border-border hover:bg-muted",
               )}
             >
-              Alle
+              {t.list.all}
             </Link>
           </li>
           {COURSE_LEVELS.map((item) => {
             const count = counts[item];
             const active = level === item;
             const href = format
-              ? `/kurse?level=${item}&format=${format}`
-              : `/kurse?level=${item}`;
+              ? `/${locale}/kurse?level=${item}&format=${format}`
+              : `/${locale}/kurse?level=${item}`;
 
             return (
               <li key={item}>
@@ -114,7 +124,7 @@ export default async function CoursesPage({ searchParams }: Props) {
                   <span className="text-xs opacity-70">({count})</span>
                   <span className="sr-only">
                     {" "}
-                    — {LEVEL_LABELS[item]}
+                    — {levelLabel(locale, item)}
                   </span>
                 </Link>
               </li>
@@ -126,23 +136,21 @@ export default async function CoursesPage({ searchParams }: Props) {
       {/* Броят на резултатите се обявява — иначе при филтриране екранният
           четец не разбира, че съдържанието се е сменило. */}
       <p role="status" aria-live="polite" className="mt-8 text-sm text-muted-foreground">
-        {courses.length === 1
-          ? "1 Kurs gefunden"
-          : `${courses.length} Kurse gefunden`}
+        {t.list.found(courses.length)}
       </p>
 
       {courses.length === 0 ? (
         <EmptyState
           className="mt-6"
-          title="Für dieses Niveau ist gerade kein Kurs geplant"
-          description="Melden Sie sich — wir informieren Sie, sobald ein passender Kurs startet, oder finden eine andere Lösung."
+          title={t.list.emptyTitle}
+          description={t.list.emptyBody}
           action={
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild>
-                <Link href="/kontakt">Beratung anfragen</Link>
+                <Link href={`/${locale}/kontakt`}>{t.list.emptyContact}</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/kurse">Alle Kurse zeigen</Link>
+                <Link href={`/${locale}/kurse`}>{t.list.emptyShowAll}</Link>
               </Button>
             </div>
           }
@@ -151,22 +159,19 @@ export default async function CoursesPage({ searchParams }: Props) {
         <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
             <li key={course.id}>
-              <CourseCard course={course} />
+              <CourseCard course={course} locale={locale} />
             </li>
           ))}
         </ul>
       )}
 
       <section className="mt-20 rounded-xl border border-border bg-surface-sunken px-6 py-10 text-center">
-        <h2 className="font-display text-2xl">
-          Sie wissen nicht, welches Niveau passt?
-        </h2>
+        <h2 className="font-display text-2xl">{t.list.testTitle}</h2>
         <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
-          Der Einstufungstest dauert etwa zehn Minuten und sagt Ihnen, wo Sie
-          stehen.
+          {t.list.testLead}
         </p>
         <Button asChild size="lg" className="mt-6">
-          <Link href="/einstufungstest">Zum Einstufungstest</Link>
+          <Link href={`/${locale}/einstufungstest`}>{t.list.testCta}</Link>
         </Button>
       </section>
     </main>

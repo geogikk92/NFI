@@ -14,15 +14,29 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { readConsent } from "@/lib/consent-cookie";
 import { CONSENT_VERSION } from "@/lib/consent";
-import { formatDateTime, toDateTimeAttribute } from "@/lib/intl";
+import { toDateTimeAttribute } from "@/lib/intl";
+import { localeAlternates } from "@/lib/i18n/alternates";
+import { toLocale } from "@/lib/i18n/config";
+import { cookiesCopy } from "@/lib/i18n/pages/cookies";
+import { dateTime } from "@/lib/i18n/pages/formats";
 import { rejectAllCookies, saveCookieSelection } from "../consent-actions";
 
-export const metadata: Metadata = {
-  title: "Cookie-Einstellungen",
-  robots: { index: true, follow: true },
-};
+type Props = { params: Promise<{ locale: string }> };
 
-export default async function CookieSettingsPage() {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+
+  return {
+    alternates: localeAlternates(toLocale(locale), "cookies"),
+    title: cookiesCopy(toLocale(locale)).metaTitle,
+    robots: { index: true, follow: true },
+  };
+}
+
+export default async function CookieSettingsPage({ params }: Props) {
+  const locale = toLocale((await params).locale);
+  const t = cookiesCopy(locale);
+
   const consent = await readConsent();
   const decided = consent.decidedAt ? new Date(consent.decidedAt) : null;
 
@@ -31,28 +45,22 @@ export default async function CookieSettingsPage() {
       <span className="flagline w-16" aria-hidden />
 
       <header className="mt-6 max-w-2xl">
-        <h1 className="text-4xl font-semibold tracking-tight">
-          Cookie-Einstellungen
-        </h1>
-        <p className="mt-4 text-muted-foreground">
-          Sie können Ihre Entscheidung jederzeit ändern. Externe Inhalte werden
-          ohne Ihre Einwilligung nicht geladen — nicht nur ausgeblendet.
-        </p>
+        <h1 className="text-4xl font-semibold tracking-tight">{t.title}</h1>
+        <p className="mt-4 text-muted-foreground">{t.lead}</p>
       </header>
 
       <div className="mt-10 max-w-2xl rounded-xl border border-border bg-card p-6">
         {decided ? (
           <p role="status" className="text-sm text-muted-foreground">
-            Ihre aktuelle Auswahl vom{" "}
+            {t.currentPrefix}{" "}
             <time dateTime={toDateTimeAttribute(decided)}>
-              {formatDateTime(decided)}
+              {dateTime(locale, decided)}
             </time>{" "}
-            · Textfassung {consent.version}
+            · {t.textVersion(consent.version)}
           </p>
         ) : (
           <p role="status" className="text-sm text-muted-foreground">
-            Sie haben noch keine Auswahl getroffen. Es sind nur technisch
-            notwendige Cookies aktiv.
+            {t.noSelection}
           </p>
         )}
 
@@ -60,18 +68,16 @@ export default async function CookieSettingsPage() {
 
         <form action={saveCookieSelection}>
           <fieldset className="space-y-5">
-            <legend className="sr-only">Cookie-Kategorien</legend>
+            <legend className="sr-only">{t.legend}</legend>
 
             <div className="flex items-start gap-3">
               <Checkbox id="c-necessary" checked disabled aria-readonly />
               <div className="grid gap-1">
                 <label htmlFor="c-necessary" className="font-medium">
-                  Notwendig · immer aktiv
+                  {t.necessaryLabel}
                 </label>
                 <p className="text-sm text-muted-foreground">
-                  Sitzung, Warenkorb und diese Auswahl selbst. Ohne sie
-                  funktioniert die Seite nicht, deshalb sind sie nicht
-                  abwählbar.
+                  {t.necessaryBody}
                 </p>
               </div>
             </div>
@@ -84,11 +90,10 @@ export default async function CookieSettingsPage() {
               />
               <div className="grid gap-1">
                 <label htmlFor="c-functional" className="font-medium">
-                  Externe Inhalte
+                  {t.functionalLabel}
                 </label>
                 <p className="text-sm text-muted-foreground">
-                  Videos von Vimeo und GoTo. Beim Laden erhalten diese Dienste
-                  Ihre IP-Adresse.
+                  {t.functionalBody}
                 </p>
               </div>
             </div>
@@ -101,17 +106,17 @@ export default async function CookieSettingsPage() {
               />
               <div className="grid gap-1">
                 <label htmlFor="c-analytics" className="font-medium">
-                  Statistik
+                  {t.analyticsLabel}
                 </label>
                 <p className="text-sm text-muted-foreground">
-                  Anonyme Auswertung, welche Seiten gelesen werden.
+                  {t.analyticsBody}
                 </p>
               </div>
             </div>
           </fieldset>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button type="submit">Auswahl speichern</Button>
+            <Button type="submit">{t.save}</Button>
           </div>
         </form>
 
@@ -119,15 +124,13 @@ export default async function CookieSettingsPage() {
             разчекване на три кутийки. */}
         <form action={rejectAllCookies} className="mt-3">
           <Button type="submit" variant="outline">
-            Alles ablehnen
+            {t.rejectAll}
           </Button>
         </form>
       </div>
 
       <p className="mt-8 max-w-2xl text-sm text-muted-foreground">
-        Wenn wir den Text dieser Einwilligung ändern, fragen wir erneut — Ihre
-        Zustimmung gilt immer für die Fassung, die Sie gesehen haben. Aktuelle
-        Fassung: {CONSENT_VERSION}.
+        {t.footnote(CONSENT_VERSION)}
       </p>
     </main>
   );

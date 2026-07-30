@@ -16,7 +16,14 @@ export const COURSE_LEVELS: readonly CourseLevel[] = [
   "C2",
 ];
 
-/** Немските етикети на нивата — това вижда посетителят. */
+/**
+ * Немските етикети на нивата.
+ *
+ * ОСНОВАТА, не единственият вариант: публичните страници ползват
+ * levelLabel()/formatLabel() от lib/i18n/pages/courses.ts, за да следват
+ * езика на посетителя. Тези тук остават за админа (той е на български за
+ * съдържанието, но нивата се пишат еднакво) и за тестовете.
+ */
 export const LEVEL_LABELS: Record<CourseLevel, string> = {
   A1: "A1 · Anfänger",
   A2: "A2 · Grundlagen",
@@ -33,13 +40,19 @@ export const FORMAT_LABELS: Record<CourseFormat, string> = {
   INDIVIDUAL: "Einzelunterricht",
 };
 
+// Многоезичните полета са НЕЗАДЪЛЖИТЕЛНИ нарочно: същият тип описва и
+// редове от заявки другаде (напр. suggestCoursesForLevel в
+// level-test-db.ts), които още не селектират *En колоните. pick() приема
+// undefined и пада на немското заглавие, вместо да покаже нищо.
 export interface CourseSummary {
   id: string;
   slug: string;
   title: string;
   titleDe: string | null;
+  titleEn?: string | null;
   summary: string | null;
   summaryDe: string | null;
+  summaryEn?: string | null;
   level: CourseLevel;
   format: CourseFormat;
   priceCents: number | null;
@@ -53,6 +66,7 @@ export interface CourseSummary {
 export interface CourseDetail extends CourseSummary {
   description: string | null;
   descriptionDe: string | null;
+  descriptionEn?: string | null;
   reviewCount: number;
   averageRating: number | null;
 }
@@ -62,8 +76,10 @@ const SUMMARY_FIELDS = {
   slug: true,
   title: true,
   titleDe: true,
+  titleEn: true,
   summary: true,
   summaryDe: true,
+  summaryEn: true,
   level: true,
   format: true,
   priceCents: true,
@@ -77,6 +93,8 @@ const SUMMARY_FIELDS = {
 export interface CourseFilter {
   level?: CourseLevel | null;
   format?: CourseFormat | null;
+  /** Таван на резултатите. Началната страница иска само три. */
+  take?: number;
 }
 
 /** Валидира стойност от адреса. Непознатото се игнорира, не гърми. */
@@ -106,6 +124,9 @@ export async function listCourses(
       ...(filter.format ? { format: filter.format } : {}),
     },
     orderBy: [{ sortOrder: "asc" }, { level: "asc" }],
+    // Без таван началната страница теглеше ВСИЧКИ публикувани курсове, за
+    // да покаже три.
+    ...(filter.take ? { take: filter.take } : {}),
     select: SUMMARY_FIELDS,
   });
 }
@@ -157,6 +178,7 @@ export const getCourseBySlug = cache(
         ...SUMMARY_FIELDS,
         description: true,
         descriptionDe: true,
+        descriptionEn: true,
       },
     });
 

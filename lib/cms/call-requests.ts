@@ -39,29 +39,35 @@ export const CALL_REQUEST_SOURCES = [
 
 export type CallRequestSource = (typeof CALL_REQUEST_SOURCES)[number];
 
+/**
+ * Съобщенията в схемата са КОДОВЕ, не текстове: формата е на три езика,
+ * а низ тук би бил на един. Кодовете се превеждат в
+ * lib/i18n/pages/contact-form.ts, където Record по код не пуска непълен
+ * превод.
+ */
 export const callRequestSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Bitte geben Sie Ihren Namen an.")
-    .max(120, "Der Name ist zu lang."),
+    .min(2, "name-too-short")
+    .max(120, "name-too-long"),
   email: z
     .string()
     .trim()
     .toLowerCase()
-    .email("Bitte prüfen Sie Ihre E-Mail-Adresse."),
+    .email("email-invalid"),
   // Телефонът е по желание, но заявката за ОБАЖДАНЕ без телефон е странна —
   // затова е с подсказка, не задължително.
   phone: z
     .string()
     .trim()
-    .max(40, "Die Telefonnummer ist zu lang.")
+    .max(40, "phone-too-long")
     .optional()
     .or(z.literal("")),
   message: z
     .string()
     .trim()
-    .max(2000, "Die Nachricht ist zu lang.")
+    .max(2000, "message-too-long")
     .optional()
     .or(z.literal("")),
   preferredTime: z.string().trim().max(120).optional().or(z.literal("")),

@@ -8,23 +8,35 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { AwaitingLegalText } from "@/components/content/legal-page";
+import { localeAlternates } from "@/lib/i18n/alternates";
+import { toLocale } from "@/lib/i18n/config";
+import { aboutCopy } from "@/lib/i18n/pages/about";
 
-export const metadata: Metadata = {
-  title: "Über uns",
-  description:
-    "Das Nürnberger Fremdsprachen Institut — Sprachunterricht von Lehrkräften, die beide Sprachen kennen.",
-};
+type Props = { params: Promise<{ locale: string }> };
 
-export default function UeberUnsPage() {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = aboutCopy(toLocale(locale));
+
+  return {
+    alternates: localeAlternates(toLocale(locale), "ueber-uns"),
+    title: t.metaTitle, description: t.metaDescription };
+}
+
+export default async function UeberUnsPage({ params }: Props) {
+  const locale = toLocale((await params).locale);
+  const t = aboutCopy(locale);
+
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
       <header className="max-w-2xl">
         <span className="flagline w-20" aria-hidden />
-        <p className="kicker mt-6">Über uns</p>
+        <p className="kicker mt-6">{t.kicker}</p>
         <h1 className="mt-2 text-4xl font-semibold tracking-tight">
-          Zwei Sprachen, ein Institut
+          {t.title}
         </h1>
-        {/* Двуезичността е обещанието на марката, не украса. */}
+        {/* Двуезичността е обещанието на марката, не украса — затова тези
+            два реда стоят на двата езика при всеки избран език. */}
         <div className="duo mt-6 text-lg">
           <p lang="de">
             Wir unterrichten Deutsch für Menschen, die in Deutschland ankommen
@@ -38,19 +50,21 @@ export default function UeberUnsPage() {
       </header>
 
       <div className="prose mt-14">
-        <h2>Wer wir sind</h2>
+        {/* Указанията в AwaitingLegalText са бележка към екипа, не текст за
+            посетителя — затова остават на немски. */}
+        <h2>{t.whoHeading}</h2>
         <AwaitingLegalText
           what="Geschichte des Instituts, Gründung, Selbstverständnis"
           who="der Kundin"
         />
 
-        <h2>Unsere Lehrkräfte</h2>
+        <h2>{t.teachersHeading}</h2>
         <AwaitingLegalText
           what="Vorstellung der Lehrkräfte mit Foto und Qualifikation"
           who="der Kundin"
         />
 
-        <h2>Wie wir unterrichten</h2>
+        <h2>{t.methodHeading}</h2>
         <AwaitingLegalText
           what="Methodik, Gruppengrößen, Materialien"
           who="der Kundin"
@@ -58,17 +72,14 @@ export default function UeberUnsPage() {
       </div>
 
       <section className="mt-20 rounded-xl border border-border bg-surface-sunken px-6 py-10">
-        <h2 className="font-display text-2xl">Lernen Sie uns kennen</h2>
-        <p className="mt-3 max-w-prose text-muted-foreground">
-          Der schnellste Weg ist ein Gespräch. Wir klären Ihr Niveau und sagen
-          offen, ob wir die Richtigen für Sie sind.
-        </p>
+        <h2 className="font-display text-2xl">{t.ctaTitle}</h2>
+        <p className="mt-3 max-w-prose text-muted-foreground">{t.ctaBody}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <Link href="/kontakt">Beratung anfragen</Link>
+            <Link href={`/${locale}/kontakt`}>{t.ctaContact}</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href="/einstufungstest">Niveau testen</Link>
+            <Link href={`/${locale}/einstufungstest`}>{t.ctaTest}</Link>
           </Button>
         </div>
       </section>

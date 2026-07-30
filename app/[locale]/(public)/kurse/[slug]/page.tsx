@@ -8,55 +8,79 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CourseCard } from "@/components/content/course-card";
-import {
-  FORMAT_LABELS,
-  LEVEL_LABELS,
-  getCourseBySlug,
-  listRelatedCourses,
-} from "@/lib/cms/courses";
-import {
-  formatCourseDuration,
-  formatDateLong,
-  formatNumber,
-  toDateTimeAttribute,
-} from "@/lib/intl";
+import { getCourseBySlug, listRelatedCourses } from "@/lib/cms/courses";
+import { toDateTimeAttribute } from "@/lib/intl";
 import { formatMoney } from "@/lib/money";
+import { pick, toLocale } from "@/lib/i18n/config";
+import {
+  courseDuration,
+  coursesCopy,
+  formatLabel,
+  levelLabel,
+} from "@/lib/i18n/pages/courses";
+import { dateLong, decimal, moneyTag } from "@/lib/i18n/pages/formats";
 
-type Props = { params: Promise<{ slug: string }> };
+// Двете полета идват от един и същ адрес — /de/kurse/a1-abendkurs.
+type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale: raw, slug } = await params;
+  const locale = toLocale(raw);
   const course = await getCourseBySlug(slug);
 
-  if (!course) return { title: "Kurs nicht gefunden" };
+  if (!course) return { title: coursesCopy(locale).detail.notFound };
 
   return {
-    title: course.titleDe ?? course.title,
-    description: course.summaryDe ?? course.summary ?? undefined,
+    title: pick(locale, {
+      bg: course.title,
+      de: course.titleDe,
+      en: course.titleEn,
+    }),
+    description:
+      pick(locale, {
+        bg: course.summary,
+        de: course.summaryDe,
+        en: course.summaryEn,
+      }) || undefined,
   };
 }
 
 export default async function CoursePage({ params }: Props) {
-  const { slug } = await params;
+  const { locale: raw, slug } = await params;
+  const locale = toLocale(raw);
   const course = await getCourseBySlug(slug);
 
   if (!course) notFound();
 
   const related = await listRelatedCourses(course);
+  const t = coursesCopy(locale).detail;
 
-  const title = course.titleDe ?? course.title;
-  const summary = course.summaryDe ?? course.summary;
-  const description = course.descriptionDe ?? course.description;
-  const duration = formatCourseDuration(
+  const title = pick(locale, {
+    bg: course.title,
+    de: course.titleDe,
+    en: course.titleEn,
+  });
+  const summary = pick(locale, {
+    bg: course.summary,
+    de: course.summaryDe,
+    en: course.summaryEn,
+  });
+  const description = pick(locale, {
+    bg: course.description,
+    de: course.descriptionDe,
+    en: course.descriptionEn,
+  });
+  const duration = courseDuration(
+    locale,
     course.durationWeeks,
     course.hoursPerWeek,
   );
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
-      <nav aria-label="Brotkrumen" className="text-sm text-muted-foreground">
-        <Link href="/kurse" className="hover:text-primary">
-          Kurse
+      <nav aria-label={t.breadcrumb} className="text-sm text-muted-foreground">
+        <Link href={`/${locale}/kurse`} className="hover:text-primary">
+          {t.coursesLink}
         </Link>
         <span aria-hidden> / </span>
         <span aria-current="page">{title}</span>
@@ -67,8 +91,8 @@ export default async function CoursePage({ params }: Props) {
           <span className="flagline w-16" aria-hidden />
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">{LEVEL_LABELS[course.level]}</Badge>
-            <Badge variant="outline">{FORMAT_LABELS[course.format]}</Badge>
+            <Badge variant="secondary">{levelLabel(locale, course.level)}</Badge>
+            <Badge variant="outline">{formatLabel(locale, course.format)}</Badge>
           </div>
 
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">{title}</h1>
@@ -91,15 +115,16 @@ export default async function CoursePage({ params }: Props) {
           {course.reviewCount > 0 && course.averageRating !== null ? (
             <section className="mt-12" aria-labelledby="bewertungen">
               <h2 id="bewertungen" className="font-display text-2xl">
-                Bewertungen
+                {t.reviewsHeading}
               </h2>
               <p className="mt-3 text-muted-foreground">
-                {formatNumber(course.averageRating, "de", {
-                  minimumFractionDigits: 1,
-                  maximumFractionDigits: 1,
-                })}{" "}
-                von 5 · {course.reviewCount}{" "}
-                {course.reviewCount === 1 ? "Bewertung" : "Bewertungen"}
+                {t.reviews(
+                  decimal(locale, course.averageRating, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }),
+                  course.reviewCount,
+                )}
               </p>
             </section>
           ) : null}
@@ -110,48 +135,50 @@ export default async function CoursePage({ params }: Props) {
             {course.priceCents !== null ? (
               <>
                 <p className="text-3xl font-semibold">
-                  {formatMoney(course.priceCents)}
+                  {formatMoney(course.priceCents, moneyTag(locale))}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  inkl. MwSt. · gesamter Kurs
+                  {t.priceNote}
                 </p>
               </>
             ) : (
-              <p className="text-xl font-semibold">Preis auf Anfrage</p>
+              <p className="text-xl font-semibold">{t.priceOnRequest}</p>
             )}
 
             <Separator className="my-6" />
 
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Niveau</dt>
-                <dd className="text-right">{LEVEL_LABELS[course.level]}</dd>
+                <dt className="text-muted-foreground">{t.level}</dt>
+                <dd className="text-right">{levelLabel(locale, course.level)}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Format</dt>
-                <dd className="text-right">{FORMAT_LABELS[course.format]}</dd>
+                <dt className="text-muted-foreground">{t.format}</dt>
+                <dd className="text-right">
+                  {formatLabel(locale, course.format)}
+                </dd>
               </div>
               {duration ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Umfang</dt>
+                  <dt className="text-muted-foreground">{t.scope}</dt>
                   <dd className="text-right">{duration}</dd>
                 </div>
               ) : null}
               {course.startsAt ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Start</dt>
+                  <dt className="text-muted-foreground">{t.start}</dt>
                   <dd className="text-right">
                     <time dateTime={toDateTimeAttribute(course.startsAt)}>
-                      {formatDateLong(course.startsAt)}
+                      {dateLong(locale, course.startsAt)}
                     </time>
                   </dd>
                 </div>
               ) : null}
               {course.maxParticipants ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Gruppengröße</dt>
+                  <dt className="text-muted-foreground">{t.groupSize}</dt>
                   <dd className="text-right">
-                    max. {course.maxParticipants}
+                    {t.maxParticipants(course.maxParticipants)}
                   </dd>
                 </div>
               ) : null}
@@ -160,14 +187,13 @@ export default async function CoursePage({ params }: Props) {
             {/* Записването минава през заявка за обаждане (задача 5), не
                 през количката — курсът иска разговор преди плащане. */}
             <Button asChild className="mt-6 w-full" size="lg">
-              <Link href={`/kontakt?kurs=${course.slug}`}>
-                Beratung anfragen
+              <Link href={`/${locale}/kontakt?kurs=${course.slug}`}>
+                {t.cta}
               </Link>
             </Button>
 
             <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              Wir rufen Sie zurück, klären Ihr Niveau und reservieren Ihren
-              Platz. Keine Zahlung an dieser Stelle.
+              {t.ctaNote}
             </p>
           </div>
         </aside>
@@ -176,12 +202,12 @@ export default async function CoursePage({ params }: Props) {
       {related.length > 0 ? (
         <section className="mt-24" aria-labelledby="weitere">
           <h2 id="weitere" className="font-display text-2xl">
-            Weitere Kurse auf {course.level}
+            {t.related(course.level)}
           </h2>
           <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((item) => (
               <li key={item.id}>
-                <CourseCard course={item} />
+                <CourseCard course={item} locale={locale} />
               </li>
             ))}
           </ul>

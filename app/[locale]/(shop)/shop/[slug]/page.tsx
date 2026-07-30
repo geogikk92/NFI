@@ -2,7 +2,8 @@
 //
 // Информацията над бутона е правно изискване, не оформление: §312j Abs. 3
 // BGB иска основните характеристики, общата цена с ДДС и разходите за
-// доставка да са видими непосредствено преди поръчката.
+// доставка да са видими непосредствено преди поръчката. Изискването важи
+// и за преведените версии — затова текстовете са пълни и на трите езика.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,37 +14,62 @@ import { Separator } from "@/components/ui/separator";
 import { getProductBySlug } from "@/lib/commerce/catalog";
 import { formatMoney } from "@/lib/money";
 import { WITHDRAWAL_PERIOD_DAYS } from "@/lib/legal";
+import { pick, toLocale } from "@/lib/i18n/config";
+import { shopCopy } from "@/lib/i18n/pages/shop";
+import { moneyTag } from "@/lib/i18n/pages/formats";
 import { addToCartForm } from "../../actions";
 
-type Params = { params: Promise<{ slug: string }> };
+// Двете полета идват от един адрес — /de/shop/lehrbuch-a1.
+type Params = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale: raw, slug } = await params;
+  const locale = toLocale(raw);
   const product = await getProductBySlug(slug);
 
-  if (!product) return { title: "Produkt nicht gefunden" };
+  if (!product) return { title: shopCopy(locale).product.notFound };
 
   return {
-    title: product.titleDe ?? product.title,
-    description: product.descriptionDe ?? product.description ?? undefined,
+    title: pick(locale, {
+      bg: product.title,
+      de: product.titleDe,
+      en: product.titleEn,
+    }),
+    description:
+      pick(locale, {
+        bg: product.description,
+        de: product.descriptionDe,
+        en: product.descriptionEn,
+      }) || undefined,
   };
 }
 
 export default async function ProductPage({ params }: Params) {
-  const { slug } = await params;
+  const { locale: raw, slug } = await params;
+  const locale = toLocale(raw);
   const product = await getProductBySlug(slug);
 
   if (!product) notFound();
 
+  const t = shopCopy(locale).product;
   const isDigital = product.type === "DIGITAL";
   const soldOut = product.stock !== null && product.stock <= 0;
-  const title = product.titleDe ?? product.title;
+  const title = pick(locale, {
+    bg: product.title,
+    de: product.titleDe,
+    en: product.titleEn,
+  });
+  const description = pick(locale, {
+    bg: product.description,
+    de: product.descriptionDe,
+    en: product.descriptionEn,
+  });
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
-      <nav aria-label="Brotkrumen" className="text-sm text-muted-foreground">
-        <Link href="/shop" className="hover:text-primary">
-          Shop
+      <nav aria-label={t.breadcrumb} className="text-sm text-muted-foreground">
+        <Link href={`/${locale}/shop`} className="hover:text-primary">
+          {t.shopLink}
         </Link>
         <span aria-hidden> / </span>
         <span aria-current="page">{title}</span>
@@ -56,22 +82,22 @@ export default async function ProductPage({ params }: Params) {
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Badge variant={isDigital ? "secondary" : "outline"}>
-              {isDigital ? "Sofort-Download" : "Versand"}
+              {isDigital ? t.badgeInstantDownload : t.badgeShipping}
             </Badge>
             {product.weightGrams ? (
               <Badge variant="outline">{product.weightGrams} g</Badge>
             ) : null}
           </div>
 
-          {product.descriptionDe || product.description ? (
+          {description ? (
             <p className="mt-8 max-w-prose text-lg leading-relaxed">
-              {product.descriptionDe ?? product.description}
+              {description}
             </p>
           ) : null}
 
           {product.files.length > 0 ? (
             <section className="mt-10">
-              <h2 className="text-sm font-semibold">Enthaltene Dateien</h2>
+              <h2 className="text-sm font-semibold">{t.filesHeading}</h2>
               <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
                 {product.files.map((file) => (
                   <li key={file.label}>{file.label}</li>
@@ -85,35 +111,35 @@ export default async function ProductPage({ params }: Params) {
         <aside className="lg:sticky lg:top-8 lg:self-start">
           <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <p className="text-3xl font-semibold">
-              {formatMoney(product.priceCents)}
+              {formatMoney(product.priceCents, moneyTag(locale))}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              inkl. MwSt.
-              {isDigital
-                ? " · keine Versandkosten"
-                : " · zzgl. Versand, wird im Warenkorb berechnet"}
+              {t.vatNote} ·{" "}
+              {isDigital ? t.shippingFree : t.shippingCalculated}
             </p>
 
             <Separator className="my-6" />
 
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Lieferung</dt>
+                <dt className="text-muted-foreground">{t.delivery}</dt>
                 <dd className="text-right">
-                  {isDigital ? "sofort per Download" : "2–4 Werktage"}
+                  {isDigital ? t.deliveryDigital : t.deliveryPhysical}
                 </dd>
               </div>
               {product.stock !== null ? (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Verfügbarkeit</dt>
+                  <dt className="text-muted-foreground">{t.availability}</dt>
                   <dd className="text-right">
-                    {soldOut ? "ausverkauft" : `${product.stock} auf Lager`}
+                    {soldOut ? t.soldOut : t.inStock(product.stock)}
                   </dd>
                 </div>
               ) : null}
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Widerrufsrecht</dt>
-                <dd className="text-right">{WITHDRAWAL_PERIOD_DAYS} Tage</dd>
+                <dt className="text-muted-foreground">{t.withdrawal}</dt>
+                <dd className="text-right">
+                  {t.withdrawalDays(WITHDRAWAL_PERIOD_DAYS)}
+                </dd>
               </div>
             </dl>
 
@@ -122,16 +148,13 @@ export default async function ProductPage({ params }: Params) {
               <input type="hidden" name="productId" value={product.id} />
               <input type="hidden" name="quantity" value={1} />
               <Button type="submit" className="w-full" size="lg" disabled={soldOut}>
-                {soldOut ? "Ausverkauft" : "In den Warenkorb"}
+                {soldOut ? t.soldOutButton : t.addToCart}
               </Button>
             </form>
 
             {isDigital ? (
               <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                Bei digitalen Inhalten erlischt das Widerrufsrecht, sobald Sie
-                dem sofortigen Beginn der Ausführung ausdrücklich zustimmen und
-                den Verlust bestätigen. Die Zustimmung wird im Bestellvorgang
-                eingeholt.
+                {t.digitalWithdrawalNote}
               </p>
             ) : null}
           </div>

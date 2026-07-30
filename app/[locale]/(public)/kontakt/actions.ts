@@ -9,6 +9,11 @@ import {
   callRequestSchema,
   checkSpam,
 } from "@/lib/cms/call-requests";
+import { toLocale } from "@/lib/i18n/config";
+import {
+  contactFormCopy,
+  translateFieldError,
+} from "@/lib/i18n/pages/contact-form";
 import {
   createCallRequest,
   isRateLimited,
@@ -16,6 +21,8 @@ import {
 
 export interface CallRequestFormState {
   status: "idle" | "success" | "error";
+  /** Ключ от result-таблицата, не готов текст — формата го превежда. */
+  messageKey?: keyof ReturnType<typeof contactFormCopy>["result"];
   /** Съобщения по поле — формата ги показва до съответния вход. */
   fieldErrors?: Record<string, string>;
   message?: string;
@@ -54,6 +61,11 @@ export async function submitCallRequest(
     source: String(formData.get("source") ?? "CONTACT_PAGE"),
   };
 
+  // Езикът пътува със формуляра: server action не вижда params на
+  // страницата, а съобщенията трябва да са на езика, на който човекът чете.
+  const locale = toLocale(formData.get("locale"));
+  const t = contactFormCopy(locale).result;
+
   const parsed = callRequestSchema.safeParse(raw);
 
   if (!parsed.success) {
@@ -62,12 +74,15 @@ export async function submitCallRequest(
       const key = String(issue.path[0] ?? "form");
       // Първата грешка за поле е достатъчна — стек от съобщения върху
       // едно поле е шум.
-      if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+      // issue.message е КОД от схемата — превежда се тук.
+      if (!fieldErrors[key]) {
+        fieldErrors[key] = translateFieldError(locale, issue.message);
+      }
     }
     return {
       status: "error",
       fieldErrors,
-      message: "Bitte prüfen Sie die markierten Felder.",
+      message: t.checkFields,
       values: raw,
     };
   }
@@ -78,9 +93,7 @@ export async function submitCallRequest(
   if (await isRateLimited(ip)) {
     return {
       status: "error",
-      message:
-        "Wir haben in der letzten Stunde mehrere Anfragen von Ihnen erhalten. " +
-        "Bitte rufen Sie uns direkt an oder versuchen Sie es später.",
+      message: t.rateLimited,
       values: raw,
     };
   }
@@ -106,8 +119,7 @@ export async function submitCallRequest(
   } catch {
     return {
       status: "error",
-      message:
-        "Die Anfrage konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+      message: t.saveFailed,
       values: raw,
     };
   }
@@ -121,8 +133,6 @@ export async function submitCallRequest(
   // Жоро, още mock) — нарочно не се вика тук, за да не гърми формата.
   return {
     status: "success",
-    message:
-      "Danke! Wir melden uns innerhalb eines Werktags bei Ihnen. " +
-      "Bei dringenden Fragen erreichen Sie uns telefonisch.",
+    message: t.successBody,
   };
 }

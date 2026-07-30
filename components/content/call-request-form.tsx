@@ -1,7 +1,6 @@
 "use client";
 
-// ТЕРИТОРИЯ НА БОБИ · задача 5 — формата за заявка за обаждане.
-// Писано от Жоро, докато Боби е в отпуск.
+// Формата за заявка за обаждане · задача 5.
 //
 // Достъпност (правно задължение от 28.06.2025):
 //   • всяко поле има <label>, не placeholder вместо етикет;
@@ -11,14 +10,15 @@
 //   • резултатът се обявява през role="status" / role="alert".
 
 import { useActionState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { HONEYPOT_FIELD } from "@/lib/cms/call-requests";
-import type {
-  CallRequestFormState,
-} from "@/app/[locale]/(public)/kontakt/actions";
+import type { Locale } from "@/lib/i18n/config";
+import { contactFormCopy } from "@/lib/i18n/pages/contact-form";
+import type { CallRequestFormState } from "@/app/[locale]/(public)/kontakt/actions";
 
 interface CallRequestFormProps {
   action: (
@@ -26,6 +26,7 @@ interface CallRequestFormProps {
     formData: FormData,
   ) => Promise<CallRequestFormState>;
   source: "COURSE_PAGE" | "CONTACT_PAGE" | "LEVEL_TEST";
+  locale: Locale;
   /** Предварително избран курс. */
   courseId?: string;
   courseTitle?: string;
@@ -36,11 +37,14 @@ const INITIAL: CallRequestFormState = { status: "idle" };
 export function CallRequestForm({
   action,
   source,
+  locale,
   courseId,
   courseTitle,
 }: CallRequestFormProps) {
   const [state, formAction, pending] = useActionState(action, INITIAL);
   const summaryRef = useRef<HTMLDivElement>(null);
+  const copy = contactFormCopy(locale);
+  const t = copy.labels;
 
   // Фокусът отива на съобщението — иначе човек с екранен четец не разбира
   // какво е станало след изпращането.
@@ -56,7 +60,7 @@ export function CallRequestForm({
         role="status"
         className="rounded-xl border border-success/40 bg-success/5 px-6 py-8"
       >
-        <p className="font-medium text-success">Anfrage erhalten</p>
+        <p className="font-medium text-success">{copy.result.successTitle}</p>
         <p className="mt-2 text-sm text-muted-foreground">{state.message}</p>
       </div>
     );
@@ -68,6 +72,9 @@ export function CallRequestForm({
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="source" value={source} />
+      {/* Езикът пътува със формуляра: server action не вижда params на
+          страницата, а съобщенията трябва да са на езика на четящия. */}
+      <input type="hidden" name="locale" value={locale} />
       {courseId ? (
         <input type="hidden" name="courseId" value={courseId} />
       ) : null}
@@ -101,15 +108,15 @@ export function CallRequestForm({
 
       {courseTitle ? (
         <p className="rounded-lg bg-muted px-4 py-3 text-sm">
-          Ihre Anfrage bezieht sich auf: <strong>{courseTitle}</strong>
+          {t.courseContext} <strong>{courseTitle}</strong>
         </p>
       ) : null}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="name">
-            Name <span aria-hidden className="text-destructive">*</span>
-            <span className="sr-only">(Pflichtfeld)</span>
+            {t.name} <span aria-hidden className="text-destructive">*</span>
+            <span className="sr-only">({t.required})</span>
           </Label>
           <Input
             id="name"
@@ -129,8 +136,8 @@ export function CallRequestForm({
 
         <div className="grid gap-2">
           <Label htmlFor="email">
-            E-Mail <span aria-hidden className="text-destructive">*</span>
-            <span className="sr-only">(Pflichtfeld)</span>
+            {t.email} <span aria-hidden className="text-destructive">*</span>
+            <span className="sr-only">({t.required})</span>
           </Label>
           <Input
             id="email"
@@ -150,7 +157,7 @@ export function CallRequestForm({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="phone">Telefon</Label>
+          <Label htmlFor="phone">{t.phone}</Label>
           <Input
             id="phone"
             name="phone"
@@ -160,12 +167,12 @@ export function CallRequestForm({
             aria-describedby="phone-hint"
           />
           <p id="phone-hint" className="text-xs text-muted-foreground">
-            Für einen Rückruf — sonst antworten wir per E-Mail.
+            {t.phoneHint}
           </p>
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="preferredTime">Wann passt es Ihnen?</Label>
+          <Label htmlFor="preferredTime">{t.preferredTime}</Label>
           <Input
             id="preferredTime"
             name="preferredTime"
@@ -173,13 +180,13 @@ export function CallRequestForm({
             aria-describedby="time-hint"
           />
           <p id="time-hint" className="text-xs text-muted-foreground">
-            z.&nbsp;B. &bdquo;vormittags&ldquo; oder &bdquo;nach 18 Uhr&ldquo;
+            {t.timeHint}
           </p>
         </div>
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="message">Ihre Nachricht</Label>
+        <Label htmlFor="message">{t.message}</Label>
         <Textarea
           id="message"
           name="message"
@@ -196,15 +203,20 @@ export function CallRequestForm({
       </div>
 
       <Button type="submit" size="lg" disabled={pending}>
-        {pending ? "Wird gesendet…" : "Rückruf anfragen"}
+        {pending ? t.pending : t.submit}
       </Button>
 
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Wir verwenden Ihre Angaben ausschließlich, um Ihre Anfrage zu
-        bearbeiten. Mehr dazu in der{" "}
-        <a href="/datenschutz" className="underline hover:text-primary">
-          Datenschutzerklärung
-        </a>
+        {t.privacyNote}{" "}
+        {/* Link, не <a>: вътрешна навигация без презареждане, и връзката
+            носи езика — иначе middleware пренасочва по Accept-Language и
+            човекът излиза на друг език. */}
+        <Link
+          href={`/${locale}/datenschutz`}
+          className="underline hover:text-primary"
+        >
+          {t.privacyLink}
+        </Link>
         .
       </p>
     </form>

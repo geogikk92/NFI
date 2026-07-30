@@ -1,21 +1,44 @@
 // ТЕРИТОРИЯ НА БОБИ · задача 4.
 // Писано от Жоро, докато Боби е в отпуск.
+//
+// Езикът се подава отвън, не се разчита тук: картата стои в списъци,
+// които вече знаят локала, а второ разчитане би се разминало с адреса.
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { formatCourseDuration, formatDate, toDateTimeAttribute } from "@/lib/intl";
+import { toDateTimeAttribute } from "@/lib/intl";
 import { formatMoney } from "@/lib/money";
+// Само тип — стойност оттук би довлякла Prisma до всеки, който внесе картата.
+import type { CourseSummary } from "@/lib/cms/courses";
+import { pick, type Locale } from "@/lib/i18n/config";
 import {
-  FORMAT_LABELS,
-  LEVEL_LABELS,
-  type CourseSummary,
-} from "@/lib/cms/courses";
+  courseDuration,
+  coursesCopy,
+  formatLabel,
+  levelLabel,
+} from "@/lib/i18n/pages/courses";
+import { dateShort, moneyTag } from "@/lib/i18n/pages/formats";
 
-export function CourseCard({ course }: { course: CourseSummary }) {
-  const title = course.titleDe ?? course.title;
-  const summary = course.summaryDe ?? course.summary;
-  const duration = formatCourseDuration(
+interface CourseCardProps {
+  course: CourseSummary;
+  locale: Locale;
+}
+
+export function CourseCard({ course, locale }: CourseCardProps) {
+  const t = coursesCopy(locale).card;
+  const title = pick(locale, {
+    bg: course.title,
+    de: course.titleDe,
+    en: course.titleEn,
+  });
+  const summary = pick(locale, {
+    bg: course.summary,
+    de: course.summaryDe,
+    en: course.summaryEn,
+  });
+  const duration = courseDuration(
+    locale,
     course.durationWeeks,
     course.hoursPerWeek,
   );
@@ -24,15 +47,15 @@ export function CourseCard({ course }: { course: CourseSummary }) {
     <Card className="group relative flex h-full flex-col transition-shadow hover:shadow-md">
       <CardContent className="flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{LEVEL_LABELS[course.level]}</Badge>
-          <Badge variant="outline">{FORMAT_LABELS[course.format]}</Badge>
+          <Badge variant="secondary">{levelLabel(locale, course.level)}</Badge>
+          <Badge variant="outline">{formatLabel(locale, course.format)}</Badge>
         </div>
 
         <h3 className="mt-4 font-display text-xl leading-snug">
           {/* Цялата карта е кликаема, но връзката е една — иначе екранният
               четец обявява един и същ адрес по три пъти. */}
           <Link
-            href={`/kurse/${course.slug}`}
+            href={`/${locale}/kurse/${course.slug}`}
             className="after:absolute after:inset-0 group-hover:text-primary"
           >
             {title}
@@ -48,17 +71,17 @@ export function CourseCard({ course }: { course: CourseSummary }) {
         <dl className="mt-5 space-y-1.5 text-sm">
           {duration ? (
             <div className="flex gap-2">
-              <dt className="text-muted-foreground">Umfang:</dt>
+              <dt className="text-muted-foreground">{t.scope}</dt>
               <dd>{duration}</dd>
             </div>
           ) : null}
 
           {course.startsAt ? (
             <div className="flex gap-2">
-              <dt className="text-muted-foreground">Start:</dt>
+              <dt className="text-muted-foreground">{t.start}</dt>
               <dd>
                 <time dateTime={toDateTimeAttribute(course.startsAt)}>
-                  {formatDate(course.startsAt)}
+                  {dateShort(locale, course.startsAt)}
                 </time>
               </dd>
             </div>
@@ -66,8 +89,8 @@ export function CourseCard({ course }: { course: CourseSummary }) {
 
           {course.maxParticipants ? (
             <div className="flex gap-2">
-              <dt className="text-muted-foreground">Gruppe:</dt>
-              <dd>max. {course.maxParticipants} Teilnehmende</dd>
+              <dt className="text-muted-foreground">{t.group}</dt>
+              <dd>{t.groupValue(course.maxParticipants)}</dd>
             </div>
           ) : null}
         </dl>
@@ -77,14 +100,12 @@ export function CourseCard({ course }: { course: CourseSummary }) {
         {course.priceCents !== null ? (
           <div>
             <p className="text-lg font-semibold">
-              {formatMoney(course.priceCents)}
+              {formatMoney(course.priceCents, moneyTag(locale))}
             </p>
-            <p className="text-xs text-muted-foreground">
-              inkl. MwSt. · gesamter Kurs
-            </p>
+            <p className="text-xs text-muted-foreground">{t.priceNote}</p>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Preis auf Anfrage</p>
+          <p className="text-sm text-muted-foreground">{t.priceOnRequest}</p>
         )}
       </CardFooter>
     </Card>
