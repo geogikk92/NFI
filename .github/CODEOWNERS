@@ -8,9 +8,6 @@
 # ║  водят в docs/ЗА-БОБИ.md.                                             ║
 # ╚═══════════════════════════════════════════════════════════════════════╝
 #
-# ⚠️  ПЪРВА РАБОТА: замени ЖОРО-GITHUB с истинския му GitHub username (и на двата реда).
-#     Докато не го направиш, GitHub игнорира тези правила.
-#
 # Тук се изброяват САМО общите файлове. Личните територии нарочно ги няма —
 # ако бяха тук, GitHub щеше да иска чуждо одобрение за всеки твой PR
 # (човек не може да одобри собствения си PR) и щяхте да се блокирате взаимно.
@@ -23,23 +20,23 @@
 # замразеният файл е app/tokens.css, а app/globals.css остава свободна
 # територия на Боби.
 
-/prisma/schema/base.prisma    @BorisGudev @ЖОРО-GITHUB
-/app/layout.tsx               @BorisGudev @ЖОРО-GITHUB
-/app/tokens.css               @BorisGudev @ЖОРО-GITHUB
-/components/ui/               @BorisGudev @ЖОРО-GITHUB
+/prisma/schema/base.prisma    @BorisGudev @geogikk92
+/app/layout.tsx               @BorisGudev @geogikk92
+/app/tokens.css               @BorisGudev @geogikk92
+/components/ui/               @BorisGudev @geogikk92
 
 # Общи помощни модули — и двамата ги викат от ден 1.
-/lib/db.ts                    @BorisGudev @ЖОРО-GITHUB
-/lib/money.ts                 @BorisGudev @ЖОРО-GITHUB
-/lib/counter.ts               @BorisGudev @ЖОРО-GITHUB
+/lib/db.ts                    @BorisGudev @geogikk92
+/lib/money.ts                 @BorisGudev @geogikk92
+/lib/counter.ts               @BorisGudev @geogikk92
 
 # Конфигурация
-/package.json                 @BorisGudev @ЖОРО-GITHUB
-/prisma.config.ts             @BorisGudev @ЖОРО-GITHUB
-/components.json              @BorisGudev @ЖОРО-GITHUB
-/next.config.ts               @BorisGudev @ЖОРО-GITHUB
-/.env.example                 @BorisGudev @ЖОРО-GITHUB
-/.github/CODEOWNERS           @BorisGudev @ЖОРО-GITHUB
+/package.json                 @BorisGudev @geogikk92
+/prisma.config.ts             @BorisGudev @geogikk92
+/components.json              @BorisGudev @geogikk92
+/next.config.ts               @BorisGudev @geogikk92
+/.env.example                 @BorisGudev @geogikk92
+/.github/CODEOWNERS           @BorisGudev @geogikk92
 
 # Разпределението на териториите (за справка, не се налага от GitHub):
 #
