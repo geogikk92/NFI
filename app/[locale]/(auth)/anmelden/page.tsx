@@ -6,10 +6,12 @@
 // предупрежденията.
 
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LoginForm } from "@/components/content/login-form";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { toLocale } from "@/lib/i18n/config";
+import { currentUser } from "@/lib/auth/session-db";
 import { signInWithPassword } from "./actions";
 
 type Props = {
@@ -31,6 +33,13 @@ export default async function LoginPage({ params }: Props) {
   const { locale: rawLocale } = await params;
   const locale = toLocale(rawLocale);
   const t = getDictionary(locale);
+
+  // Влезлият човек няма работа тук: форма за вход, показана на вече влязъл,
+  // изглежда като че ли сесията му се е загубила, и той въвежда паролата си
+  // втори път без нужда.
+  if (await currentUser()) {
+    redirect(`/${locale}/profil`);
+  }
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">

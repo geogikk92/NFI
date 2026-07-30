@@ -7,7 +7,7 @@
 
 import { redirect } from "next/navigation";
 import { destroySession } from "@/lib/auth/session-db";
-import { DEFAULT_LOCALE } from "@/lib/i18n/config";
+import { DEFAULT_LOCALE, toLocale } from "@/lib/i18n/config";
 
 /**
  * Изход.
@@ -17,7 +17,15 @@ import { DEFAULT_LOCALE } from "@/lib/i18n/config";
  * някой предварително такава връзка (антивирус, четец, Safari), човекът
  * излиза без да е поискал.
  */
-export async function signOut(): Promise<never> {
+export async function signOut(formData?: FormData): Promise<never> {
   await destroySession();
-  redirect(`/${DEFAULT_LOCALE}`);
+
+  // Езикът идва от скрито поле във формата. Без него немски посетител
+  // излиза и се озовава на българската начална страница — дребно, но
+  // изглежда като счупен сайт.
+  //
+  // `toLocale` пази от подправена стойност: полето идва от браузъра,
+  // тоест може да е каквото и да е.
+  const locale = formData ? toLocale(formData.get("locale")) : DEFAULT_LOCALE;
+  redirect(`/${locale}`);
 }

@@ -155,6 +155,7 @@ export function SiteNav({
                 {account.label}
               </Link>
               <form action={onSignOut}>
+                <input type="hidden" name="locale" value={locale} />
                 <Button type="submit" variant="ghost" size="sm">
                   {t.nav.signOut}
                 </Button>
@@ -253,6 +254,7 @@ export function SiteNav({
                     </span>
                   </p>
                   <form action={onSignOut} className="mt-2">
+                    <input type="hidden" name="locale" value={locale} />
                     <Button
                       type="submit"
                       variant="outline"

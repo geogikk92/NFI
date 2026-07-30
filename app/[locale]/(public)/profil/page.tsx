@@ -189,6 +189,7 @@ export default async function AccountPage({ params }: Props) {
         </section>
 
         <form action={signOut} className="mt-12">
+          <input type="hidden" name="locale" value={locale} />
           <Button type="submit" variant="outline">
             {t.signOut}
           </Button>
