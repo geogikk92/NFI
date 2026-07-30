@@ -25,7 +25,8 @@
     "e2e:vhod": "node e2e/vhod.mjs",
     "e2e:registraciya": "node e2e/registraciya.mjs",
     "e2e:profil": "node e2e/profil.mjs",
-    "e2e:ezik": "node e2e/ezik.mjs"
+    "e2e:ezik": "node e2e/ezik.mjs",
+    "e2e:kursove": "node e2e/kursove.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

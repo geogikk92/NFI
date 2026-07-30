@@ -1,7 +1,12 @@
 // АДМИН · задача 17a — заявките към базата за админ панела.
 //
-// Всичко тук е ЧЕТЕНЕ. Панелът още не пише — статусите на заявките ще се
-// сменят със server actions в следваща задача, за да има и одитна следа.
+// Всичко тук е ЧЕТЕНЕ, плюс българските етикети на изброимите.
+//
+// Писането живее в отделен модул на всеки обект — lib/admin/courses.ts и
+// нататък — защото всяка промяна минава през транзакция с одитна следа
+// (lib/admin/audit.ts) и това е друг вид код. Етикетите обаче остават тук:
+// списъкът и формата показват едни и същи думи, а два отделни списъка се
+// разминават след първата промяна.
 //
 // Броевете се смятат в БАЗАТА (count/groupBy), не в паметта. Иначе таблото
 // тегли всички заявки, за да покаже пет числа.
@@ -84,12 +89,47 @@ export const SUBSCRIBER_STATUS_LABELS: Record<SubscriberStatus, string> = {
   BOUNCED: "Недоставим",
 };
 
+/** Възходящо по трудност — редът, в който ги мисли и преподавателят. */
+export const COURSE_LEVELS: readonly CourseLevel[] = [
+  "A1",
+  "A2",
+  "B1",
+  "B2",
+  "C1",
+  "C2",
+];
+
+export const COURSE_FORMATS: readonly CourseFormat[] = [
+  "ONLINE",
+  "PRESENCE",
+  "HYBRID",
+  "INDIVIDUAL",
+];
+
 export const COURSE_FORMAT_LABELS_BG: Record<CourseFormat, string> = {
   ONLINE: "Онлайн",
   PRESENCE: "Присъствено",
   HYBRID: "Хибридно",
   INDIVIDUAL: "Индивидуално",
 };
+
+/**
+ * Готови списъци за падащите менюта.
+ *
+ * Извеждат се от изброимите отгоре, а не се преписват: втори ръчен списък
+ * се разминава с първия при първото добавено ниво и тогава формата просто
+ * не показва новото — без грешка и без следа.
+ */
+export const COURSE_LEVEL_OPTIONS = COURSE_LEVELS.map((level) => ({
+  value: level,
+  // Нивото Е етикетът си: „A1" не се превежда и всеки преподавател го чете.
+  label: level,
+}));
+
+export const COURSE_FORMAT_OPTIONS = COURSE_FORMATS.map((format) => ({
+  value: format,
+  label: COURSE_FORMAT_LABELS_BG[format],
+}));
 
 /**
  * Валидира статус от адреса.
