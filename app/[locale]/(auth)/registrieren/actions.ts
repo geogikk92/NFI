@@ -20,6 +20,7 @@ import { createRegistration } from "@/lib/auth/register-db";
 // Защитата от ботове е вече написана за формата за обаждане и е чист модул —
 // няма причина да се пише втори път.
 import { HONEYPOT_FIELD, checkSpam } from "@/lib/cms/call-requests";
+import { RATE_ACTIONS, RATE_LIMITS, isOverLimit, recordEvent } from "@/lib/rate-limit-db";
 
 export interface RegisterFormState {
   status: "idle" | "success" | "error";
@@ -97,13 +98,35 @@ export async function registerAccount(
     return { status: "success", message: t.auth.verifySent };
   }
 
-  const store = await headers();
+  const [store, ip] = await Promise.all([headers(), clientIp()]);
+
+  // Ограничението е ПРЕДИ createRegistration, тоест преди scrypt.
+  //
+  // Досега единствената защита беше checkSpam — honeypot плюс минимално
+  // време за попълване. И двете са изцяло на страната на клиента и се
+  // заобикалят с един ред: не пращаш полето-примамка и слагаш renderedAt
+  // отпреди пет секунди. А всяка заявка струва ~80 ms процесор (scrypt при
+  // N=16384) и записва User + VerificationToken + два ConsentLog реда.
+  //
+  // Отговорът е СЪЩИЯТ като при успех. Различен отговор би казал на
+  // нападателя кога е уцелил границата — а и човек, стигнал дотук по
+  // погрешка, няма какво да направи с тази информация.
+  if (await isOverLimit(RATE_LIMITS.register, ip)) {
+    console.warn(`[registrieren] Надхвърлен лимит по IP, locale=${locale}`);
+    return { status: "success", message: t.auth.verifySent };
+  }
 
   try {
     await createRegistration(validation.data, {
-      ip: await clientIp(),
+      ip,
       userAgent: store.get("user-agent"),
       locale,
+    });
+    // Брои се СЛЕД успешния запис: заявка, която е паднала, не бива да
+    // изразходва лимита на човека.
+    await recordEvent(RATE_ACTIONS.register, {
+      ip,
+      userAgent: store.get("user-agent"),
     });
   } catch {
     return {
