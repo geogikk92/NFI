@@ -168,6 +168,17 @@ export const VAT_CATEGORY_HINTS: Record<VatCategory, string> = {
     "Има човешки труд, затова НЕ е електронна услуга и никога не минава през OSS.",
 };
 
+// ── Промоции ─────────────────────────────────────────────────────────────
+
+export type DiscountKind = "PERCENT" | "FIXED";
+
+export const DISCOUNT_KINDS: readonly DiscountKind[] = ["PERCENT", "FIXED"];
+
+export const DISCOUNT_KIND_LABELS: Record<DiscountKind, string> = {
+  PERCENT: "Процент от поръчката",
+  FIXED: "Фиксирана сума",
+};
+
 export const COVER_COLORS: readonly CoverColor[] = [
   "INK",
   "RED",
@@ -213,6 +224,11 @@ export const VAT_CATEGORY_OPTIONS = VAT_CATEGORIES.map((category) => ({
 export const COVER_COLOR_OPTIONS = COVER_COLORS.map((color) => ({
   value: color,
   label: COVER_COLOR_LABELS[color],
+}));
+
+export const DISCOUNT_KIND_OPTIONS = DISCOUNT_KINDS.map((kind) => ({
+  value: kind,
+  label: DISCOUNT_KIND_LABELS[kind],
 }));
 
 /**
@@ -384,6 +400,43 @@ export async function listAdminProducts(): Promise<AdminProduct[]> {
       published: true,
       publishedAt: true,
       sortOrder: true,
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Промоции
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface AdminDiscount {
+  id: string;
+  code: string;
+  kind: DiscountKind;
+  /** PERCENT: процент. FIXED: ЦЕНТОВЕ. Едно поле, две единици. */
+  value: number;
+  minOrderCents: number | null;
+  maxRedemptions: number | null;
+  redemptions: number;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  active: boolean;
+}
+
+export async function listAdminDiscounts(): Promise<AdminDiscount[]> {
+  return db.discount.findMany({
+    // Най-новите отгоре: промоцията е нещо, което се прави и следи сега.
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      code: true,
+      kind: true,
+      value: true,
+      minOrderCents: true,
+      maxRedemptions: true,
+      redemptions: true,
+      startsAt: true,
+      endsAt: true,
+      active: true,
     },
   });
 }

@@ -42,7 +42,10 @@ const SECTIONS: readonly NavSection[] = [
   {
     id: "admin-nav-magazin",
     title: "Магазин",
-    items: [{ href: "/admin/produkti", label: "Продукти" }],
+    items: [
+      { href: "/admin/produkti", label: "Продукти" },
+      { href: "/admin/promocii", label: "Промоции" },
+    ],
   },
 ];
 
