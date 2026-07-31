@@ -6,9 +6,11 @@
 // requireAdmin(): пазачът в layout-а НЕ стои между заявката и server
 // action-а, а забравена проверка тук значи отворен запис за целия интернет.
 //
-// И тук няма revalidatePath — причината е измерена и записана в
-// app/admin/kursove/actions.ts.
+// За обезсилването виж дългия коментар в app/admin/kursove/actions.ts:
+// НЕ трябва при навигация, но ТРЯБВА при запис без смяна на страница —
+// иначе формата показва данните отпреди записа под надпис „записано".
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/guard";
 import { auditMeta } from "@/lib/admin/audit";
@@ -91,6 +93,9 @@ export async function saveProduct(
   if (createdId) {
     redirect(`/admin/produkti/${createdId}?sazdaden=1`);
   }
+
+  revalidatePath("/admin/produkti/[id]", "page");
+  revalidatePath("/admin/produkti");
 
   return { status: "success", message: "Промените са записани." };
 }

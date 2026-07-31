@@ -444,6 +444,122 @@ async function seedDiscounts() {
   });
 }
 
+/**
+ * Примерни заявки за превод.
+ *
+ * Съществуват, защото публичната форма за подаване още я няма (тя чака
+ * хранилището — виж lib/storage/index.ts), а екранът в админа трябва да
+ * може да се види и тества. Изтрий ги, щом тръгнат истинските заявки.
+ *
+ * Данните са ЯВНО измислени: имена от учебник, домейн „example.com".
+ * Заявка за превод носи дипломи и актове за раждане — примерът не бива да
+ * прилича на истински човек, дори по случайност.
+ *
+ * Номерата НЕ минават през Counter: броячът е за фактури и сертификати,
+ * където дупка в поредицата е счетоводен проблем. Тук стойността е само
+ * за показване, а фиксираните номера правят сийда идемпотентен.
+ */
+async function seedTranslations() {
+  const day = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  const requests = [
+    {
+      number: "NFI-P-2026-000001",
+      accessToken: "seed-token-primerna-zayavka-001",
+      name: "Мария Иванова",
+      email: "maria.example@example.com",
+      phone: "+49 151 0000001",
+      sourceLang: "bg",
+      targetLang: "de",
+      certified: true,
+      status: "SUBMITTED" as const,
+      notes: null,
+      createdAt: new Date(now - 2 * day),
+      // Три месеца след подаването — примерен срок, докато не се уточни
+      // истинският в docs/ПРАВНИ-ИЗИСКВАНИЯ.md.
+      purgeAfter: new Date(now + 88 * day),
+      documents: [
+        { filename: "diploma-bakalavar.pdf", mimeType: "application/pdf", sizeBytes: 842_000, pages: 2, isSource: true },
+        { filename: "prilozhenie-otsenki.pdf", mimeType: "application/pdf", sizeBytes: 1_240_000, pages: 4, isSource: true },
+      ],
+    },
+    {
+      number: "NFI-P-2026-000002",
+      accessToken: "seed-token-primerna-zayavka-002",
+      name: "Петър Georgiev",
+      email: "petar.example@example.com",
+      phone: null,
+      sourceLang: "bg",
+      targetLang: "de",
+      certified: true,
+      status: "QUOTED" as const,
+      quotedCents: 8_500,
+      quotedVatRate: "20.00",
+      quotedAt: new Date(now - 5 * day),
+      quoteExpiresAt: new Date(now + 9 * day),
+      notes: "Клиентът пита дали може да получи и хартиено копие по пощата.",
+      createdAt: new Date(now - 9 * day),
+      purgeAfter: new Date(now + 81 * day),
+      documents: [
+        { filename: "akt-za-razhdane.pdf", mimeType: "application/pdf", sizeBytes: 410_000, pages: 1, isSource: true },
+      ],
+    },
+    {
+      number: "NFI-P-2026-000003",
+      accessToken: "seed-token-primerna-zayavka-003",
+      name: "Anna Schmidt",
+      email: "anna.example@example.com",
+      phone: "+49 151 0000003",
+      sourceLang: "de",
+      targetLang: "bg",
+      certified: false,
+      status: "DELIVERED" as const,
+      quotedCents: 12_000,
+      quotedVatRate: "20.00",
+      quotedAt: new Date(now - 40 * day),
+      quoteExpiresAt: new Date(now - 26 * day),
+      deliveredAt: new Date(now - 20 * day),
+      notes: null,
+      createdAt: new Date(now - 45 * day),
+      // Просрочен НАРОЧНО: така екранът показва и предупреждението за
+      // изтекъл срок, без да се чака истинска заявка да го докара.
+      purgeAfter: new Date(now - 3 * day),
+      documents: [
+        { filename: "arbeitszeugnis.pdf", mimeType: "application/pdf", sizeBytes: 302_000, pages: 1, isSource: true },
+        { filename: "arbeitszeugnis-prevod.pdf", mimeType: "application/pdf", sizeBytes: 318_000, pages: 1, isSource: false },
+      ],
+    },
+  ];
+
+  for (const { documents, ...request } of requests) {
+    const existing = await db.translationRequest.findUnique({
+      where: { number: request.number },
+      select: { id: true },
+    });
+
+    if (existing) continue;
+
+    await db.translationRequest.create({
+      data: {
+        ...request,
+        documents: {
+          create: documents.map((doc, index) => ({
+            isSource: doc.isSource,
+            filename: doc.filename,
+            // Ключът сочи в хранилище, което още го няма. Записва се, за да
+            // има какво да намери реализацията, щом дойде.
+            storageKey: `translation/${request.number}/${index}-${doc.filename}`,
+            mimeType: doc.mimeType,
+            sizeBytes: doc.sizeBytes,
+            pages: doc.pages,
+          })),
+        },
+      },
+    });
+  }
+}
+
 async function seedPages() {
   const pages = [
     { slug: "home", title: "Начало" },
@@ -501,6 +617,7 @@ async function main() {
   await seedLevelTest();
   await seedShipping();
   await seedDiscounts();
+  await seedTranslations();
   await seedPages();
 
   const counts = {
@@ -510,6 +627,7 @@ async function main() {
     "зони за доставка": await db.shippingZone.count(),
     отстъпки: await db.discount.count(),
     "въпроси в теста": await db.levelTestQuestion.count(),
+    "заявки за превод": await db.translationRequest.count(),
     страници: await db.page.count(),
   };
 

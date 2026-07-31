@@ -179,6 +179,53 @@ export const DISCOUNT_KIND_LABELS: Record<DiscountKind, string> = {
   FIXED: "Фиксирана сума",
 };
 
+// ── Преводи ──────────────────────────────────────────────────────────────
+
+export type TranslationStatus =
+  | "SUBMITTED"
+  | "UNDER_REVIEW"
+  | "QUOTED"
+  | "QUOTE_ACCEPTED"
+  | "QUOTE_DECLINED"
+  | "IN_PROGRESS"
+  | "READY"
+  | "DELIVERED"
+  | "CANCELLED";
+
+/** Редът е работният път на заявката, затова не е азбучен. */
+export const TRANSLATION_STATUSES: readonly TranslationStatus[] = [
+  "SUBMITTED",
+  "UNDER_REVIEW",
+  "QUOTED",
+  "QUOTE_ACCEPTED",
+  "QUOTE_DECLINED",
+  "IN_PROGRESS",
+  "READY",
+  "DELIVERED",
+  "CANCELLED",
+];
+
+export const TRANSLATION_STATUS_LABELS: Record<TranslationStatus, string> = {
+  SUBMITTED: "Получена",
+  UNDER_REVIEW: "В преглед",
+  QUOTED: "Изпратена оферта",
+  QUOTE_ACCEPTED: "Офертата е приета",
+  QUOTE_DECLINED: "Офертата е отказана",
+  IN_PROGRESS: "В превод",
+  READY: "Готова",
+  DELIVERED: "Предадена",
+  CANCELLED: "Отказана",
+};
+
+/** Кои състояния значат, че заявката още чака някого от нас. */
+export const TRANSLATION_OPEN_STATUSES: readonly TranslationStatus[] = [
+  "SUBMITTED",
+  "UNDER_REVIEW",
+  "QUOTE_ACCEPTED",
+  "IN_PROGRESS",
+  "READY",
+];
+
 export const COVER_COLORS: readonly CoverColor[] = [
   "INK",
   "RED",
@@ -229,6 +276,11 @@ export const COVER_COLOR_OPTIONS = COVER_COLORS.map((color) => ({
 export const DISCOUNT_KIND_OPTIONS = DISCOUNT_KINDS.map((kind) => ({
   value: kind,
   label: DISCOUNT_KIND_LABELS[kind],
+}));
+
+export const TRANSLATION_STATUS_OPTIONS = TRANSLATION_STATUSES.map((status) => ({
+  value: status,
+  label: TRANSLATION_STATUS_LABELS[status],
 }));
 
 /**
@@ -439,6 +491,88 @@ export async function listAdminDiscounts(): Promise<AdminDiscount[]> {
       active: true,
     },
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Заявки за превод
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface AdminTranslation {
+  id: string;
+  number: string;
+  name: string;
+  email: string;
+  sourceLang: string;
+  targetLang: string;
+  certified: boolean;
+  status: TranslationStatus;
+  quotedCents: number | null;
+  /** GDPR: след този момент документите се трият от cron-а за срокове. */
+  purgeAfter: Date | null;
+  createdAt: Date;
+  documentCount: number;
+}
+
+/** Горна граница на един изглед — както при заявките за обаждане. */
+export const TRANSLATION_LIMIT = 200;
+
+export async function listTranslations(
+  options: { status?: TranslationStatus | null } = {},
+): Promise<AdminTranslation[]> {
+  const rows = await db.translationRequest.findMany({
+    where: options.status ? { status: options.status } : {},
+    // Най-новите първо: заявката за превод е спешна за клиента.
+    orderBy: { createdAt: "desc" },
+    take: TRANSLATION_LIMIT,
+    select: {
+      id: true,
+      number: true,
+      name: true,
+      email: true,
+      sourceLang: true,
+      targetLang: true,
+      certified: true,
+      status: true,
+      quotedCents: true,
+      purgeAfter: true,
+      createdAt: true,
+      _count: { select: { documents: true } },
+    },
+  });
+
+  return rows.map(({ _count, ...row }) => ({
+    ...row,
+    documentCount: _count.documents,
+  })) as AdminTranslation[];
+}
+
+/** Броевете за филтъра. Един groupBy вместо девет count заявки. */
+export async function countTranslationsByStatus(): Promise<
+  Record<TranslationStatus, number>
+> {
+  const rows = await db.translationRequest.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
+
+  const counts = Object.fromEntries(
+    TRANSLATION_STATUSES.map((status) => [status, 0]),
+  ) as Record<TranslationStatus, number>;
+
+  for (const row of rows) {
+    counts[row.status as TranslationStatus] = row._count._all;
+  }
+
+  return counts;
+}
+
+export function parseTranslationStatus(
+  value: unknown,
+): TranslationStatus | null {
+  return typeof value === "string" &&
+    Object.hasOwn(TRANSLATION_STATUS_LABELS, value)
+    ? (value as TranslationStatus)
+    : null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

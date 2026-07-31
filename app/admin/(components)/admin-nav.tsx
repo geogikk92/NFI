@@ -47,6 +47,11 @@ const SECTIONS: readonly NavSection[] = [
       { href: "/admin/promocii", label: "Промоции" },
     ],
   },
+  {
+    id: "admin-nav-uslugi",
+    title: "Услуги",
+    items: [{ href: "/admin/prevodi", label: "Преводи" }],
+  },
 ];
 
 /**

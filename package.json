@@ -28,7 +28,8 @@
     "e2e:ezik": "node e2e/ezik.mjs",
     "e2e:kursove": "node e2e/kursove.mjs",
     "e2e:produkti": "node e2e/produkti.mjs",
-    "e2e:promocii": "node e2e/promocii.mjs"
+    "e2e:promocii": "node e2e/promocii.mjs",
+    "e2e:prevodi": "node e2e/prevodi.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

@@ -9,6 +9,7 @@
 // пари. Затова изключването е отделно действие, което работи и когато
 // нещо друго в записа е невалидно.
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/guard";
 import { auditMeta } from "@/lib/admin/audit";
@@ -88,6 +89,10 @@ export async function saveDiscount(
   if (createdId) {
     redirect(`/admin/promocii/${createdId}?sazdadena=1`);
   }
+
+  // Виж коментара за обезсилването в app/admin/kursove/actions.ts.
+  revalidatePath("/admin/promocii/[id]", "page");
+  revalidatePath("/admin/promocii");
 
   return { status: "success", message: "Промените са записани." };
 }

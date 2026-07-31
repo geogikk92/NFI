@@ -243,6 +243,13 @@ try {
     "смяната към дигитален минава",
     (await page.textContent("body")).includes("Промените са записани"),
   );
+  // Потвърждението трябва да стои над ЗАПИСАНОТО. Без обезсилване формата
+  // се връща към данните отпреди записа и надписът изглежда като лъжа.
+  check(
+    "полето показва ЗАПИСАНИЯ вид, не стария",
+    (await page.inputValue("#f-type")) === "DIGITAL",
+    (await page.inputValue("#f-type")) || "празно",
+  );
 
   await page.goto(`${BASE}/admin/produkti`, { waitUntil: "domcontentloaded" });
   const after = await page.locator("tr", { hasText: TITLE_BG }).locator("td").allTextContents();
