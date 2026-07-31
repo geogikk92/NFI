@@ -32,3 +32,20 @@ export const COURSE_LIMITS = {
   maxParticipants: 500,
   sortOrder: 9_999,
 } as const;
+
+export const PRODUCT_LIMITS = {
+  title: 200,
+  description: 20_000,
+  /** 30 кг е горницата за обикновена пратка. Над това не се приема онлайн. */
+  weightGrams: 30_000,
+  stock: 100_000,
+  sortOrder: 9_999,
+  // ── Типографската корица ──────────────────────────────────────────
+  // Числата идват от РИСУВАНЕТО, не от базата: корицата се мащабира с
+  // container queries (.cover в globals.css) и по-дълъг текст не се
+  // свива, а излиза извън цветния блок.
+  coverBrand: 40,
+  coverEyebrow: 30,
+  coverTitle: 60,
+  coverMeta: 40,
+} as const;

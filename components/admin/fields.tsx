@@ -263,6 +263,15 @@ interface SelectFieldProps extends BaseProps {
   options: readonly SelectOption[];
   /** Първи ред „—", когато празното е допустима стойност. */
   placeholder?: string;
+  /**
+   * Известява формата за смяна на избора.
+   *
+   * Нужно е, когато ИЗБОРЪТ УПРАВЛЯВА ОСТАНАЛОТО: видът на продукта решава
+   * дали изобщо да се питат тегло и наличност, а цветът на корицата се
+   * вижда веднага в предварителния изглед. Стойността си остава тук —
+   * формата само я наблюдава.
+   */
+  onValueChange?: (value: string) => void;
 }
 
 /**
@@ -278,6 +287,7 @@ export function SelectField({
   defaultValue,
   options,
   placeholder,
+  onValueChange,
   ...base
 }: SelectFieldProps) {
   const { control } = ids(base.name);
@@ -309,7 +319,10 @@ export function SelectField({
         id={control}
         name={base.name}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value);
+          onValueChange?.(event.target.value);
+        }}
         aria-invalid={base.error ? true : undefined}
         aria-describedby={describedBy(base.name, {
           hasHint: Boolean(base.hint),

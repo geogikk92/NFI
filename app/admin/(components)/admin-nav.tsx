@@ -23,8 +23,8 @@ interface NavSection {
 }
 
 // ПРАВИЛО: тук влиза само СЪЩЕСТВУВАЩА страница. Връзка към ненаправен
-// екран е 404 и е по-лоша от липсваща връзка. Чакат: продукти и поръчки
-// (17b), материали и рецензии (17c), CMS страниците (17d).
+// екран е 404 и е по-лоша от липсваща връзка. Чакат: поръчки, материали и
+// рецензии (17c), CMS страниците (17d).
 const SECTIONS: readonly NavSection[] = [
   {
     id: "admin-nav-obshto",
@@ -38,6 +38,11 @@ const SECTIONS: readonly NavSection[] = [
       { href: "/admin/anketi", label: "Заявки за обаждане" },
       { href: "/admin/kursove", label: "Курсове" },
     ],
+  },
+  {
+    id: "admin-nav-magazin",
+    title: "Магазин",
+    items: [{ href: "/admin/produkti", label: "Продукти" }],
   },
 ];
 

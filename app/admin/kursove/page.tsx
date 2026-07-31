@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/content/states";
+import { Flash, commonFlashErrors } from "@/components/admin/flash";
 import { requireAdmin } from "@/lib/admin/guard";
 import {
   COURSE_FORMAT_LABELS_BG,
@@ -22,23 +23,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/**
- * Съобщенията след действие идват през адреса.
- *
- * Причината е в самото действие: превключването на публикуването е по един
- * бутон на ред, а отделно състояние за всеки ред би означавало клиентски
- * компонент около всяка клетка на таблицата.
- */
-const FLASH: Record<string, { text: string; bad?: boolean }> = {
-  publikuvan: { text: "Курсът е публикуван и вече се вижда на сайта." },
-  skrit: { text: "Курсът е скрит от сайта." },
-  iztrit: { text: "Курсът е изтрит." },
-  sazdaden: { text: "Курсът е създаден." },
-};
-
-const FLASH_ERRORS: Record<string, string> = {
-  nyama: "Курсът вече не съществува — някой го е изтрил междувременно.",
-  baza: "Промяната не мина заради грешка в базата. Опитай пак.",
+const FLASH = {
+  publikuvan: "Курсът е публикуван и вече се вижда на сайта.",
+  skrit: "Курсът е скрит от сайта.",
+  iztrit: "Курсът е изтрит.",
+  sazdaden: "Курсът е създаден.",
 };
 
 type Props = {
@@ -51,17 +40,6 @@ export default async function AdminCoursesPage({ searchParams }: Props) {
   const query = await searchParams;
   const courses = await listAdminCourses();
   const published = courses.filter((course) => course.published).length;
-
-  // `Object.hasOwn`, не `query.greshka in FLASH_ERRORS`: операторът `in`
-  // обхожда прототипната верига и „?greshka=toString" би минал за валиден
-  // ключ. Същият капан вече е поправян два пъти в този проект.
-  const errorKey = String(query.greshka ?? "");
-  const errorFlash = Object.hasOwn(FLASH_ERRORS, errorKey)
-    ? FLASH_ERRORS[errorKey]
-    : null;
-
-  const okKey = Object.keys(FLASH).find((key) => query[key] !== undefined);
-  const okFlash = okKey ? FLASH[okKey] : null;
 
   return (
     <>
@@ -80,23 +58,11 @@ export default async function AdminCoursesPage({ searchParams }: Props) {
         </Button>
       </header>
 
-      {errorFlash ? (
-        <p
-          role="alert"
-          className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
-          {errorFlash}
-        </p>
-      ) : null}
-
-      {okFlash ? (
-        <p
-          role="status"
-          className="mt-6 rounded-lg border border-success/40 bg-success/5 px-4 py-3 text-sm"
-        >
-          {okFlash.text}
-        </p>
-      ) : null}
+      <Flash
+        query={query}
+        success={FLASH}
+        errors={commonFlashErrors("Курсът")}
+      />
 
       {courses.length === 0 ? (
         <EmptyState

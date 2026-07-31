@@ -113,6 +113,75 @@ export const COURSE_FORMAT_LABELS_BG: Record<CourseFormat, string> = {
   INDIVIDUAL: "Индивидуално",
 };
 
+// ── Продукти ─────────────────────────────────────────────────────────────
+
+export type ProductType = "DIGITAL" | "PHYSICAL";
+
+export type VatCategory =
+  | "EDUCATION"
+  | "ELECTRONIC"
+  | "GOODS"
+  | "TRANSLATION";
+
+export type CoverColor = "INK" | "RED" | "GREEN" | "GOLD";
+
+export const PRODUCT_TYPES: readonly ProductType[] = ["DIGITAL", "PHYSICAL"];
+
+export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
+  DIGITAL: "Дигитален (за сваляне)",
+  PHYSICAL: "Физически (за доставка)",
+};
+
+export const VAT_CATEGORIES: readonly VatCategory[] = [
+  "EDUCATION",
+  "ELECTRONIC",
+  "GOODS",
+  "TRANSLATION",
+];
+
+/**
+ * ДДС категорията НЕ следва вида на продукта и точно това бърка всички.
+ *
+ * Онлайн курс на живо и записан видеокурс са и двата „дигитални", но само
+ * вторият е електронна услуга и минава през OSS — тоест се облага по
+ * държавата на КУПУВАЧА над прага от 10 000 €. Заверен превод има човешки
+ * труд и никога не минава през OSS, колкото и голям да е оборотът.
+ *
+ * Затова етикетите обясняват, а не само назовават: сгрешена категория се
+ * вижда чак пред счетоводителя. Правилата са в lib/legal/index.ts.
+ */
+export const VAT_CATEGORY_LABELS: Record<VatCategory, string> = {
+  EDUCATION: "Обучение — курс с преподавател",
+  ELECTRONIC: "Електронна услуга — PDF, видео, автоматично сваляне",
+  GOODS: "Стока — нещо, което се изпраща",
+  TRANSLATION: "Заверен превод",
+};
+
+export const VAT_CATEGORY_HINTS: Record<VatCategory, string> = {
+  EDUCATION:
+    "Присъствен или онлайн на живо. Облага се по седалището на NFI, не по държавата на курсиста.",
+  ELECTRONIC:
+    "Записано съдържание без човешка намеса при доставката. Минава през OSS над 10 000 € оборот — тогава ставката е на държавата на купувача.",
+  GOODS:
+    "Учебник, тетрадка, всичко с тегло. Също минава през OSS над прага.",
+  TRANSLATION:
+    "Има човешки труд, затова НЕ е електронна услуга и никога не минава през OSS.",
+};
+
+export const COVER_COLORS: readonly CoverColor[] = [
+  "INK",
+  "RED",
+  "GREEN",
+  "GOLD",
+];
+
+export const COVER_COLOR_LABELS: Record<CoverColor, string> = {
+  INK: "Мастилено синьо",
+  RED: "Червено",
+  GREEN: "Зелено",
+  GOLD: "Златисто",
+};
+
 /**
  * Готови списъци за падащите менюта.
  *
@@ -129,6 +198,21 @@ export const COURSE_LEVEL_OPTIONS = COURSE_LEVELS.map((level) => ({
 export const COURSE_FORMAT_OPTIONS = COURSE_FORMATS.map((format) => ({
   value: format,
   label: COURSE_FORMAT_LABELS_BG[format],
+}));
+
+export const PRODUCT_TYPE_OPTIONS = PRODUCT_TYPES.map((type) => ({
+  value: type,
+  label: PRODUCT_TYPE_LABELS[type],
+}));
+
+export const VAT_CATEGORY_OPTIONS = VAT_CATEGORIES.map((category) => ({
+  value: category,
+  label: VAT_CATEGORY_LABELS[category],
+}));
+
+export const COVER_COLOR_OPTIONS = COVER_COLORS.map((color) => ({
+  value: color,
+  label: COVER_COLOR_LABELS[color],
 }));
 
 /**
@@ -256,6 +340,49 @@ export async function listAdminCourses(): Promise<AdminCourse[]> {
       published: true,
       publishedAt: true,
       startsAt: true,
+      sortOrder: true,
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Продукти
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface AdminProduct {
+  id: string;
+  slug: string;
+  title: string;
+  titleDe: string | null;
+  type: ProductType;
+  vatCategory: VatCategory;
+  priceCents: number;
+  currency: string;
+  stock: number | null;
+  published: boolean;
+  publishedAt: Date | null;
+  sortOrder: number;
+}
+
+/**
+ * ВСИЧКИ продукти, включително непубликуваните — разликата с
+ * lib/commerce/catalog.ts, който вижда само публикуваните.
+ */
+export async function listAdminProducts(): Promise<AdminProduct[]> {
+  return db.product.findMany({
+    orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      titleDe: true,
+      type: true,
+      vatCategory: true,
+      priceCents: true,
+      currency: true,
+      stock: true,
+      published: true,
+      publishedAt: true,
       sortOrder: true,
     },
   });

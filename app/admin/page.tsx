@@ -162,12 +162,18 @@ export default async function AdminDashboardPage() {
           />
         </dl>
 
-        <p className="mt-3 text-sm">
+        <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
           <Link
             href="/admin/kursove"
             className="underline underline-offset-2 hover:no-underline"
           >
             Списък на курсовете
+          </Link>
+          <Link
+            href="/admin/produkti"
+            className="underline underline-offset-2 hover:no-underline"
+          >
+            Списък на продуктите
           </Link>
         </p>
       </section>
