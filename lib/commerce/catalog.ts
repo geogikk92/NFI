@@ -4,6 +4,7 @@
 // място, което чете цени — така „клиентът не диктува цена" е свойство на
 // архитектурата, а не на дисциплината.
 
+import { cache } from "react";
 import { db } from "@/lib/db";
 import type { VatCategory } from "@/lib/legal";
 import { DEFAULT_LOCALE, pick, type Locale } from "@/lib/i18n/config";
@@ -109,7 +110,22 @@ export async function listProducts(): Promise<ProductCard[]> {
   }));
 }
 
-export async function getProductBySlug(
+/**
+ * Продуктът по адрес — МЕМОИЗИРАН за времето на една заявка.
+ *
+ * Страницата го вика ДВА пъти независимо: веднъж в `generateMetadata` и
+ * веднъж в самия компонент (app/[locale]/(shop)/shop/[slug]/page.tsx:30 и
+ * :52). Без `cache()` това са две еднакви заявки към базата при всяко
+ * отваряне, всяка със свързване към файловете.
+ *
+ * Next мемоизира само `fetch()`, не и Prisma — затова обвивката е ръчна.
+ * Същото решение вече е взето при курсовете (lib/cms/courses.ts) и при
+ * пазача на админа (lib/admin/guard.ts).
+ *
+ * Формата е `cache(async function …)`, а не стрелкова: така тялото отдолу
+ * остава непреотстъпено и разликата е три реда вместо трийсет и седем.
+ */
+export const getProductBySlug = cache(async function getProductBySlug(
   slug: string,
 ): Promise<(ProductCard & { files: { label: string }[] }) | null> {
   const row = await db.product.findFirst({
@@ -143,7 +159,7 @@ export async function getProductBySlug(
     coverMeta: row.coverMeta,
     files: row.files,
   };
-}
+});
 
 export interface PriceCartFromDbInput {
   items: readonly CartItemInput[];

@@ -201,6 +201,22 @@ try {
   const row = page.locator("tr", { hasText: TITLE_BG });
   check("курсът е в списъка на панела", (await row.count()) > 0);
 
+  // Таблицата се превърта настрани. Област, която се превърта, но до която
+  // не се стига с Tab, е недостъпна за човек без мишка — WCAG 2.1.1.
+  const region = page.locator('[role="region"][aria-label="Курсове"]');
+  check(
+    "превъртащата се таблица е спирка на Tab и има име",
+    (await region.count()) === 1 &&
+      (await region.evaluate((el) => el.tabIndex)) === 0,
+  );
+  check(
+    "и наистина приема фокус",
+    await region.evaluate((el) => {
+      el.focus();
+      return document.activeElement === el;
+    }),
+  );
+
   await row.locator('button[type="submit"]').click();
   await page.waitForURL(/publikuvan=1/, { timeout: 15000 }).catch(() => {});
   // Изчакването е СЛЕД смяната на адреса: пренасочването сменя адреса

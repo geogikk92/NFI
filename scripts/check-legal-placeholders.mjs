@@ -19,7 +19,13 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const strict = process.env.CHECK_LEGAL_STRICT === "1";
 
 const SEARCH_ROOTS = ["app", "components"];
-const MARKER = "AwaitingLegalText";
+// ДВА вида блокиращ маркер, не един:
+//   • AwaitingLegalText   — липсва текст от юрист;
+//   • MissingRetentionJob — текстът е верен, но кодът не го спазва
+//     (обещан срок за изтриване без задача, която да трие).
+// Вторият е по-коварен — разделът изглежда завършен и звучи вярно, а е
+// невярно твърдение. Затова спира деплоя точно като първия.
+const MARKERS = ["AwaitingLegalText", "MissingRetentionJob"];
 
 // lstat, НЕ stat: stat следва symlink-ове и хвърля ENOENT при счупен.
 // Грешката се разпространяваше до външния catch, той правеше `continue`,
@@ -83,7 +89,7 @@ for (const searchRoot of SEARCH_ROOTS) {
     const lines = source.split("\n");
 
     lines.forEach((line, index) => {
-      if (!line.includes(`<${MARKER}`)) return;
+      if (!MARKERS.some((marker) => line.includes(`<${marker}`))) return;
 
       // Изважда what="…" от СЛЕДВАЩИТЕ редове на този елемент, не от
       // първото срещане в файла — иначе всички повторения на един и същ

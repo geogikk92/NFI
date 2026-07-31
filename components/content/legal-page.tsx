@@ -81,3 +81,45 @@ export function AwaitingLegalText({
     </div>
   );
 }
+
+/**
+ * Място за ОБЕЩАНИЕ, което кодът още не спазва.
+ *
+ * Различно от AwaitingLegalText, макар да спира деплоя по същия начин.
+ * Онова казва „чака се текст от юрист"; това казва „текстът е готов и
+ * верен, но програмата още не прави каквото пише в него".
+ *
+ * Вторият случай е по-коварен: разделът изглежда завършен и звучи вярно,
+ * а всъщност е невярно твърдение пред надзорния орган. Пример, заради
+ * който компонентът съществува: декларацията обещаваше изтриване на
+ * качените документи след 60 дни, а нищо в проекта не триеше нищо —
+ * `crons` беше празен масив, а DOC_RETENTION_DAYS се ползваше само за да
+ * се изпише числото на екрана.
+ *
+ * Затова СРОКЪТ ОСТАВА ВИДИМ в таблицата, но с думата „vorgesehen", а
+ * тук стои какво липсва. Скриването на срока би било по-лошо: тогава
+ * никой не помни, че е бил обещан.
+ */
+export function MissingRetentionJob({
+  what,
+  who = "der Entwicklung",
+}: {
+  what: string;
+  who?: string;
+}) {
+  return (
+    <div
+      role="note"
+      className="not-prose my-6 rounded-lg border-2 border-dashed border-warning bg-warning/10 px-5 py-4"
+    >
+      <p className="text-sm font-semibold">
+        ⚠️ Zugesagt, aber noch nicht umgesetzt: {what}
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Wird von {who} umgesetzt. Diese Seite darf nicht veröffentlicht
+        werden, solange dieser Hinweis erscheint — eine Frist, die nur auf
+        dem Papier steht, ist schlimmer als keine.
+      </p>
+    </div>
+  );
+}

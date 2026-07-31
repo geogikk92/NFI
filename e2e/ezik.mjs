@@ -22,6 +22,34 @@ try {
   ok("/bg/impressum: html е bg", (await p.getAttribute("html","lang")) === "bg-BG");
   ok("/bg/impressum: main е de (WCAG 3.1.2)", (await p.getAttribute("main","lang")) === "de");
 
+  // Филтрите и предварително избраният курс преживяват смяната на езика.
+  //
+  // Проверява се БЕЗ JavaScript нарочно: превключвателят е връзки, значи
+  // query-то трябва да е в HTML-а още от сървъра. С включен скрипт тестът
+  // би минал и при поправка, която работи само след хидратация.
+  const noJs = await b.newContext({ javaScriptEnabled: false });
+  const q = await noJs.newPage();
+  for (const [path, want] of [
+    ["/bg/kurse?level=B1&format=ONLINE", "/de/kurse?level=B1&format=ONLINE"],
+    ["/bg/kontakt?kurs=deutsch-b1-online", "/de/kontakt?kurs=deutsch-b1-online"],
+    // Без query адресът остава чист — без увиснал въпросителен знак.
+    ["/bg/kurse", "/de/kurse"],
+  ]) {
+    await q.goto(`${B}${path}`, { waitUntil: "domcontentloaded" });
+    const href = await q.locator('a[hreflang="de"]').first().getAttribute("href");
+    ok(`${path} → DE пази query`, href === want, String(href));
+  }
+  await noJs.close();
+
+  // Таблицата в Datenschutz се превърта настрани на тесен екран.
+  await p.goto(`${B}/de/datenschutz`, { waitUntil: "domcontentloaded" });
+  const reg = p.locator('[role="region"][aria-label="Übersicht der gespeicherten Daten"]');
+  ok(
+    "превъртащата се таблица в Datenschutz приема фокус",
+    (await reg.count()) === 1 &&
+      (await reg.evaluate((el) => { el.focus(); return document.activeElement === el && el.tabIndex === 0; })),
+  );
+
   // ШРИФТОВЕТЕ — това счупи веднъж целия сайт.
   await p.goto(`${B}/bg/kurse`, { waitUntil: "networkidle" });
   const h1 = await p.evaluate(() => getComputedStyle(document.querySelector("h1")).fontFamily);

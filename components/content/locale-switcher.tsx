@@ -10,7 +10,7 @@
 // разпознава своя, без да знае текущия.
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   LOCALES,
   LOCALE_NAMES,
@@ -28,6 +28,13 @@ export function LocaleSwitcher({
   label: string;
 }) {
   const pathname = usePathname();
+  // Query-то е състоянието на страницата (филтри, предварително избран
+  // курс) и трябва да преживее смяната на езика. Хукът е безопасен тук,
+  // защото SiteShell чете бисквитки и прави всеки такъв маршрут
+  // динамичен. Стане ли някой ден статичен, Next ще поиска <Suspense> —
+  // и тогава fallback-ът трябва да е СЪЩИЯТ превключвател с празно query,
+  // не null: иначе връзките към другите езици изчезват от HTML-а.
+  const searchParams = useSearchParams();
 
   return (
     <nav aria-label={label} className="flex items-center gap-0.5">
@@ -37,7 +44,7 @@ export function LocaleSwitcher({
         return (
           <Link
             key={locale}
-            href={switchLocalePath(pathname, locale)}
+            href={switchLocalePath(pathname, locale, searchParams.toString())}
             // hreflang казва на търсачката и на четеца какъв е целевият
             // език, а lang — на какъв език е самият надпис.
             hrefLang={locale}

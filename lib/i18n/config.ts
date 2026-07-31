@@ -101,10 +101,26 @@ export function localeFromAcceptLanguage(header: string | null): Locale {
   return DEFAULT_LOCALE;
 }
 
-/** Адрес със сменен език, при запазен път. */
+/**
+ * Адрес със сменен език, при запазен път И запазено query.
+ *
+ * Query-то Е СЪСТОЯНИЕТО на страницата, не украса: филтрите на /kurse
+ * (level, format) живеят само там, както и предварително избраният курс на
+ * /kontakt (?kurs=). Смяната на езика ПРЕВЕЖДА страницата — тя не бива да
+ * зачерква избора. Досега точно това правеше: на
+ * /bg/kurse?level=B1&format=ONLINE връзката „DE" сочеше голо /de/kurse.
+ *
+ * Пренася се ЦЯЛОТО query, не подбрани имена. Списък с позволени
+ * параметри трябва да се допълва при всеки нов филтър и тихо губи онзи,
+ * който някой е забравил да добави.
+ *
+ * Третият параметър е по подразбиране празен, за да останат валидни
+ * извикванията, които не знаят за query.
+ */
 export function switchLocalePath(
   pathname: string,
   next: Locale,
+  search: string = "",
 ): string {
   const segments = pathname.split("/").filter(Boolean);
 
@@ -114,5 +130,8 @@ export function switchLocalePath(
     segments.unshift(next);
   }
 
-  return `/${segments.join("/")}`;
+  // Приема се и „a=1", и „?a=1"; празното не оставя гол въпросителен знак.
+  const query = search.replace(/^\?+/, "");
+
+  return `/${segments.join("/")}${query ? `?${query}` : ""}`;
 }

@@ -85,6 +85,34 @@ describe("switchLocalePath", () => {
     expect(switchLocalePath("/bg/kurse/a1", "en")).toBe("/en/kurse/a1");
   });
 
+  it("пази query низа — филтрите не изчезват при смяна на език", () => {
+    // Query-то Е състоянието на страницата: филтрите на /kurse и
+    // предварително избраният курс на /kontakt живеят само там.
+    expect(switchLocalePath("/bg/kurse", "de", "level=B1&format=ONLINE")).toBe(
+      "/de/kurse?level=B1&format=ONLINE",
+    );
+    expect(switchLocalePath("/bg/kontakt", "en", "kurs=deutsch-b1")).toBe(
+      "/en/kontakt?kurs=deutsch-b1",
+    );
+
+    // Приема се и с водещ въпросителен знак.
+    expect(switchLocalePath("/bg/kurse", "de", "?level=B1")).toBe(
+      "/de/kurse?level=B1",
+    );
+
+    // Празното НЕ оставя гол въпросителен знак — иначе всеки адрес
+    // получава „?" и се брои за различен от търсачките.
+    expect(switchLocalePath("/bg/kurse", "de", "")).toBe("/de/kurse");
+    expect(switchLocalePath("/bg/kurse", "de", "?")).toBe("/de/kurse");
+
+    // Query-то не бърка добавянето на липсващ език, нито корена — този
+    // клон (`segments.unshift`) не беше проверяван с query изобщо.
+    expect(switchLocalePath("/kurse", "de", "level=A1")).toBe(
+      "/de/kurse?level=A1",
+    );
+    expect(switchLocalePath("/", "bg", "level=A1")).toBe("/bg?level=A1");
+  });
+
   it("добавя език, ако липсва", () => {
     expect(switchLocalePath("/kurse", "de")).toBe("/de/kurse");
     expect(switchLocalePath("/", "bg")).toBe("/bg");

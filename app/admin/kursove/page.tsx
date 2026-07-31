@@ -76,7 +76,18 @@ export default async function AdminCoursesPage({ searchParams }: Props) {
           }
         />
       ) : (
-        <div className="mt-8 overflow-x-auto rounded-xl border border-border">
+        <div
+          className="mt-8 overflow-x-auto rounded-xl border border-border"
+          tabIndex={0}
+          role="region"
+          aria-label="Курсове"
+        >
+          {/* tabIndex={0} + role="region": контейнерът СЕ ПРЕВЪРТА
+            настрани (overflow-x), а превъртаща се област, до която не се
+            стига с Tab, е недостъпна за човек без мишка — WCAG 2.1.1
+            „Клавиатура". Ролята и името са задължителни заедно с
+            tabIndex: спирка на Tab, която четецът обявява само като
+            „група", не казва нищо. */}
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">
               Курсове с ниво, формат, цена и състояние на публикуване

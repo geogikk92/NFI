@@ -56,7 +56,16 @@ export default async function ImpressumPage({ params }: Props) {
       )}
 
       <h3>Registereintrag</h3>
-      <div className="table-wrap">
+      {/* tabIndex={0} + role="region": таблицата се превърта настрани
+      на тесен екран, а превъртаща се област без спирка на Tab е
+      недостъпна без мишка (WCAG 2.1.1). Името е на НЕМСКИ като
+      останалата страница — тя е правен документ на немски. */}
+      <div
+        className="table-wrap"
+        tabIndex={0}
+        role="region"
+        aria-label="Registereintrag"
+      >
         <table>
           <tbody>
             <tr>
