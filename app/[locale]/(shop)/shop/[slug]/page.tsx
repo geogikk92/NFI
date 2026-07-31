@@ -17,6 +17,7 @@ import { getProductBySlug } from "@/lib/commerce/catalog";
 import { formatMoney } from "@/lib/money";
 import { WITHDRAWAL_PERIOD_DAYS } from "@/lib/legal";
 import { pick, toLocale } from "@/lib/i18n/config";
+import { localeAlternates } from "@/lib/i18n/alternates";
 import { shopCopy } from "@/lib/i18n/pages/shop";
 import { moneyTag } from "@/lib/i18n/pages/formats";
 import { addToCartForm } from "../../actions";
@@ -43,6 +44,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
         de: product.descriptionDe,
         en: product.descriptionEn,
       }) || undefined,
+    // Виж бележката в kurse/[slug]/page.tsx — същата причина.
+    alternates: localeAlternates(locale, `shop/${slug}`),
   };
 }
 

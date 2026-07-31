@@ -14,6 +14,7 @@ import { JsonLd } from "@/components/content/json-ld";
 import { getCourseBySlug, listRelatedCourses } from "@/lib/cms/courses";
 import { toDateTimeAttribute } from "@/lib/intl";
 import { pick, toLocale } from "@/lib/i18n/config";
+import { localeAlternates } from "@/lib/i18n/alternates";
 import {
   courseDuration,
   coursesCopy,
@@ -49,6 +50,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         de: course.summaryDe,
         en: course.summaryEn,
       }) || undefined,
+    // Без това търсачката вижда /de/kurse/<slug>, /bg/... и /en/... като
+    // три почти еднакви страници и решава САМА коя да покаже. Списъчните
+    // страници го имаха отдавна; детайлните — точно тези, които водят
+    // трафик — бяха пропуснати.
+    alternates: localeAlternates(locale, `kurse/${slug}`),
   };
 }
 

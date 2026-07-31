@@ -8,6 +8,17 @@ import { LEGAL_TEXT_VERSIONS, ORDER_BUTTON_LABEL } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "AGB",
   robots: { index: true, follow: true },
+  // ТВЪРД canonical към немската версия — БЕЗ hreflang.
+  //
+  // Страницата се отваря и на /bg/agb, и на /en/agb, но текстът е и
+  // остава НЕМСКИ: това е правен документ по немско право и превод на
+  // него не е превод, а нов документ с друга правна тежест (виж
+  // components/content/legal-page.tsx).
+  //
+  // Значи трите адреса не са три езикови версии, а три копия на едно и
+  // също. hreflang между тях би излъгал търсачката; canonical ѝ казва
+  // истината — индексирай едната.
+  alternates: { canonical: "/de/agb" },
 };
 
 // Езикът се приема само за да е подписът същият като на останалите
