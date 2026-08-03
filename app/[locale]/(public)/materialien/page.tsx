@@ -106,15 +106,20 @@ export default async function MaterialsPage({ params }: Props) {
                             en: material.titleEn,
                           })}
                         </span>
-                        {material.description ? (
-                          <span className="mt-1 block max-w-prose text-sm leading-relaxed text-muted-foreground">
-                            {pick(locale, {
-                              bg: material.description,
-                              de: material.descriptionDe,
-                              en: material.descriptionEn,
-                            })}
-                          </span>
-                        ) : null}
+                        {(() => {
+                          // pick() ПРЕДИ проверката: иначе празно българско
+                          // описание крие съществуващия немски превод.
+                          const picked = pick(locale, {
+                            bg: material.description,
+                            de: material.descriptionDe,
+                            en: material.descriptionEn,
+                          });
+                          return picked ? (
+                            <span className="mt-1 block max-w-prose text-sm leading-relaxed text-muted-foreground">
+                              {picked}
+                            </span>
+                          ) : null;
+                        })()}
                       </span>
 
                       <span className="flex flex-none items-center gap-3">

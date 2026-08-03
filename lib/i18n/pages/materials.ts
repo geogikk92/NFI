@@ -39,7 +39,7 @@ const bg = {
 
   form: {
     heading: "Вземи материала",
-    lede: "Кажи ни име и имейл — линкът за сваляне се показва веднага и пристига в пощата ти.",
+    lede: "Кажи ни име и имейл — линкът за сваляне се показва веднага, тук на страницата.",
     videoLede:
       "Хареса ли ти? Остави име и имейл — пращаме ти новите записи, щом излязат.",
     videoSubmit: "Искам още такива материали",
@@ -61,7 +61,7 @@ const bg = {
       "Свали материала от бутона долу. Линкът работи 72 часа — и е само за теб.",
     download: "Свали материала",
     videoReady:
-      "Материалът е видео — гледа се направо на тази страница, по-горе.",
+      "Материалът се отваря направо от тази страница — виж по-горе.",
     emailFollowup: "Пратихме линка и на имейла ти, за всеки случай.",
     checkFields: "Провери отбелязаните полета.",
     rateLimited:
@@ -123,7 +123,7 @@ const de: MaterialsCopy = {
 
   form: {
     heading: "Material erhalten",
-    lede: "Name und E-Mail genügen — der Download-Link erscheint sofort und kommt zusätzlich per E-Mail.",
+    lede: "Name und E-Mail genügen — der Download-Link erscheint sofort, direkt auf dieser Seite.",
     videoLede:
       "Hat es dir gefallen? Name und E-Mail genügen — wir schicken dir neue Aufzeichnungen, sobald sie erscheinen.",
     videoSubmit: "Ich möchte mehr solche Materialien",
@@ -145,7 +145,7 @@ const de: MaterialsCopy = {
       "Lade das Material über den Button unten herunter. Der Link gilt 72 Stunden — und nur für dich.",
     download: "Material herunterladen",
     videoReady:
-      "Das Material ist ein Video — du kannst es direkt oben auf dieser Seite ansehen.",
+      "Das Material öffnet sich direkt auf dieser Seite — siehe oben.",
     emailFollowup: "Wir haben den Link zur Sicherheit auch an deine E-Mail geschickt.",
     checkFields: "Prüfe die markierten Felder.",
     rateLimited:
@@ -204,7 +204,7 @@ const en: MaterialsCopy = {
 
   form: {
     heading: "Get the material",
-    lede: "Just your name and email — the download link appears immediately and also lands in your inbox.",
+    lede: "Just your name and email — the download link appears immediately, right on this page.",
     videoLede:
       "Liked it? Leave your name and email — we send you new recordings as they come out.",
     videoSubmit: "Send me more like this",
@@ -226,7 +226,7 @@ const en: MaterialsCopy = {
       "Download the material from the button below. The link works for 72 hours — and only for you.",
     download: "Download material",
     videoReady:
-      "This material is a video — watch it right on this page, above.",
+      "The material opens right from this page — see above.",
     emailFollowup: "We also sent the link to your email, just in case.",
     checkFields: "Check the highlighted fields.",
     rateLimited:

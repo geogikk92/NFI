@@ -150,6 +150,17 @@ export async function grantMaterialAccess(
   return { token: downloadable ? token : null, materialTitle: material.title };
 }
 
+/**
+ * Връща брояча след осребряване, което не е доставило файл.
+ * Условно, никога под нула — паралелен връх не създава безплатни опити.
+ */
+export async function refundDownloadAttempt(token: string): Promise<void> {
+  await db.downloadGrant.updateMany({
+    where: { token, downloadCount: { gt: 0 } },
+    data: { downloadCount: { decrement: 1 } },
+  });
+}
+
 export type RedeemResult =
   | { ok: true; storageKey: string; watermarkText: string | null; filename: string }
   | { ok: false; reason: "not-found" | "revoked" | "expired" | "exhausted" | "no-file" };
@@ -202,10 +213,14 @@ export async function redeemDownloadToken(
   // изчерпал последното сваляне.
   if (claimed.count === 0) return { ok: false, reason: "exhausted" };
 
+  // Разширението идва от самия файл: аудио с име „….pdf" не се отваря.
+  const extension =
+    grant.freeMaterial.storageKey.split(".").pop() ?? "pdf";
+
   return {
     ok: true,
     storageKey: grant.freeMaterial.storageKey,
     watermarkText: grant.watermarkText,
-    filename: `${grant.freeMaterial.slug}.pdf`,
+    filename: `${grant.freeMaterial.slug}.${extension}`,
   };
 }

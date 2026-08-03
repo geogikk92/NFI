@@ -55,8 +55,14 @@ export interface StorageObject {
   checksum?: string;
 }
 
-/** S3 се смята за конфигуриран при наличен bucket + ключове. */
-function s3Configured(): boolean {
+/**
+ * S3 се смята за конфигуриран при наличен bucket + ключове.
+ *
+ * ЕДИНСТВЕНАТА такава проверка: и драйверният избор тук, и
+ * app/api/storage/route.ts питат нея. Две отделни проверки се разминават
+ * при частична конфигурация и дават тихо счупени линкове.
+ */
+export function s3Configured(): boolean {
   return Boolean(
     process.env.S3_BUCKET &&
       process.env.S3_ACCESS_KEY_ID &&

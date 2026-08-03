@@ -38,13 +38,39 @@ export interface SubscribeResult {
   devConfirmUrl: string | null;
 }
 
+/**
+ * Колко често може да тръгва ново потвърдително писмо към един адрес.
+ * Спирачката срещу subscription bombing: без нея всеки POST в цикъл
+ * пълни чужда пощенска кутия и съсипва изпращаческата репутация.
+ */
+const RESEND_COOLDOWN_MINUTES = 10;
+
+/** Толкова заявки за абонамент от един IP за час. */
+const RATE_LIMIT_PER_HOUR = 10;
+
+export async function isNewsletterRateLimited(
+  ip: string | null,
+  now: Date = new Date(),
+): Promise<boolean> {
+  // Без IP не ограничаваме — цял офис зад прокси не бива да се заключва.
+  // Охлаждането по имейл отдолу продължава да действа.
+  if (!ip) return false;
+
+  const since = new Date(now.getTime() - 60 * 60 * 1000);
+  const count = await db.consentLog.count({
+    where: { type: "NEWSLETTER", ip, requestedAt: { gte: since } },
+  });
+
+  return count >= RATE_LIMIT_PER_HOUR;
+}
+
 export async function subscribeToNewsletter(
   input: NewsletterInput,
   meta: { ip: string | null; userAgent: string | null; appUrl: string },
 ): Promise<SubscribeResult> {
   const existing = await db.newsletterSubscriber.findUnique({
     where: { email: input.email },
-    select: { id: true, status: true, confirmToken: true },
+    select: { id: true, status: true },
   });
 
   // Потвърденият не се връща в PENDING: повторното записване на познат
@@ -53,27 +79,63 @@ export async function subscribeToNewsletter(
     return { status: "already-confirmed", devConfirmUrl: null };
   }
 
-  const confirmToken = existing?.confirmToken ?? newToken();
+  // Охлаждане по ИМЕЙЛ: скорошна заявка за същия адрес не праща ново
+  // писмо (и не издава нищо навън — отговорът е същият „pending").
+  const recent = await db.consentLog.findFirst({
+    where: {
+      email: input.email,
+      type: "NEWSLETTER",
+      requestedAt: {
+        gte: new Date(Date.now() - RESEND_COOLDOWN_MINUTES * 60 * 1000),
+      },
+    },
+    select: { id: true },
+  });
+  if (recent) {
+    return { status: "pending", devConfirmUrl: null };
+  }
+
+  // Токенът се РОТИРА при всеки нов опит: стар линк в стара поща не
+  // бива да може да потвърди отдавнашно, може би оттеглено, съгласие.
+  const confirmToken = newToken();
 
   if (existing) {
-    // PENDING/UNSUBSCRIBED → нов опит: опресняваме езика и съгласието.
     await db.newsletterSubscriber.update({
       where: { id: existing.id },
-      data: { status: "PENDING", locale: input.locale, ip: meta.ip },
-    });
-  } else {
-    await db.newsletterSubscriber.create({
       data: {
-        email: input.email,
         status: "PENDING",
         locale: input.locale,
-        confirmToken,
-        unsubscribeToken: newToken(),
-        consentTextVersion: NEWSLETTER_CONSENT_VERSION,
         ip: meta.ip,
+        confirmToken,
+        // Новият опит е ново съгласие: старите дати не важат за него.
+        consentTextVersion: NEWSLETTER_CONSENT_VERSION,
+        confirmedAt: null,
+        unsubscribedAt: null,
       },
-      select: { id: true },
     });
+  } else {
+    try {
+      await db.newsletterSubscriber.create({
+        data: {
+          email: input.email,
+          status: "PENDING",
+          locale: input.locale,
+          confirmToken,
+          unsubscribeToken: newToken(),
+          consentTextVersion: NEWSLETTER_CONSENT_VERSION,
+          ip: meta.ip,
+        },
+        select: { id: true },
+      });
+    } catch (error) {
+      // Две паралелни първи записвания: губещият P2002 просто опреснява
+      // реда, който печелившият току-що създаде.
+      if ((error as { code?: string }).code !== "P2002") throw error;
+      await db.newsletterSubscriber.update({
+        where: { email: input.email },
+        data: { status: "PENDING", locale: input.locale, confirmToken },
+      });
+    }
   }
 
   // Заявката за съгласие се логва ОЩЕ ТУК (requestedAt), потвърждението
@@ -127,6 +189,9 @@ export async function confirmSubscription(
 
   if (!subscriber) return "not-found";
   if (subscriber.status === "CONFIRMED") return "already";
+  // Отписаният НЕ се потвърждава със стар линк: оттеглено съгласие се
+  // връща само с нов double opt-in, не със заварен токен в пощата.
+  if (subscriber.status === "UNSUBSCRIBED") return "not-found";
 
   const now = new Date();
 
@@ -169,7 +234,12 @@ export async function unsubscribe(token: string): Promise<UnsubscribeOutcome> {
 
   await db.newsletterSubscriber.update({
     where: { id: subscriber.id },
-    data: { status: "UNSUBSCRIBED", unsubscribedAt: now },
+    data: {
+      status: "UNSUBSCRIBED",
+      unsubscribedAt: now,
+      // Старият потвърдителен линк умира заедно с абонамента.
+      confirmToken: newToken(),
+    },
   });
 
   await db.consentLog.updateMany({

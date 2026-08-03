@@ -74,6 +74,13 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      /* Закъсненията също: иначе hero каскадата държи текста скрит
+         по 100–400ms дори при изключено движение. */
+      animation-delay: 0ms !important;
+      transition-delay: 0ms !important;
+      /* Scroll-driven анимациите (нишката, печатът) нямат duration —
+         тях ги спира махането на timeline-а. */
+      animation-timeline: auto !important;
     }
   }
   * {

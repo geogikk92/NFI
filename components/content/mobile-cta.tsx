@@ -34,8 +34,16 @@ export function MobileCta({
   useEffect(() => {
     if (excluded) return;
 
-    // Появява се след един екран скрол; крие се обратно най-горе.
-    const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.9);
+    // Появява се след един екран скрол; крие се най-горе И при футъра —
+    // иначе лентата ляга върху бюлетина и правните връзки, до които
+    // човек тъкмо се е дотъркалял.
+    const onScroll = () => {
+      const pastHero = window.scrollY > window.innerHeight * 0.9;
+      const nearBottom =
+        window.scrollY + window.innerHeight >
+        document.documentElement.scrollHeight - 480;
+      setVisible(pastHero && !nearBottom);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

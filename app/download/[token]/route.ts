@@ -7,7 +7,10 @@
 // Осребряването брои: redeemDownloadToken() вдига брояча с УСЛОВНО
 // updateMany, така че два паралелни клика на изчерпан токен не минават.
 
-import { redeemDownloadToken } from "@/lib/cms/free-materials-db";
+import {
+  redeemDownloadToken,
+  refundDownloadAttempt,
+} from "@/lib/cms/free-materials-db";
 import { readObject } from "@/lib/storage";
 import { materialsCopy } from "@/lib/i18n/pages/materials";
 
@@ -75,7 +78,12 @@ export async function GET(
   }
 
   const object = await readObject(redeemed.storageKey);
-  if (!object) return errorPage(404, "noFile");
+  if (!object) {
+    // Файлът липсва на диска СЛЕД успешното осребряване — опитът не
+    // бива да брои: човекът не е получил нищо.
+    await refundDownloadAttempt(token);
+    return errorPage(404, "noFile");
+  }
 
   return new Response(new Uint8Array(object.body), {
     status: 200,

@@ -617,18 +617,33 @@ async function seedFreeMaterials() {
   // форма → токен → сваляне се минава на чиста машина, без S3.
   const { localPut } = await import("../lib/storage/local");
   const pdfKey = "media/seed/der-die-das-tablitza.pdf";
-  const pdf = [
-    "%PDF-1.4",
-    "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj",
-    "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj",
-    "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj",
-    "4 0 obj<</Length 90>>stream",
-    "BT /F1 24 Tf 72 770 Td (NFI - der/die/das) Tj ET",
-    "BT /F1 12 Tf 72 740 Td (Demo material - task 8 seed) Tj ET",
-    "endstream endobj",
-    "5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj",
-    "trailer<</Root 1 0 R>>",
-  ].join("\n");
+  // Валиден PDF, сглобен обект по обект с точни отмествания в xref —
+  // иначе стриктни четци (не Preview) отказват файла.
+  const stream =
+    "BT /F1 24 Tf 72 770 Td (NFI - der/die/das) Tj ET\n" +
+    "BT /F1 12 Tf 72 740 Td (Demo material - task 8 seed) Tj ET";
+  const objects = [
+    "<</Type/Catalog/Pages 2 0 R>>",
+    "<</Type/Pages/Kids[3 0 R]/Count 1>>",
+    "<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R" +
+      "/Resources<</Font<</F1 5 0 R>>>>>>",
+    `<</Length ${stream.length}>>stream\n${stream}\nendstream`,
+    "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>",
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets: number[] = [];
+  objects.forEach((body, i) => {
+    offsets.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${body}\nendobj\n`;
+  });
+  const xrefAt = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const offset of offsets) {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  }
+  pdf +=
+    `trailer<</Size ${objects.length + 1}/Root 1 0 R>>\n` +
+    `startxref\n${xrefAt}\n%%EOF`;
   await localPut(pdfKey, Buffer.from(pdf), "application/pdf");
 
   const materials = [

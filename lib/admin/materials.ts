@@ -47,6 +47,63 @@ export interface MaterialInput {
   published: boolean;
 }
 
+
+/**
+ * Външният идентификатор според вида.
+ *
+ * Vimeo: само цифри — всичко друго значи, че човекът е поставил целия
+ * адрес. GoTo/връзка: само https:// — стойност като javascript:… би се
+ * рендирала като href на публичната страница и е съхранен XSS.
+ */
+function parseExternalId(
+  kind: string,
+  raw: string,
+  required: boolean,
+):
+  | { ok: true; value: string | null }
+  | { ok: false; error: string } {
+  if (!raw) {
+    if (!required) return { ok: true, value: null };
+    return {
+      ok: false,
+      error:
+        kind === "VIDEO_VIMEO"
+          ? "Видеото иска Vimeo ID (цифрите от адреса на видеото)."
+          : "Този вид иска външен адрес, започващ с https://",
+    };
+  }
+
+  if (raw.length > LIMITS.externalId) {
+    return { ok: false, error: "Външният ID е твърде дълъг." };
+  }
+
+  if (kind === "VIDEO_VIMEO") {
+    if (!/^\d{6,15}$/.test(raw)) {
+      return {
+        ok: false,
+        error:
+          "Vimeo ID е само цифрите от адреса: vimeo.com/76979871 → 76979871.",
+      };
+    }
+    return { ok: true, value: raw };
+  }
+
+  if (kind === "VIDEO_GOTO" || kind === "LINK") {
+    let parsed: URL;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      return { ok: false, error: "Адресът не е валиден. Започни с https://" };
+    }
+    if (parsed.protocol !== "https:") {
+      return { ok: false, error: "Допуска се само https:// адрес." };
+    }
+    return { ok: true, value: raw };
+  }
+
+  return { ok: true, value: raw };
+}
+
 export function parseMaterialForm(
   data: FormData,
 ):
@@ -121,16 +178,7 @@ export function parseMaterialForm(
 
     storageKey: storageKeyField,
 
-    externalId:
-      needsExternal && !externalIdRaw
-        ? ({
-            ok: false,
-            error:
-              kindRaw === "VIDEO_VIMEO"
-                ? "Видеото иска Vimeo ID (цифрите от адреса на видеото)."
-                : "Този вид иска външен адрес или идентификатор.",
-          } as const)
-        : optionalText(data.get("externalId"), LIMITS.externalId, "Външен ID"),
+    externalId: parseExternalId(kindRaw, externalIdRaw, needsExternal),
 
     // Празното ниво значи „за всички" — колоната е nullable нарочно.
     level:
@@ -193,6 +241,11 @@ export async function getMaterialForEdit(
     where: { id },
     select: AUDITED,
   }) as Promise<AdminMaterialDetail | null>;
+}
+
+/** Броят заявки — за детайлната страница, без Prisma в компонента. */
+export async function countMaterialRequests(id: string): Promise<number> {
+  return db.downloadGrant.count({ where: { freeMaterialId: id } });
 }
 
 export interface AdminMaterialRow {

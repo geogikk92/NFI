@@ -7,12 +7,14 @@ import { MaterialForm } from "@/components/admin/material-form";
 import { DeleteSection } from "@/components/admin/delete-section";
 import { Flash, commonFlashErrors } from "@/components/admin/flash";
 import { requireAdmin } from "@/lib/admin/guard";
-import { getMaterialForEdit } from "@/lib/admin/materials";
+import {
+  countMaterialRequests,
+  getMaterialForEdit,
+} from "@/lib/admin/materials";
 import {
   MATERIAL_KIND_OPTIONS,
   MATERIAL_LEVEL_OPTIONS,
 } from "@/lib/admin/material-labels";
-import { db } from "@/lib/db";
 import { removeMaterial, saveMaterial } from "../actions";
 
 export const metadata: Metadata = {
@@ -33,7 +35,7 @@ export default async function EditMaterialPage({ params, searchParams }: Props) 
 
   const [material, requestCount] = await Promise.all([
     getMaterialForEdit(id),
-    db.downloadGrant.count({ where: { freeMaterialId: id } }),
+    countMaterialRequests(id),
   ]);
 
   if (!material) notFound();

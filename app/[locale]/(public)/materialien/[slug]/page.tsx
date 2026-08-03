@@ -1,11 +1,13 @@
 // БЕЗПЛАТНИТЕ МАТЕРИАЛИ · задача 8 — детайлът.
 //
-// Двете поведения, нарочно различни (следват мокъпа):
-//   • ВИДЕО: гледа се направо тук — но зад ConsentGate, защото iframe
+// Трите поведения, нарочно различни (следват мокъпа):
+//   • VIMEO: гледа се направо тук — но зад ConsentGate, защото iframe
 //     праща IP към Vimeo (бележката на Жоро в consent-gate.tsx).
-//     Формата отдолу е lead: „искам още такива".
+//   • GOTO/ВРЪЗКА: външен https:// линк, без iframe и без гейт — на
+//     нашата страница не се зарежда нищо чуждо.
 //   • PDF/АУДИО: зад формата. Токенът идва веднага на екрана — не чака
 //     имейл (имейлите са задача 23m).
+// При съдържание „на страницата" формата е lead: „искам още такива".
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -16,11 +18,7 @@ import { MaterialAccessForm } from "@/components/content/material-access-form";
 import { localeAlternates } from "@/lib/i18n/alternates";
 import { pick, toLocale } from "@/lib/i18n/config";
 import { materialsCopy } from "@/lib/i18n/pages/materials";
-import {
-  embedProvider,
-  isEmbeddedVideo,
-  type MaterialKind,
-} from "@/lib/cms/free-materials";
+import { type MaterialKind } from "@/lib/cms/free-materials";
 import { getFreeMaterialBySlug } from "@/lib/cms/free-materials-db";
 import { requestMaterialAccess } from "../actions";
 
@@ -58,7 +56,9 @@ export default async function MaterialDetailPage({ params }: Props) {
   if (!material) notFound();
 
   const kind = material.kind as MaterialKind;
-  const isVideo = isEmbeddedVideo(kind);
+  // „На страницата" = видео ИЛИ външна връзка: формата тогава е lead,
+  // не ключалка, и успехът ѝ не бива да обещава бутон за сваляне.
+  const isVideo = kind === "VIDEO_VIMEO" || kind === "VIDEO_GOTO" || kind === "LINK";
   const title = pick(locale, {
     bg: material.title,
     de: material.titleDe,
@@ -95,39 +95,44 @@ export default async function MaterialDetailPage({ params }: Props) {
         </p>
       ) : null}
 
-      {isVideo && material.externalId ? (
+      {kind === "VIDEO_VIMEO" && material.externalId ? (
         <div className="mt-10 max-w-4xl">
           <ConsentGate
             category="functional"
             locale={locale}
-            provider={embedProvider(kind) ?? "Vimeo"}
+            provider="Vimeo"
             title={title}
           >
-            {kind === "VIDEO_VIMEO" ? (
-              <div className="aspect-video w-full bg-ink shadow-md">
-                <iframe
-                  // dnt=1: казва на Vimeo да не следи — съгласието
-                  // покрива зареждането, не рекламния профил.
-                  src={`https://player.vimeo.com/video/${encodeURIComponent(material.externalId)}?dnt=1`}
-                  title={title}
-                  className="size-full"
-                  allow="fullscreen; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              // GoTo няма чист embed — външна връзка, без iframe и без
-              // трети страни на нашата страница.
-              <a
-                href={material.externalId}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border-b-2 border-red-600 pb-1 text-sm font-semibold"
-              >
-                {t.detail.watch} ↗
-              </a>
-            )}
+            <div className="aspect-video w-full bg-ink shadow-md">
+              <iframe
+                // dnt=1: казва на Vimeo да не следи — съгласието
+                // покрива зареждането, не рекламния профил.
+                src={`https://player.vimeo.com/video/${encodeURIComponent(material.externalId)}?dnt=1`}
+                title={title}
+                className="size-full"
+                allow="fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           </ConsentGate>
+        </div>
+      ) : null}
+
+      {/* GoTo записи и външни връзки: обикновен <a>, БЕЗ ConsentGate —
+          на нашата страница не се зарежда нищо чуждо, значи няма какво
+          да се гейтва. Рендира се само https:// — втората бариера срещу
+          javascript: URI, ако валидацията в админа някога пропусне. */}
+      {(kind === "VIDEO_GOTO" || kind === "LINK") &&
+      material.externalId?.startsWith("https://") ? (
+        <div className="mt-10">
+          <a
+            href={material.externalId}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="draw-link inline-flex items-center gap-2 pb-1 text-sm font-semibold"
+          >
+            {kind === "LINK" ? t.detail.open : t.detail.watch} ↗
+          </a>
         </div>
       ) : null}
 

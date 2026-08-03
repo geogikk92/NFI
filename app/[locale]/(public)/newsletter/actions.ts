@@ -12,7 +12,10 @@ import { toLocale } from "@/lib/i18n/config";
 import { clientIp } from "@/lib/request-ip";
 import { newsletterCopy } from "@/lib/i18n/pages/newsletter";
 import { HONEYPOT_FIELD, newsletterSchema } from "@/lib/cms/newsletter";
-import { subscribeToNewsletter } from "@/lib/cms/newsletter-db";
+import {
+  isNewsletterRateLimited,
+  subscribeToNewsletter,
+} from "@/lib/cms/newsletter-db";
 
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 
@@ -44,11 +47,21 @@ export async function subscribeAction(
   });
 
   if (!parsed.success) {
-    return { status: "error", message: t.invalid };
+    return {
+      status: "error",
+      message: t.invalid,
+      email: String(formData.get("email") ?? ""),
+    };
   }
 
   const store = await headers();
   const ip = await clientIp();
+
+  // Лимит по IP (в базата, като при материалите): цикъл от POST-ове не
+  // бива да може да пълни чужди пощи с потвърдителни писма.
+  if (await isNewsletterRateLimited(ip)) {
+    return { status: "error", message: t.failed, email: parsed.data.email };
+  }
 
   try {
     const result = await subscribeToNewsletter(parsed.data, {
@@ -57,8 +70,10 @@ export async function subscribeAction(
       appUrl: APP_URL,
     });
 
+    // ЕДНАКЪВ отговор за нов, повторен и вече потвърден абонат — иначе
+    // формата е оракул „този имейл в списъка ли е" за всеки любопитен.
     if (result.status === "already-confirmed") {
-      return { status: "success", message: t.already, email: parsed.data.email };
+      return { status: "success", message: t.pending, email: parsed.data.email };
     }
 
     return {
@@ -68,6 +83,6 @@ export async function subscribeAction(
       devConfirmUrl: result.devConfirmUrl ?? undefined,
     };
   } catch {
-    return { status: "error", message: t.failed };
+    return { status: "error", message: t.failed, email: parsed.data.email };
   }
 }

@@ -48,6 +48,7 @@ const STATIC_PATHS: Array<{
   { path: "/einstufungstest", priority: 0.8, changeFrequency: "monthly" },
   { path: "/kontakt", priority: 0.8, changeFrequency: "monthly" },
   { path: "/shop", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/materialien", priority: 0.7, changeFrequency: "weekly" },
   { path: "/ueber-uns", priority: 0.6, changeFrequency: "monthly" },
   { path: "/community", priority: 0.5, changeFrequency: "monthly" },
   // Правните страници се индексират (изискване по §5 DDG за намираемост),
@@ -114,12 +115,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const [courses, products] = await Promise.all([
+    const [courses, products, materials] = await Promise.all([
       db.course.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
       }),
       db.product.findMany({
+        where: { published: true },
+        select: { slug: true, updatedAt: true },
+      }),
+      db.freeMaterial.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
       }),
@@ -145,6 +150,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           changeFrequency: "monthly",
           priority: 0.6,
           alternates: alternates(`/shop/${product.slug}`),
+        });
+      }
+    }
+
+    for (const material of materials) {
+      for (const locale of LOCALES) {
+        entries.push({
+          url: `${SITE_URL}/${locale}/materialien/${material.slug}`,
+          lastModified: material.updatedAt,
+          changeFrequency: "monthly",
+          priority: 0.6,
+          alternates: alternates(`/materialien/${material.slug}`),
         });
       }
     }

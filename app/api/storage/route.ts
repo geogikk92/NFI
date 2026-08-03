@@ -8,9 +8,12 @@
 // линкът Е достъпът, точно като presigned URL. Кратък срок, private cache.
 
 import { verifySignedParams, localRead } from "@/lib/storage/local";
+import { s3Configured } from "@/lib/storage";
 
 export async function GET(request: Request): Promise<Response> {
-  if (process.env.S3_BUCKET) {
+  // СЪЩАТА проверка като драйверния избор — частична S3 конфигурация не
+  // бива да остави signedUrl() да издава линкове, които този route отказва.
+  if (s3Configured()) {
     return new Response("Not found", { status: 404 });
   }
 
@@ -25,18 +28,24 @@ export async function GET(request: Request): Promise<Response> {
   // Едно и също съобщение за грешен подпис, изтекъл срок и липсващ
   // параметър: разликата би казала на атакуващия кое е познал.
   if (!verified) {
-    return new Response("Линкът е невалиден или изтекъл.", {
-      status: 403,
-      headers: { "content-type": "text/plain; charset=utf-8" },
-    });
+    return new Response(
+      "Линкът е невалиден или изтекъл. / Der Link ist ungültig oder abgelaufen. / The link is invalid or expired.",
+      {
+        status: 403,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      },
+    );
   }
 
   const object = await localRead(verified.key);
   if (!object) {
-    return new Response("Файлът не е намерен.", {
-      status: 404,
-      headers: { "content-type": "text/plain; charset=utf-8" },
-    });
+    return new Response(
+      "Файлът не е намерен. / Datei nicht gefunden. / File not found.",
+      {
+        status: 404,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      },
+    );
   }
 
   const headers: Record<string, string> = {

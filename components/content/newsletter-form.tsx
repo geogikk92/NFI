@@ -82,8 +82,14 @@ export function NewsletterForm({ locale }: { locale: Locale }) {
           required
           autoComplete="email"
           placeholder={t.emailPlaceholder}
+          defaultValue={state.status === "error" ? state.email : undefined}
           className="min-w-0 flex-1"
-          aria-describedby="newsletter-note"
+          aria-invalid={state.status === "error" ? true : undefined}
+          aria-describedby={
+            state.status === "error"
+              ? "newsletter-error newsletter-note"
+              : "newsletter-note"
+          }
         />
         <Button type="submit" disabled={pending} className="flex-none">
           {pending ? t.submitting : t.submit}
@@ -92,6 +98,7 @@ export function NewsletterForm({ locale }: { locale: Locale }) {
 
       {state.status === "error" && state.message ? (
         <p
+          id="newsletter-error"
           ref={resultRef}
           tabIndex={-1}
           role="alert"

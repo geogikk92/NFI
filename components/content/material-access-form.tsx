@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { HONEYPOT_FIELD } from "@/lib/cms/free-materials";
 import type { Locale } from "@/lib/i18n/config";
 import { materialsCopy } from "@/lib/i18n/pages/materials";
+import { contactFormCopy } from "@/lib/i18n/pages/contact-form";
 import type { MaterialAccessState } from "@/app/[locale]/(public)/materialien/actions";
 
 interface MaterialAccessFormProps {
@@ -56,7 +57,7 @@ export function MaterialAccessForm({
           {t.result.successTitle}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          {state.isVideo ? t.result.videoReady : t.result.successBody}
+          {state.message ?? t.result.successBody}
         </p>
 
         {state.downloadPath ? (
@@ -155,7 +156,12 @@ export function MaterialAccessForm({
           достъп = принудително съгласие (чл. 7, ал. 4 GDPR) — затова
           материалът идва независимо от нея. */}
       <div className="flex items-start gap-3">
-        <Checkbox id="material-newsletter" name="newsletter" className="mt-0.5" />
+        <Checkbox
+          id="material-newsletter"
+          name="newsletter"
+          defaultChecked={values.newsletter === "on"}
+          className="mt-0.5"
+        />
         <Label
           htmlFor="material-newsletter"
           className="text-sm font-normal leading-relaxed text-muted-foreground"
@@ -178,7 +184,7 @@ export function MaterialAccessForm({
           href={`/${locale}/datenschutz`}
           className="underline hover:text-primary"
         >
-          Datenschutz
+          {contactFormCopy(locale).labels.privacyLink}
         </Link>
         .
       </p>

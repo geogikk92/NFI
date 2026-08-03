@@ -63,7 +63,11 @@ export async function requestMaterialAccess(
       status: "error",
       fieldErrors,
       message: t.result.checkFields,
-      values: { name: raw.name, email: raw.email },
+      values: {
+        name: raw.name,
+        email: raw.email,
+        newsletter: raw.newsletter ? "on" : "",
+      },
     };
   }
 
@@ -74,7 +78,11 @@ export async function requestMaterialAccess(
     return {
       status: "error",
       message: t.result.rateLimited,
-      values: { name: raw.name, email: raw.email },
+      values: {
+        name: raw.name,
+        email: raw.email,
+        newsletter: raw.newsletter ? "on" : "",
+      },
     };
   }
 
@@ -88,7 +96,9 @@ export async function requestMaterialAccess(
     Date.now() - renderedAt < MIN_FILL_SECONDS * 1000;
 
   if (honeypot.trim().length > 0 || Number.isNaN(renderedAt) || tooFast) {
-    return { status: "success", message: t.result.successBody, isVideo: true };
+    // Неутрален успех без линк: ботът не научава нищо, а истински човек,
+    // ударен от автопопълване, вижда правдоподобно съобщение.
+    return { status: "success", message: t.result.videoReady, isVideo: true };
   }
 
   let grant;
@@ -98,12 +108,24 @@ export async function requestMaterialAccess(
     return {
       status: "error",
       message: t.result.failed,
-      values: { name: raw.name, email: raw.email },
+      values: {
+        name: raw.name,
+        email: raw.email,
+        newsletter: raw.newsletter ? "on" : "",
+      },
     };
   }
 
   if (!grant) {
-    return { status: "error", message: t.result.failed };
+    return {
+      status: "error",
+      message: t.result.failed,
+      values: {
+        name: raw.name,
+        email: raw.email,
+        newsletter: raw.newsletter ? "on" : "",
+      },
+    };
   }
 
   // Бюлетинът е ОТДЕЛНО съгласие и отделен поток. Провалът му не бива
@@ -125,7 +147,7 @@ export async function requestMaterialAccess(
 
   return {
     status: "success",
-    message: t.result.successBody,
+    message: grant.token ? t.result.successBody : t.result.videoReady,
     downloadPath: grant.token ? `/download/${grant.token}` : undefined,
     isVideo: grant.token === null,
   };
