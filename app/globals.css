@@ -501,6 +501,195 @@
     opacity: 0.035;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     ДВИЖЕНИЕ · дизайн-система, слой 2
+     ═══════════════════════════════════════════════════════════════════
+
+     Три правила, преди което и да е от долното да се пипа:
+       1. Съдържанието е видимо БЕЗ JavaScript — скрива го чак браузърът
+          (components/content/reveal.tsx), и то само под сгъвката.
+       2. prefers-reduced-motion убива всичко през глобалното правило в
+          @layer base — тук няма нужда от втора защита.
+       3. Едно движение на един екран. Хореографията е в стойностите
+          по-долу, не в количеството ефекти.                            */
+
+  /* ── появяване при скрол (партньор на reveal.tsx) ─────────────── */
+  .will-reveal {
+    opacity: 0;
+    translate: 0 var(--reveal-distance, 18px);
+  }
+
+  .will-reveal.is-revealed {
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity var(--duration-slow) var(--ease-out-soft),
+      translate var(--duration-slow) var(--ease-out-soft);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  /* ── хореография при зареждане (само hero, е ПЪРВИЯ екран) ──────
+     Чист CSS: работи и без JS. Стълбица от закъснения — kicker,
+     заглавие, lede, действия, значки. Като в мокъпа.                */
+  .hero-rise {
+    opacity: 0;
+    translate: 0 22px;
+    animation: hero-rise var(--duration-slow) var(--ease-out-soft) forwards;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+
+  @keyframes hero-rise {
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  /* ── червената нишка, която се изтегля ──────────────────────────
+     Вертикалната линия на „der rote Faden": изтегля се, докато човек
+     скролира покрай нея. Scroll-driven animation — чисто CSS, без JS.
+     Където timeline() още не се поддържа, линията просто СТОИ — пълна,
+     статична, нищо не липсва.                                        */
+  .thread {
+    position: relative;
+  }
+
+  .thread::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 2px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      var(--color-red-600) 8%,
+      var(--color-red-600) 92%,
+      transparent
+    );
+  }
+
+  @supports (animation-timeline: view()) {
+    .thread::before {
+      transform-origin: top;
+      animation: thread-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 55%;
+    }
+
+    @keyframes thread-draw {
+      from {
+        scale: 1 0;
+      }
+      to {
+        scale: 1 1;
+      }
+    }
+  }
+
+  .thread-dot {
+    position: absolute;
+    inset-inline-start: -4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-red-600);
+    box-shadow: 0 0 0 4px var(--color-background);
+  }
+
+  /* ── печатът се „притиска" при поява ────────────────────────────
+     Като истински печат: идва отгоре, леко голям, и ляга. Веднъж.   */
+  .stamp-press {
+    animation: stamp-press 0.7s var(--ease-out-soft) both;
+    animation-delay: 150ms;
+  }
+
+  @supports (animation-timeline: view()) {
+    .stamp-press {
+      animation-timeline: view();
+      animation-range: entry 20% entry 80%;
+    }
+  }
+
+  @keyframes stamp-press {
+    from {
+      opacity: 0;
+      transform: rotate(-7deg) scale(1.35);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(-7deg) scale(1);
+    }
+  }
+
+  /* ── редове-връзки (курсове, материали) ─────────────────────────
+     Държанието от мокъпа: редът се отмества, стрелката тръгва напред,
+     отдолу се изтегля червена база. Транспорт, не декорация — казва
+     „това е врата, не текст".                                        */
+  .row-link {
+    position: relative;
+    transition: background-color var(--duration-fast) ease;
+  }
+
+  .row-link::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--color-red-600);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-out-soft);
+  }
+
+  .row-link:hover::after,
+  .row-link:focus-visible::after {
+    transform: scaleX(1);
+  }
+
+  .row-link .row-link-arrow {
+    transition: translate var(--duration-base) var(--ease-out-soft);
+  }
+
+  .row-link:hover .row-link-arrow,
+  .row-link:focus-visible .row-link-arrow {
+    translate: 6px 0;
+  }
+
+  /* ── карти с повдигане ──────────────────────────────────────────
+     Едва доловимо: 2px нагоре и по-дълбока сянка. Повече прилича на
+     презентация от 2019.                                             */
+  .card-lift {
+    transition:
+      translate var(--duration-base) var(--ease-out-soft),
+      box-shadow var(--duration-base) var(--ease-out-soft);
+  }
+
+  .card-lift:hover,
+  .card-lift:focus-within {
+    translate: 0 -2px;
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ── подчертаване, което се изтегля ─────────────────────────────
+     За ghost връзките „виж всички →". Изтегля се отляво при hover.  */
+  .draw-link {
+    background-image: linear-gradient(
+      currentColor,
+      currentColor
+    );
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 2px;
+    transition: background-size var(--duration-base) var(--ease-out-soft);
+  }
+
+  .draw-link:hover,
+  .draw-link:focus-visible {
+    background-size: 100% 2px;
+  }
 }
 
 /* Свързва shadcn речника с променливите от tokens.css.
