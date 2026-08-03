@@ -1,11 +1,25 @@
-// ДОГОВОРКА, не реализация.
+// ТЕРИТОРИЯ НА БОБИ · задача 17m — медиен слой, хранилище.
 //
-// Собственик: БОБИ (запълва я в задача 17m — медиен слой).
-// Ползва се от Жоро от ден 1 за файловете на продуктите и преводните
-// документи. Затова сигнатурите се пипат само с уговорка между двамата;
-// mock тялото отдолу е на Боби и се сменя без предупреждение.
+// До 03.08 това беше договорка с mock тяло. Сега е РЕАЛИЗАЦИЯ с два
+// драйвера:
 //
-// Реализацията ще е S3/R2 в EU регион (виж .env.example).
+//   • локален (uploads/, в .gitignore) — работи веднага, без акаунти.
+//     Подписаните линкове са истински HMAC през app/api/storage.
+//   • S3/R2 — чака ключовете от Жоро (docs/ДЕПЛОЙ.md „По-късно").
+//     Конфигурирани ключове без драйвер дават ЯСНА грешка, не тиха
+//     повреда — виж s3NotReady().
+//
+// Сигнатурите са същите като в договорката от K1 + две нови функции
+// (readObject, uploadsConfigured). Жоро консумира без промяна.
+
+import {
+  isSafeKey,
+  localHead,
+  localPut,
+  localRead,
+  localRemove,
+  localSignedPath,
+} from "./local";
 
 export type StorageScope =
   /** Публични изображения — може да се кешира от CDN. */
@@ -41,9 +55,54 @@ export interface StorageObject {
   checksum?: string;
 }
 
+/** S3 се смята за конфигуриран при наличен bucket + ключове. */
+function s3Configured(): boolean {
+  return Boolean(
+    process.env.S3_BUCKET &&
+      process.env.S3_ACCESS_KEY_ID &&
+      process.env.S3_SECRET_ACCESS_KEY,
+  );
+}
+
+/**
+ * Конфигуриран S3 без драйвер е ГРЕШКА, не резервен път към localhost:
+ * тихото падане към локалния диск в продукция значи файлове, които
+ * изчезват при всеки deploy.
+ */
+function s3NotReady(fn: string): never {
+  throw new Error(
+    `lib/storage.${fn}(): S3 ключовете са зададени, но S3 драйверът още не е ` +
+      "написан (задача 17m, следваща стъпка). Махни S3_* от средата, за да " +
+      "работи локалният драйвер, или изчакай S3 драйвера.",
+  );
+}
+
+/**
+ * Ключ за нов файл: scope/година/slug-суфикс.разширение.
+ * Суфиксът пази от съвпадения, без да прави ключа нечетим.
+ */
+export function newObjectKey(
+  scope: StorageScope,
+  baseName: string,
+  extension: string,
+): string {
+  const year = new Date().getFullYear();
+  const clean = baseName
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${scope}/${year}/${clean || "file"}-${suffix}.${extension}`;
+}
+
 /**
  * Presigned URL за качване. Файлът НИКОГА не минава през сървъра на
  * Next — иначе Vercel лимитът за размер на заявка ще ни спре.
+ *
+ * ЛОКАЛНО: качването минава през сървъра (същият process), защото
+ * лимитът на Vercel не съществува на localhost. Затова тук връщаме
+ * маркер-URL, а админ формите качват през server action → putObject.
  */
 export async function createUploadTarget(
   scope: StorageScope,
@@ -51,12 +110,21 @@ export async function createUploadTarget(
   mimeType: string,
   sizeBytes: number,
 ): Promise<UploadTarget> {
-  return notImplemented("createUploadTarget", {
-    scope,
-    filename,
-    mimeType,
-    sizeBytes,
-  });
+  if (s3Configured()) s3NotReady("createUploadTarget");
+
+  void mimeType;
+  void sizeBytes;
+
+  const extension = filename.split(".").pop() ?? "bin";
+  const key = newObjectKey(scope, filename.replace(/\.[^.]+$/, ""), extension);
+
+  return {
+    key,
+    // Локалният драйвер няма отделен endpoint за PUT — качва се през
+    // server action. URL-ът е маркер, който админ формата разпознава.
+    url: "local://put-through-server-action",
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+  };
 }
 
 /**
@@ -67,12 +135,26 @@ export async function signedUrl(
   key: string,
   options?: SignedUrlOptions,
 ): Promise<string> {
-  return notImplemented("signedUrl", { key, options });
+  if (s3Configured()) s3NotReady("signedUrl");
+
+  return localSignedPath(key, options?.expiresIn ?? 300, options?.downloadAs);
 }
 
 /** Метаданни без сваляне — за проверка след качване. */
 export async function head(key: string): Promise<StorageObject | null> {
-  return notImplemented("head", { key });
+  if (s3Configured()) s3NotReady("head");
+  return localHead(key);
+}
+
+/**
+ * Съдържанието на обект — за route handlers, които стриймват сами
+ * (свалянето на материали слага Content-Disposition и брои опити).
+ */
+export async function readObject(
+  key: string,
+): Promise<{ body: Buffer; mimeType: string } | null> {
+  if (s3Configured()) s3NotReady("readObject");
+  return localRead(key);
 }
 
 /**
@@ -80,7 +162,8 @@ export async function head(key: string): Promise<StorageObject | null> {
  * документи (задача 21). Връща true и когато обектът вече го няма.
  */
 export async function remove(key: string): Promise<boolean> {
-  return notImplemented("remove", { key });
+  if (s3Configured()) s3NotReady("remove");
+  return localRemove(key);
 }
 
 /** Сървърно качване — само за генерирани файлове (PDF от pdf-lib). */
@@ -90,17 +173,15 @@ export async function putObject(
   body: Uint8Array | Buffer,
   mimeType: string,
 ): Promise<StorageObject> {
-  return notImplemented("putObject", { scope, key, mimeType, size: body.length });
-}
+  if (s3Configured()) s3NotReady("putObject");
 
-// ─────────────────────────────────────────────────────────────────────────
-
-function notImplemented(fn: string, args: unknown): never {
-  const detail = JSON.stringify(args);
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(`lib/storage.${fn}() още не е реализирана.`);
+  if (!key.startsWith(`${scope}/`)) {
+    throw new Error(
+      `Ключът „${key}" не е в scope „${scope}" — ключове се правят с newObjectKey().`,
+    );
   }
-  throw new Error(
-    `lib/storage.${fn}() е още mock (собственик: Боби, задача 17m). Извикана с ${detail}`,
-  );
+
+  return localPut(key, body, mimeType);
 }
+
+export { isSafeKey };
