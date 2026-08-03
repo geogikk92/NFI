@@ -10,6 +10,8 @@
 // Истинските курсове от базата се показват в /kurse.
 
 import Image from "next/image";
+import type { CSSProperties } from "react";
+import { Reveal, RevealGroup } from "@/components/content/reveal";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
@@ -63,21 +65,21 @@ export default async function HomePage({ params }: Props) {
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-(--container-page) items-center gap-12 px-6 py-16 lg:grid-cols-[1.15fr_1fr] lg:py-24">
           <div>
-            <p className="kicker">
+            <p className="kicker hero-rise" style={{ "--rise-delay": "0ms" } as CSSProperties}>
               <span className="kicker-sq" aria-hidden />
               {t.hero.kicker}
             </p>
 
-            <h1 className="mt-5 font-title text-(length:--text-display-xl) font-bold leading-(--leading-display) tracking-tighter">
+            <h1 className="hero-rise mt-5 font-title text-(length:--text-display-xl) font-bold leading-(--leading-display) tracking-tighter" style={{ "--rise-delay": "90ms" } as CSSProperties}>
               {t.hero.titleLead}{" "}
               <em className="not-italic text-primary">{t.hero.titleAccent}</em>
             </h1>
 
-            <p className="mt-6 max-w-(--container-lede) text-(length:--text-lede) leading-relaxed text-muted-foreground">
+            <p className="hero-rise mt-6 max-w-(--container-lede) text-(length:--text-lede) leading-relaxed text-muted-foreground" style={{ "--rise-delay": "180ms" } as CSSProperties}>
               {t.hero.lede}
             </p>
 
-            <div className="mt-9 flex flex-wrap items-center gap-4">
+            <div className="hero-rise mt-9 flex flex-wrap items-center gap-4" style={{ "--rise-delay": "270ms" } as CSSProperties}>
               <Button asChild size="lg">
                 <Link href={p("/kontakt")}>{t.hero.ctaPrimary}</Link>
               </Button>
@@ -85,14 +87,14 @@ export default async function HomePage({ params }: Props) {
                   втори плътен бутон — за да е ясно кое е основното действие. */}
               <Link
                 href={p("/einstufungstest")}
-                className="inline-flex items-center gap-2 border-b-2 border-primary pb-1 text-sm font-semibold transition-[gap] hover:gap-3"
+                className="draw-link inline-flex items-center gap-2 pb-1 text-sm font-semibold text-foreground"
               >
                 {t.hero.ctaSecondary}
                 <span aria-hidden>→</span>
               </Link>
             </div>
 
-            <ul className="mt-10 flex flex-wrap items-center gap-3">
+            <ul className="hero-rise mt-10 flex flex-wrap items-center gap-3" style={{ "--rise-delay": "360ms" } as CSSProperties}>
               <li className="tag tag-red">{t.hero.badgeLive}</li>
               <li className="tag">{t.hero.badgeLevels}</li>
             </ul>
@@ -102,7 +104,7 @@ export default async function HomePage({ params }: Props) {
               само за снимката на общността, а героят е в цвят — драматичният
               червено-златен фон е част от кадъра и обработката би го убила.
               Съотношението 3/3.6 е от мокъпа. */}
-          <div className="relative">
+          <div className="hero-rise relative" style={{ "--rise-delay": "150ms" } as CSSProperties}>
             <figure className="relative aspect-[3/3.6] w-full overflow-hidden bg-ink">
               <Image
                 src="/img/vasilena-hero.jpg"
@@ -147,10 +149,13 @@ export default async function HomePage({ params }: Props) {
           </p>
 
           <ul className="mt-12 grid gap-6 md:grid-cols-3">
-            {t.why.items.map((item) => (
-              <li
+            <RevealGroup step={90}>
+            {t.why.items.map((item, index) => (
+              <Reveal
+                as="li"
                 key={item.title}
-                className="border border-border bg-card p-7 shadow-sm"
+                index={index}
+                className="card-lift border border-border bg-card p-7 shadow-sm"
               >
                 <span className="tag tag-red">{item.tag}</span>
                 <h3 className="mt-5 font-title text-(length:--text-display-m) font-bold leading-tight">
@@ -159,8 +164,9 @@ export default async function HomePage({ params }: Props) {
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {item.body}
                 </p>
-              </li>
+              </Reveal>
             ))}
+            </RevealGroup>
           </ul>
         </div>
       </section>
@@ -183,7 +189,7 @@ export default async function HomePage({ params }: Props) {
             </div>
             <Link
               href={p("/kurse")}
-              className="inline-flex items-center gap-2 border-b-2 border-primary pb-1 text-sm font-semibold transition-[gap] hover:gap-3"
+              className="draw-link inline-flex items-center gap-2 pb-1 text-sm font-semibold text-foreground"
             >
               {t.courses.all}
               <span aria-hidden>→</span>
@@ -196,7 +202,7 @@ export default async function HomePage({ params }: Props) {
               <li key={lvl.level}>
                 <Link
                   href={p(`/kurse?level=${lvl.level}`)}
-                  className="group flex flex-wrap items-center gap-x-8 gap-y-2 py-6 transition-colors hover:bg-muted/60"
+                  className="row-link group flex flex-wrap items-center gap-x-8 gap-y-2 py-6 hover:bg-muted/50"
                 >
                   <span className="w-14 font-title text-3xl font-bold text-primary">
                     {lvl.level}
@@ -210,10 +216,7 @@ export default async function HomePage({ params }: Props) {
                   <span className="font-mono text-2xs uppercase tracking-kicker text-subtle">
                     {lvl.note}
                   </span>
-                  <span
-                    aria-hidden
-                    className="text-primary transition-transform group-hover:translate-x-1"
-                  >
+                  <span aria-hidden className="row-link-arrow text-primary">
                     →
                   </span>
                 </Link>
@@ -246,8 +249,9 @@ export default async function HomePage({ params }: Props) {
           {/* Нумериран списък: това е ПЪТ и редът значи нещо. Номерът е
               декоративен, а редът се чете текстово от четеца. */}
           <ol className="mt-12 grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-5">
+            <RevealGroup step={70}>
             {t.rules.steps.map((step, index) => (
-              <li key={step.n} className="bg-card p-6">
+              <Reveal as="li" key={step.n} index={index} className="bg-card p-6">
                 <span
                   aria-hidden
                   className="font-mono text-2xl font-medium text-primary"
@@ -263,8 +267,9 @@ export default async function HomePage({ params }: Props) {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {step.body}
                 </p>
-              </li>
+              </Reveal>
             ))}
+            </RevealGroup>
           </ol>
         </div>
       </section>
@@ -276,7 +281,7 @@ export default async function HomePage({ params }: Props) {
       >
         <div className="mx-auto grid max-w-(--container-page) items-center gap-12 px-6 lg:grid-cols-[auto_1fr]">
           {/* Печатът от мокъпа — кръгъл, наклонен, с двоен кант. */}
-          <div className="stamp mx-auto size-44 shrink-0 border-primary text-primary lg:mx-0">
+          <div className="stamp stamp-press mx-auto size-44 shrink-0 border-primary text-primary lg:mx-0">
             <span className="stamp-title">{t.translation.stampTitle}</span>
             <span className="stamp-sub">{t.translation.stampSub}</span>
           </div>
@@ -329,16 +334,23 @@ export default async function HomePage({ params }: Props) {
           </div>
 
           <ul className="mt-10 grid gap-6 sm:grid-cols-2">
-            {t.reviews.items.map((review) => (
-              <li key={review.author} className="border border-border bg-card p-7">
+            <RevealGroup step={90}>
+            {t.reviews.items.map((review, index) => (
+              <Reveal
+                as="li"
+                key={review.author}
+                index={index}
+                className="card-lift border border-border bg-card p-7"
+              >
                 <blockquote className="text-lg leading-relaxed">
                   „{review.quote}“
                 </blockquote>
                 <p className="mt-4 font-mono text-2xs uppercase tracking-kicker text-muted-foreground">
                   {review.author} · {review.city}
                 </p>
-              </li>
+              </Reveal>
             ))}
+            </RevealGroup>
           </ul>
 
           <p className="mt-8 font-mono text-2xs uppercase tracking-kicker text-subtle">

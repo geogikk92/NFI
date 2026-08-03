@@ -22,6 +22,9 @@ const BYPASS = [
   "/favicon.ico",
   "/robots.txt",
   "/sitemap.xml",
+  // Свалянето по токен (задача 8): токенът Е достъпът, езикът е без
+  // значение, а пренасочване към /bg/download/... прави линка мъртъв.
+  "/download",
 ];
 
 export function middleware(request: NextRequest) {

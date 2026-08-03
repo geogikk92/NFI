@@ -21,6 +21,8 @@ import { signOut } from "@/app/auth-actions";
 import { CookieBanner } from "./cookie-banner";
 import { SiteNav } from "./site-nav";
 import { SiteFooter } from "./site-footer";
+import { MobileCta } from "./mobile-cta";
+import { homeCopy } from "@/lib/i18n/pages/home";
 
 export async function SiteShell({
   locale,
@@ -67,6 +69,9 @@ export async function SiteShell({
       />
 
       <div id="inhalt">{children}</div>
+
+      {/* Лепкавото действие на телефон · виж mobile-cta.tsx. */}
+      <MobileCta locale={locale} label={homeCopy(locale).hero.ctaPrimary} />
 
       <SiteFooter locale={locale} />
 
