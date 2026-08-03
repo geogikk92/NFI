@@ -8,6 +8,9 @@
 import Link from "next/link";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
+import { NewsletterForm } from "@/components/content/newsletter-form";
+import { newsletterCopy } from "@/lib/i18n/pages/newsletter";
+import { materialsCopy } from "@/lib/i18n/pages/materials";
 
 export function SiteFooter({ locale }: { locale: Locale }) {
   const t = getDictionary(locale);
@@ -25,6 +28,8 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         { href: p("/kurse?level=A1"), label: t.footer.forBeginners },
         { href: p("/kurse?level=B2"), label: t.footer.examPrep },
         { href: p("/einstufungstest"), label: t.nav.levelTest },
+        // Задача 8 е готова — редът от „ПРАВИЛОТО" горе влиза в сила.
+        { href: p("/materialien"), label: materialsCopy(locale).metaTitle },
       ],
     },
     {
@@ -102,7 +107,22 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        {/* Бюлетинът · задача 7. Над правния ред, на всяка страница —
+            фунията не бива да зависи от това човек да стигне до
+            /materialien. */}
+        <div className="mt-14 grid gap-6 border-t border-border pt-10 lg:grid-cols-[1fr_28rem]">
+          <div>
+            <h2 className="font-title text-lg font-bold">
+              {newsletterCopy(locale).form.heading}
+            </h2>
+            <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground">
+              {newsletterCopy(locale).form.lede}
+            </p>
+          </div>
+          <NewsletterForm locale={locale} />
+        </div>
+
+        <div className="mt-12 flex flex-col gap-3 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} Nürnberger Fremdsprachen Institut</p>
           <p>{t.footer.vatNote}</p>
         </div>
