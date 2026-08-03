@@ -607,6 +607,90 @@ function assertNotProduction(): void {
   });
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Безплатни материали · задача 8
+// ─────────────────────────────────────────────────────────────────────────
+
+async function seedFreeMaterials() {
+  // Малък, но ИСТИНСКИ PDF в локалното хранилище — така целият поток
+  // форма → токен → сваляне се минава на чиста машина, без S3.
+  const { localPut } = await import("../lib/storage/local");
+  const pdfKey = "media/seed/der-die-das-tablitza.pdf";
+  const pdf = [
+    "%PDF-1.4",
+    "1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj",
+    "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj",
+    "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj",
+    "4 0 obj<</Length 90>>stream",
+    "BT /F1 24 Tf 72 770 Td (NFI - der/die/das) Tj ET",
+    "BT /F1 12 Tf 72 740 Td (Demo material - task 8 seed) Tj ET",
+    "endstream endobj",
+    "5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj",
+    "trailer<</Root 1 0 R>>",
+  ].join("\n");
+  await localPut(pdfKey, Buffer.from(pdf), "application/pdf");
+
+  const materials = [
+    {
+      slug: "chlenovete-der-die-das",
+      title: "Членовете der/die/das — веднъж завинаги",
+      titleDe: "Die Artikel der/die/das — ein für alle Mal",
+      titleEn: "The articles der/die/das — once and for all",
+      description:
+        "Кога е der, кога die и кога das — воден от логика и няколко работещи правила, не от зубрене.",
+      descriptionDe:
+        "Wann der, wann die, wann das — geleitet von Logik und ein paar handfesten Regeln, nicht vom Auswendiglernen.",
+      descriptionEn:
+        "When it's der, die or das — guided by logic and a few solid rules, not memorisation.",
+      kind: "VIDEO_VIMEO" as const,
+      externalId: "76979871",
+      level: "A1" as const,
+      sortOrder: 1,
+    },
+    {
+      slug: "perfekt-za-40-minuti",
+      title: "Perfekt за 40 минути",
+      titleDe: "Das Perfekt in 40 Minuten",
+      titleEn: "The Perfekt tense in 40 minutes",
+      description:
+        "Миналото време, което ползваш всеки ден: haben или sein, и къде отива причастието.",
+      descriptionDe:
+        "Die Vergangenheit für jeden Tag: haben oder sein, und wohin das Partizip gehört.",
+      descriptionEn:
+        "The past tense you use daily: haben or sein, and where the participle goes.",
+      kind: "VIDEO_VIMEO" as const,
+      externalId: "76979871",
+      level: "A2" as const,
+      sortOrder: 2,
+    },
+    {
+      slug: "der-die-das-tablitza",
+      title: "der/die/das — таблицата за стената",
+      titleDe: "der/die/das — die Tabelle für die Wand",
+      titleEn: "der/die/das — the wall chart",
+      description:
+        "Една страница с окончанията, които издават рода. Разпечатай я и я дръж пред очите си.",
+      descriptionDe:
+        "Eine Seite mit den Endungen, die das Genus verraten. Ausdrucken und vor Augen behalten.",
+      descriptionEn:
+        "One page with the endings that give away the gender. Print it and keep it in sight.",
+      kind: "PDF" as const,
+      storageKey: pdfKey,
+      level: "A1" as const,
+      sortOrder: 3,
+    },
+  ];
+
+  for (const material of materials) {
+    await db.freeMaterial.upsert({
+      where: { slug: material.slug },
+      update: {},
+      create: { ...material, published: true, publishedAt: new Date() },
+    });
+  }
+}
+
 async function main() {
   assertNotProduction();
 
@@ -619,6 +703,7 @@ async function main() {
   await seedDiscounts();
   await seedTranslations();
   await seedPages();
+  await seedFreeMaterials();
 
   const counts = {
     потребители: await db.user.count(),
@@ -629,6 +714,7 @@ async function main() {
     "въпроси в теста": await db.levelTestQuestion.count(),
     "заявки за превод": await db.translationRequest.count(),
     страници: await db.page.count(),
+    "безплатни материали": await db.freeMaterial.count(),
   };
 
   console.log("Сийдът мина. В базата има:");

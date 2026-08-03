@@ -128,26 +128,26 @@ export async function grantMaterialAccess(
 
   if (!material) return null;
 
-  if (!needsDownloadGrant(material.kind as MaterialKind)) {
-    return { token: null, materialTitle: material.title };
-  }
-
+  const downloadable = needsDownloadGrant(material.kind as MaterialKind);
   const token = newToken();
 
+  // Grant се записва И за видео: там той не отключва файл, а е следата
+  // „кой поиска какво" — без нея видео-заявката не оставя контакт и
+  // формата събира въздух. Токенът просто не се връща.
   await db.downloadGrant.create({
     data: {
       email: input.email,
       freeMaterialId: material.id,
       token,
       expiresAt: grantExpiry(),
-      maxDownloads: GRANT_MAX_DOWNLOADS,
+      maxDownloads: downloadable ? GRANT_MAX_DOWNLOADS : 0,
       watermarkText: watermarkFor(input.name, input.email),
       ip: meta.ip,
     },
     select: { id: true },
   });
 
-  return { token, materialTitle: material.title };
+  return { token: downloadable ? token : null, materialTitle: material.title };
 }
 
 export type RedeemResult =
