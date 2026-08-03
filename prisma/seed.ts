@@ -706,6 +706,41 @@ async function seedFreeMaterials() {
   }
 }
 
+async function seedCertificates() {
+  // Демо сертификат на курсиста, за да има какво да се види в профила,
+  // в админа и на публичната проверка (/zertifikat/XK7M-2PQ9-WD4T).
+  //
+  // Номерът е от 2025 НАРОЧНО: истинската поредица (Counter
+  // "certificate:2026") започва от NFI-Z-2026-00001 и фиксиран сийд номер
+  // от 2026 би се сблъскал с първия истински. PDF файл не се прави тук —
+  // route-ът за сваляне го генерира при първото поискване.
+  const student = await db.user.findUnique({
+    where: { email: "student@nfi.local" },
+    select: { id: true },
+  });
+  const course = await db.course.findUnique({
+    where: { slug: "deutsch-b1-online" },
+    select: { id: true },
+  });
+  if (!student || !course) return;
+
+  await db.certificate.upsert({
+    where: { number: "NFI-Z-2025-00001" },
+    update: {},
+    create: {
+      userId: student.id,
+      courseId: course.id,
+      number: "NFI-Z-2025-00001",
+      holderName: "Max Mustermann",
+      level: "B1",
+      issuedAt: new Date("2025-12-19T10:00:00Z"),
+      // Фиксиран код от азбуката на generateVerifyCode — за да е един и
+      // същ на всяка машина и да може да се напише в документация.
+      verifyCode: "XK7M-2PQ9-WD4T",
+    },
+  });
+}
+
 async function main() {
   assertNotProduction();
 
@@ -719,6 +754,7 @@ async function main() {
   await seedTranslations();
   await seedPages();
   await seedFreeMaterials();
+  await seedCertificates();
 
   const counts = {
     потребители: await db.user.count(),
@@ -730,6 +766,7 @@ async function main() {
     "заявки за превод": await db.translationRequest.count(),
     страници: await db.page.count(),
     "безплатни материали": await db.freeMaterial.count(),
+    сертификати: await db.certificate.count(),
   };
 
   console.log("Сийдът мина. В базата има:");

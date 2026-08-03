@@ -93,6 +93,27 @@ describe("uniqueConflict", () => {
     expect(uniqueConflict(DRIVER_ADAPTER_P2002, SLUG)).toEqual(SLUG);
   });
 
+  it("сваля кавичките от съставните ограничения", () => {
+    // При съставен уникален индекс адаптерът връща колоните В КАВИЧКИ:
+    // снето от живата база при сертификатите (задача 16). Без свалянето
+    // им прякото съвпадение по поле никога не улучва.
+    const composite = {
+      code: "P2002",
+      meta: {
+        modelName: "Certificate",
+        driverAdapterError: {
+          cause: {
+            kind: "UniqueConstraintViolation",
+            constraint: { fields: ['"userId"', '"courseId"'] },
+          },
+        },
+      },
+    };
+    expect(
+      uniqueConflict(composite, { userId: "Вече има сертификат." }),
+    ).toEqual({ userId: "Вече има сертификат." });
+  });
+
   it("разпознава и класическата форма от Rust engine-а", () => {
     // Пази поправката при евентуално връщане към engine без адаптер.
     expect(

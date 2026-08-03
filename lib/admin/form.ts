@@ -123,7 +123,7 @@ export const CHECK_FIELDS = "Провери отбелязаните полет�
  * като „грешка в базата, опитай пак" — съвет, който не помага, защото
  * повторният опит дава същото. Затова се четат И ТРИТЕ известни форми.
  */
-function conflictColumns(error: unknown): string[] {
+export function conflictColumns(error: unknown): string[] {
   if (typeof error !== "object" || error === null) return [];
 
   const meta = (error as { meta?: Record<string, unknown> }).meta;
@@ -137,7 +137,12 @@ function conflictColumns(error: unknown): string[] {
   )?.cause?.constraint;
 
   if (Array.isArray(constraint?.fields)) {
-    return constraint.fields.map(String);
+    // Съставните ограничения идват с кавички в имената: ["\"userId\"",
+    // "\"courseId\""] — снето от живата база при сертификатите (задача 16).
+    // Без свалянето им прякото съвпадение по поле никога не улучва.
+    return constraint.fields.map((field) =>
+      String(field).replace(/^"+|"+$/g, ""),
+    );
   }
 
   // 2. Някои драйвери дават само името на индекса („Course_slug_key").
