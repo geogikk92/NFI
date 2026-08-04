@@ -66,7 +66,27 @@ export const requireAdmin = cache(async (): Promise<AdminUser> => {
     deny("Няма сесия. Непознат посетител на /admin.");
   }
 
-  // 2. С КАКВИ ПРАВА — чете се сега, от базата, не от сесията.
+  const check = await adminCheck(visitor);
+  if (!check.ok) deny(check.reason);
+
+  return check.user;
+});
+
+/**
+ * Същата проверка, но БЕЗ отказа: за route handlers, които връщат свой
+ * отговор (PDF, JSON), а не страница — те не могат да викнат notFound().
+ *
+ * НЕ Е втора проверка, а споделената реализация на единствената:
+ * requireAdmin() минава оттук. Първата версия на /api/certificate
+ * решаваше isAdmin с голо `role === "ADMIN"` и така заобикаляше
+ * ADMIN_EMAIL предпазителя — одитът на 04.08.2026 го хвана.
+ */
+export async function adminCheck(
+  visitor: { id: string; email: string } | null,
+): Promise<{ ok: true; user: AdminUser } | { ok: false; reason: string }> {
+  if (!visitor) return { ok: false, reason: "Няма сесия." };
+
+  // С КАКВИ ПРАВА — чете се сега, от базата, не от сесията.
   const user = await db.user.findFirst({
     where: {
       id: visitor.id,
@@ -79,21 +99,23 @@ export const requireAdmin = cache(async (): Promise<AdminUser> => {
   });
 
   if (!user) {
-    deny(`Потребител ${visitor.email} няма роля ADMIN.`);
+    return { ok: false, reason: `Потребител ${visitor.email} няма роля ADMIN.` };
   }
 
-  // 3. Предпазител, не право за достъп.
+  // Предпазител, не право за достъп.
   //
   // Ако ADMIN_EMAIL е зададен, той стеснява кръга до един конкретен човек
   // дори роля ADMIN да получи някой друг — например по грешка в сийд или
   // в ръчна заявка. Липсва ли, ролята е достатъчна.
   const restrictTo = process.env.ADMIN_EMAIL?.trim();
   if (restrictTo && restrictTo.toLowerCase() !== user.email.toLowerCase()) {
-    deny(
-      `ADMIN_EMAIL сочи ${restrictTo}, а влезлият е ${user.email}. ` +
+    return {
+      ok: false,
+      reason:
+        `ADMIN_EMAIL сочи ${restrictTo}, а влезлият е ${user.email}. ` +
         "Или махни променливата, или я изравни с имейла на админа.",
-    );
+    };
   }
 
-  return user;
-});
+  return { ok: true, user };
+}

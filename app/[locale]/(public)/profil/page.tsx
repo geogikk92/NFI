@@ -12,8 +12,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth/session-db";
 import { getAccountOverview } from "@/lib/auth/account-db";
+import { certificatesForUser } from "@/lib/certificates/certificates-db";
+import { certificateState } from "@/lib/certificates/certificates";
 import { getAccountTexts, consentLabel } from "@/lib/i18n/pages/account";
-import { toLocale, type Locale } from "@/lib/i18n/config";
+import { certificatesCopy } from "@/lib/i18n/pages/certificates";
+import { pick, toLocale, type Locale } from "@/lib/i18n/config";
+import { formatDateLong } from "@/lib/intl";
 import { signOut } from "@/app/auth-actions";
 import { Button } from "@/components/ui/button";
 
@@ -31,12 +35,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** Дата, изписана по правилата на съответния език. */
+/**
+ * Дата, изписана по правилата на съответния език — през lib/intl, за да
+ * върви със заключената часова зона. Датата на сертификата се пази като
+ * берлинска полунощ и гол Intl.DateTimeFormat на UTC сървър би показал
+ * предишния ден (одит, 04.08.2026).
+ */
 function formatDate(value: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(
-    locale === "bg" ? "bg-BG" : locale === "en" ? "en-GB" : "de-DE",
-    { day: "numeric", month: "long", year: "numeric" },
-  ).format(value);
+  return formatDateLong(value, locale);
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -65,6 +71,9 @@ export default async function AccountPage({ params }: Props) {
     // Сесия има, профил няма: изтрит е, докато човекът е бил влязъл.
     redirect(`/${locale}/anmelden`);
   }
+
+  const certificates = await certificatesForUser(visitor.id);
+  const tCert = certificatesCopy(locale).profile;
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
@@ -169,6 +178,63 @@ export default async function AccountPage({ params }: Props) {
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+
+        {/* ── Сертификати ── */}
+        <section className="mt-12" aria-labelledby="sertifikati">
+          <h2 id="sertifikati" className="font-title text-xl font-semibold">
+            {tCert.heading}
+          </h2>
+
+          {certificates.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">{tCert.empty}</p>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-muted-foreground">{tCert.lead}</p>
+              <ul className="mt-4 space-y-4">
+                {certificates.map((certificate) => (
+                  <li
+                    key={certificate.id}
+                    className="border-l-2 border-border pl-4"
+                  >
+                    <p className="text-sm font-medium">
+                      {pick(locale, {
+                        bg: certificate.courseTitle,
+                        de: certificate.courseTitleDe,
+                        en: certificate.courseTitleEn,
+                      })}{" "}
+                      · {certificate.level}
+                      {certificateState(certificate) === "revoked" ? (
+                        <span className="ml-2 text-xs font-normal text-destructive">
+                          {tCert.revokedNote}
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {certificate.number} ·{" "}
+                      {formatDate(certificate.issuedAt, locale)}
+                    </p>
+                    <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+                      {certificateState(certificate) === "revoked" ? null : (
+                        <a
+                          href={`/api/certificate/${certificate.id}`}
+                          className="draw-link font-medium text-primary"
+                        >
+                          {tCert.download}
+                        </a>
+                      )}
+                      <Link
+                        href={`/${locale}/zertifikat/${certificate.verifyCode}`}
+                        className="draw-link text-muted-foreground"
+                      >
+                        {tCert.verifyLink}
+                      </Link>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </section>
 
