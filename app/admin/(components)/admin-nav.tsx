@@ -29,7 +29,11 @@ const SECTIONS: readonly NavSection[] = [
   {
     id: "admin-nav-obshto",
     title: "Общ преглед",
-    items: [{ href: "/admin", label: "Табло" }],
+    items: [
+      { href: "/admin", label: "Табло" },
+      { href: "/admin/tarsene", label: "Търсене" },
+      { href: "/admin/dnevnik", label: "Дневник на промените" },
+    ],
   },
   {
     id: "admin-nav-sadarzhanie",
@@ -71,9 +75,67 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/**
+ * Активният раздел, изписан с думи — надписът на сгънатата навигация.
+ *
+ * На телефон човек трябва да вижда КЪДЕ е, преди да разгъне списъка.
+ * „Меню" не казва нищо; „Отзиви" казва всичко.
+ */
+function currentLabel(pathname: string): string {
+  for (const section of SECTIONS) {
+    for (const item of section.items) {
+      if (isActive(pathname, item.href)) return item.label;
+    }
+  }
+  return "Раздели";
+}
+
 export function AdminNav() {
   const pathname = usePathname();
 
+  return (
+    <>
+      {/* ── На телефон: сгънато ──
+          Списъкът е 13 връзки в четири групи. Разгънат над всяка страница
+          той изяжда целия първи екран и всяко зареждане започва с дълъг
+          скрол покрай меню, което човекът вече е ползвал.
+
+          `<details>` е НАТИВЕН: отваря се и без JavaScript, помни
+          състоянието си при отваряне и не иска нито ред логика. */}
+      {/* `key={pathname}`: layout-ът НЕ се премонтира при навигация в
+          Next, тоест без този ключ менюто остава отворено след избора и
+          новата страница се отваря под 13 връзки. Смяната на ключа
+          премонтира <details> в началното му (затворено) състояние. */}
+      <details
+        key={pathname}
+        className="group border-b border-sidebar-border lg:hidden"
+      >
+        <summary className="flex cursor-pointer items-center justify-between px-6 py-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+          <span>
+            <span className="text-muted-foreground">Раздел:</span>{" "}
+            {currentLabel(pathname)}
+          </span>
+          {/* Стрелката е единственият чисто украсен елемент — състоянието
+              се чува и от нативното `<summary>`. */}
+          <span aria-hidden className="transition-transform group-open:rotate-180">
+            ▾
+          </span>
+        </summary>
+
+        <div className="pb-3">
+          <NavSections pathname={pathname} />
+        </div>
+      </details>
+
+      {/* ── От таблет нагоре: винаги отворено ── */}
+      <div className="hidden lg:block">
+        <NavSections pathname={pathname} />
+      </div>
+    </>
+  );
+}
+
+function NavSections({ pathname }: { pathname: string }) {
   return (
     <nav aria-label="Административни раздели" className="px-3">
       {SECTIONS.map((section) => (
