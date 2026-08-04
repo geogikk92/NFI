@@ -66,16 +66,31 @@ export function SubmitButton({
   pendingLabel = "Записва се…",
   variant,
   size,
+  formAction,
 }: {
   children: React.ReactNode;
   pendingLabel?: string;
   variant?: React.ComponentProps<typeof Button>["variant"];
   size?: React.ComponentProps<typeof Button>["size"];
+  /**
+   * Различно действие от това на формата.
+   *
+   * За форми с ДВА изхода — „Запази черновата" и „Публикувай" върху едни
+   * и същи полета. Атрибутът е нативен (HTML5 formaction) и работи и без
+   * JavaScript: браузърът праща формата на посочения адрес.
+   */
+  formAction?: React.ComponentProps<"button">["formAction"];
 }) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" disabled={pending} variant={variant} size={size}>
+    <Button
+      type="submit"
+      disabled={pending}
+      variant={variant}
+      size={size}
+      formAction={formAction}
+    >
       {pending ? pendingLabel : children}
     </Button>
   );

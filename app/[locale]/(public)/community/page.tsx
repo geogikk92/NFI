@@ -5,7 +5,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import { AwaitingLegalText } from "@/components/content/legal-page";
+import { Block } from "@/components/content/block";
+import { isDraftPreview } from "@/lib/content/preview";
 import { EmptyState } from "@/components/content/states";
 import { localeAlternates } from "@/lib/i18n/alternates";
 import { toLocale } from "@/lib/i18n/config";
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CommunityPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = communityCopy(locale);
+  const draft = await isDraftPreview();
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
@@ -38,18 +40,22 @@ export default async function CommunityPage({ params }: Props) {
       </header>
 
       <div className="prose mt-14">
-        {/* Указанията в AwaitingLegalText са бележка към екипа, не текст за
-            посетителя — затова остават на немски. */}
+        {/* Указанията в бележката са към екипа, не текст за посетителя —
+            затова остават на немски. */}
         <h2>{t.cafeHeading}</h2>
-        <AwaitingLegalText
-          what="Beschreibung, Termine und Anmeldung für das Sprachcafé"
-          who="der Kundin"
+        <Block
+          k="community.cafe"
+          locale={locale}
+          draft={draft}
+          awaiting="Beschreibung, Termine und Anmeldung für das Sprachcafé"
         />
 
         <h2>{t.groupsHeading}</h2>
-        <AwaitingLegalText
-          what="Wie Lerngruppen entstehen und wie man mitmacht"
-          who="der Kundin"
+        <Block
+          k="community.groups"
+          locale={locale}
+          draft={draft}
+          awaiting="Wie Lerngruppen entstehen und wie man mitmacht"
         />
       </div>
 

@@ -3,7 +3,8 @@
 
 import type { Metadata } from "next";
 import { CallRequestForm } from "@/components/content/call-request-form";
-import { AwaitingLegalText } from "@/components/content/legal-page";
+import { Block } from "@/components/content/block";
+import { isDraftPreview } from "@/lib/content/preview";
 import { findCourseForRequest } from "@/lib/cms/call-requests-db";
 import { pick, toLocale } from "@/lib/i18n/config";
 import { contactCopy } from "@/lib/i18n/pages/contact";
@@ -28,6 +29,7 @@ export default async function KontaktPage({ params, searchParams }: Props) {
   const locale = toLocale((await params).locale);
   const { kurs } = await searchParams;
   const t = contactCopy(locale);
+  const draft = await isDraftPreview();
 
   // Курсът от адреса се проверява срещу базата — подаден отвън slug не
   // бива да се показва като заглавие, нито да стига до вмъкването.
@@ -67,20 +69,25 @@ export default async function KontaktPage({ params, searchParams }: Props) {
           <div className="rounded-xl border border-border bg-card p-6">
             <h2 className="font-title text-xl">{t.directHeading}</h2>
 
-            {/* Указанията в AwaitingLegalText остават на немски НАРОЧНО:
-                те са бележка към екипа кой какво още дължи, не текст за
-                посетителя — а самата страница не бива да излиза, докато
-                се вижда. */}
-            <AwaitingLegalText
-              what="Telefonnummer, E-Mail und Öffnungszeiten"
-              who="der Kundin"
+            {/* Указанията в бележката остават на немски НАРОЧНО: те са
+                към екипа кой какво още дължи, не текст за посетителя — а
+                самата страница не бива да излиза, докато се вижда. */}
+            <Block
+              k="contact.direct"
+              locale={locale}
+              draft={draft}
+              awaiting="Telefonnummer, E-Mail und Öffnungszeiten"
+              className="mt-4 space-y-2 text-sm leading-relaxed"
             />
 
             <div className="mt-6 border-t border-border pt-6">
               <h3 className="text-sm font-semibold">{t.addressHeading}</h3>
-              <AwaitingLegalText
-                what="Anschrift des Instituts in Nürnberg"
-                who="der Kundin"
+              <Block
+                k="contact.address"
+                locale={locale}
+                draft={draft}
+                awaiting="Anschrift des Instituts in Nürnberg"
+                className="mt-2 space-y-1 text-sm leading-relaxed text-muted-foreground"
               />
             </div>
           </div>

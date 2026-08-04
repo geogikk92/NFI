@@ -560,26 +560,26 @@ async function seedTranslations() {
   }
 }
 
-async function seedPages() {
-  const pages = [
-    { slug: "home", title: "Начало" },
-    { slug: "about", title: "За нас" },
-    { slug: "contact", title: "Контакт" },
-    { slug: "community", title: "Общност" },
-    { slug: "impressum", title: "Impressum" },
-    { slug: "datenschutz", title: "Datenschutzerklärung" },
-    { slug: "agb", title: "AGB" },
-    { slug: "widerruf", title: "Widerrufsbelehrung" },
-  ];
-
-  for (const page of pages) {
-    await db.page.upsert({
-      where: { slug: page.slug },
-      update: {},
-      create: { ...page, draft: { sections: [] } },
-    });
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────
+//  СЪДЪРЖАНИЕТО НЕ СЕ СИЙДВА. Нарочно.
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Тук стоеше seedPages(), който създаваше 8 празни реда в мъртвия модел
+// Page — при това с грешен инвентар: четири от тях бяха правни страници,
+// които НЕ бива да са редактируеми от клиентката.
+//
+// Новият модел (ContentBlock) тръгва ПРАЗЕН и това е основната печалба:
+//
+//   • празна база = днешният одобрен сайт, дума по дума;
+//   • блоковете със стойност в кода (датата на старта) я показват, докато
+//     Василена наистина не ги презапише — значи промяна в кода остава
+//     жива, вместо да бъде мълчаливо засенчена от сийднат ред;
+//   • седемте блока, които тя дължи, остават честно празни и продължават
+//     да спират деплоя, докато не бъдат написани.
+//
+// Сийд, който копира днешните текстове в базата, би направил стойностите
+// в кода мъртви: разработчик ги сменя, нищо не се случва, никой не
+// разбира защо.
 
 /**
  * Предпазителят срещу продукция.
@@ -761,7 +761,6 @@ async function main() {
   await seedShipping();
   await seedDiscounts();
   await seedTranslations();
-  await seedPages();
   await seedFreeMaterials();
   await seedCertificates();
 
@@ -773,7 +772,7 @@ async function main() {
     отстъпки: await db.discount.count(),
     "въпроси в теста": await db.levelTestQuestion.count(),
     "заявки за превод": await db.translationRequest.count(),
-    страници: await db.page.count(),
+    "редактирани текстове": await db.contentBlock.count(),
     "безплатни материали": await db.freeMaterial.count(),
     сертификати: await db.certificate.count(),
   };
