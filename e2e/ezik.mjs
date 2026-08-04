@@ -8,7 +8,7 @@
 // в него минава през този тест.
 
 import { chromium } from "playwright";
-const B = process.env.BASE ?? "http://localhost:3130";
+const B = process.env.E2E_BASE_URL ?? process.env.BASE ?? "http://localhost:3130";
 const out=[]; const ok=(n,v,d="")=>{out.push(v);console.log(`${v?"✓":"✗"} ${n}${d?"  — "+d:""}`)};
 const b = await chromium.launch(); const p = await (await b.newContext()).newPage();
 try {
