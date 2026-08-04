@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CoursePage({ params }: Props) {
   const { locale: raw, slug } = await params;
   const locale = toLocale(raw);
-  const loaded = await loadOrExplain(() => getCourseBySlug(slug));
+  const loaded = await loadOrExplain(() => getCourseBySlug(slug, locale));
   const course = loaded.ok ? loaded.data : null;
 
     // При недостъпна база НЕ се вика notFound(): 404 казва „такъв курс няма",
@@ -174,6 +174,34 @@ export default async function CoursePage({ params }: Props) {
                   course.reviewCount,
                 )}
               </p>
+
+              {/* Самите отзиви. Списъкът е на езика на посетителя — затова
+                  може да е празен, докато средната оценка не е: тя брои
+                  всички езици. */}
+              {course.reviews.length > 0 ? (
+                <ul className="mt-6 space-y-5">
+                  {course.reviews.map((review) => (
+                    <li
+                      key={review.id}
+                      className="border-l-2 border-primary/40 pl-5"
+                    >
+                      <p className="text-lg leading-relaxed">
+                        „{review.body}“
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {review.authorName}
+                        <span className="sr-only">
+                          {" "}
+                          — {review.rating} / 5
+                        </span>
+                        <span aria-hidden className="ml-2 text-primary">
+                          {"★".repeat(review.rating)}
+                        </span>
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </section>
           ) : null}
         </article>
