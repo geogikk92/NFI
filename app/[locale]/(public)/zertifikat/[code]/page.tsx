@@ -11,6 +11,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { pick, toLocale, type Locale } from "@/lib/i18n/config";
 import { certificatesCopy } from "@/lib/i18n/pages/certificates";
+import { formatDateLong } from "@/lib/intl";
 import {
   findCertificateByVerifyCode,
   type VerifiedCertificate,
@@ -29,11 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// Датите МИНАВАТ през lib/intl (заключена часова зона): issuedAt се пази
+// като берлинска полунощ и гол Intl.DateTimeFormat на UTC сървър би
+// показал предишния ден — точно на екрана, който потвърждава документа.
 function formatDate(value: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(
-    locale === "bg" ? "bg-BG" : locale === "en" ? "en-GB" : "de-DE",
-    { day: "numeric", month: "long", year: "numeric" },
-  ).format(value);
+  return formatDateLong(value, locale);
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -91,9 +92,16 @@ export default async function VerifyCertificatePage({ params }: Props) {
   const locale = toLocale(rawLocale);
   const t = certificatesCopy(locale).verify;
 
-  const certificate = await findCertificateByVerifyCode(
-    decodeURIComponent(code),
-  );
+  // Невалидна URL-кодировка (/zertifikat/%E0) не бива да е 500 — това е
+  // сгрешено копиране, тоест „кодът не е разпознат".
+  let rawCode = code;
+  try {
+    rawCode = decodeURIComponent(code);
+  } catch {
+    // остава суровият сегмент; normalizeVerifyCode ще го отхвърли
+  }
+
+  const certificate = await findCertificateByVerifyCode(rawCode);
 
   const copy = !certificate
     ? t.notFound

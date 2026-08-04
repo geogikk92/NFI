@@ -13,6 +13,8 @@ import { Flash, commonFlashErrors } from "@/components/admin/flash";
 import { CertificateRevokeSection } from "@/components/admin/certificate-revoke";
 import { requireAdmin } from "@/lib/admin/guard";
 import { getCertificateForAdmin } from "@/lib/certificates/certificates-db";
+import { certificateState } from "@/lib/certificates/certificates";
+import { formatDateLong } from "@/lib/intl";
 import {
   regenerateCertificatePdf,
   restoreCertificateAction,
@@ -41,12 +43,10 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+// През lib/intl — заключената часова зона пази задната дата от
+// изместване с ден на UTC сървър (виж коментара в input.ts).
 function formatDate(value: Date): string {
-  return new Intl.DateTimeFormat("bg-BG", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(value);
+  return formatDateLong(value, "bg");
 }
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -94,7 +94,7 @@ export default async function AdminCertificatePage({
           </p>
         </div>
 
-        {certificate.revokedAt ? (
+        {certificateState(certificate) === "revoked" ? (
           <Badge variant="destructive">отменен</Badge>
         ) : (
           <Badge>валиден</Badge>

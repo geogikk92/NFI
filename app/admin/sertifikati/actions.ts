@@ -124,14 +124,19 @@ export async function revokeCertificateAction(
   const id = String(data.get("id") ?? "").trim();
   if (!id) return invalid(data, "Липсва сертификат за отмяна.");
 
-  if (data.get("confirm") === null) {
-    return invalid(data, "Отметни потвърждението, за да се отмени.", {
-      confirm: "Без тази отметка сертификатът не се отменя.",
-    });
-  }
-
+  // Причината и отметката се проверяват ЗАЕДНО — иначе админът получава
+  // грешките една по една: първо за отметката, при второто изпращане за
+  // причината. Всички наведнъж е правилото на collect() и тук.
   const parsed = parseCertificateRevokeForm(data);
-  if (!parsed.ok) return invalid(data, CHECK_FIELDS, parsed.fieldErrors);
+  const fieldErrors: Record<string, string> = parsed.ok
+    ? {}
+    : { ...parsed.fieldErrors };
+  if (data.get("confirm") === null) {
+    fieldErrors.confirm = "Без тази отметка сертификатът не се отменя.";
+  }
+  if (!parsed.ok || Object.keys(fieldErrors).length > 0) {
+    return invalid(data, CHECK_FIELDS, fieldErrors);
+  }
 
   try {
     await revokeCertificate(id, parsed.value.reason, await auditMeta(admin));

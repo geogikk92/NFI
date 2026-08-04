@@ -21,7 +21,13 @@ export function CertificateRevokeSection({ action, id }: Props) {
   const [state, formAction] = useActionState(action, IDLE);
 
   return (
-    <details className="mt-12 rounded-xl border border-destructive/30 bg-destructive/5">
+    <details
+      // След неуспешно изпращане разделът стои ОТВОРЕН — иначе при
+      // изпращане без JavaScript (пълен POST) страницата се връща със
+      // сгънат <details> и грешката е невидима.
+      open={state.status === "idle" ? undefined : true}
+      className="mt-12 rounded-xl border border-destructive/30 bg-destructive/5"
+    >
       <summary className="cursor-pointer px-5 py-4 text-sm font-medium text-destructive focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
         Отмяна на сертификата
       </summary>

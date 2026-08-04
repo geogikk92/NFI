@@ -17,6 +17,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, PDFFont, PDFPage, degrees, rgb } from "pdf-lib";
+import { TIME_ZONE } from "@/lib/intl";
 import type { CertificateLevel } from "./certificates";
 
 export interface CertificatePdfInput {
@@ -291,13 +292,18 @@ function drawFooterColumn(
 //  Самият документ
 // ─────────────────────────────────────────────────────────────────────────
 
-/** Дата като в немски документ: „03.08.2026" — четима и на трите езика. */
+/**
+ * Дата като в немски документ: „03.08.2026" — четима и на трите езика.
+ * СЪЩАТА часова зона като сайта (lib/intl.TIME_ZONE): датата в PDF-а и
+ * датата на страницата за проверка трябва да съвпадат до деня, иначе
+ * екранът за автентичност сам сее съмнение.
+ */
 function formatStampDate(date: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    timeZone: "Europe/Sofia",
+    timeZone: TIME_ZONE,
   }).format(date);
 }
 
@@ -384,25 +390,43 @@ export async function renderCertificatePdf(
     color: MUTED,
   });
 
+  // Името: първо се свива (до 22pt); не се ли събере и така, се пренася
+  // на втори ред и всеки ред се дособира отделно (мин 14pt). Двойните
+  // фамилии с бащино име са реалност, а най-важният ред на документа
+  // няма право нито да се отреже, нито да мине под печата — одитът на
+  // 04.08.2026 измери, че 67-знаково име при стария под от 18pt стърчеше
+  // извън листа.
   const nameSize = fitSize(
     oswaldSemiBold,
     input.holderName,
     bodyMaxWidth,
     34,
-    18,
+    22,
   );
-  page.drawText(input.holderName, {
-    x: MARGIN,
-    y: 318,
-    font: oswaldSemiBold,
-    size: nameSize,
-    color: INK,
-  });
+  const nameLines = wrapText(
+    oswaldSemiBold,
+    input.holderName,
+    nameSize,
+    bodyMaxWidth,
+  ).slice(0, 2);
+
+  let cursorY = 318;
+  for (const line of nameLines) {
+    const lineSize = fitSize(oswaldSemiBold, line, bodyMaxWidth, nameSize, 14);
+    page.drawText(line, {
+      x: MARGIN,
+      y: cursorY,
+      font: oswaldSemiBold,
+      size: lineSize,
+      color: INK,
+    });
+    cursorY -= lineSize + 8;
+  }
+  cursorY -= 2; // въздух преди реда за курса
 
   const courseLine = `den Kurs „${input.courseTitleDe}“`;
   const courseSize = fitSize(interSemiBold, courseLine, bodyMaxWidth, 15, 11);
   const courseLines = wrapText(interSemiBold, courseLine, courseSize, bodyMaxWidth);
-  let cursorY = 284;
   for (const line of courseLines.slice(0, 2)) {
     page.drawText(line, {
       x: MARGIN,

@@ -12,38 +12,26 @@ import { EmptyState } from "@/components/content/states";
 import { Flash, commonFlashErrors } from "@/components/admin/flash";
 import { requireAdmin } from "@/lib/admin/guard";
 import { listCertificatesForAdmin } from "@/lib/certificates/certificates-db";
-import { formatNumber } from "@/lib/intl";
+import { certificateState } from "@/lib/certificates/certificates";
+import { formatDate, formatNumber } from "@/lib/intl";
 
 export const metadata: Metadata = {
   title: "Сертификати",
   robots: { index: false, follow: false },
 };
 
-const FLASH = {
-  izdaden: "Сертификатът е издаден.",
-  otmenen: "Сертификатът е отменен.",
-  vazstanoven: "Сертификатът е възстановен.",
-  pdf: "PDF файлът е генериран наново.",
-};
-
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-function formatDate(value: Date): string {
-  return new Intl.DateTimeFormat("bg-BG", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(value);
-}
 
 export default async function AdminCertificatesPage({ searchParams }: Props) {
   await requireAdmin();
 
   const query = await searchParams;
   const certificates = await listCertificatesForAdmin();
-  const valid = certificates.filter((row) => !row.revokedAt).length;
+  const valid = certificates.filter(
+    (row) => certificateState(row) === "valid",
+  ).length;
 
   return (
     <>
@@ -62,9 +50,11 @@ export default async function AdminCertificatesPage({ searchParams }: Props) {
         </Button>
       </header>
 
+      {/* Успешните действия пренасочват към ДЕТАЙЛА и там е флашът им —
+          тук идват само грешките от вида „вече не съществува". */}
       <Flash
         query={query}
-        success={FLASH}
+        success={{}}
         errors={commonFlashErrors("Сертификатът")}
       />
 
@@ -135,10 +125,10 @@ export default async function AdminCertificatesPage({ searchParams }: Props) {
                   <td className="px-4 py-3">{certificate.courseTitle}</td>
                   <td className="px-4 py-3">{certificate.level}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {formatDate(certificate.issuedAt)}
+                    {formatDate(certificate.issuedAt, "bg")}
                   </td>
                   <td className="px-4 py-3">
-                    {certificate.revokedAt ? (
+                    {certificateState(certificate) === "revoked" ? (
                       <Badge variant="destructive">отменен</Badge>
                     ) : (
                       <Badge>валиден</Badge>

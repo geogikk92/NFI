@@ -724,6 +724,15 @@ async function seedCertificates() {
   });
   if (!student || !course) return;
 
+  // Има ли ВЕЧЕ сертификат за тази двойка (например издаден на ръка през
+  // админа при разработка), сийдът не пипа: create-ът би паднал на
+  // unique(userId, courseId) и целият сийд би гръмнал.
+  const existing = await db.certificate.findFirst({
+    where: { userId: student.id, courseId: course.id },
+    select: { id: true },
+  });
+  if (existing) return;
+
   await db.certificate.upsert({
     where: { number: "NFI-Z-2025-00001" },
     update: {},

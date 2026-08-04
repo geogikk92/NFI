@@ -13,9 +13,11 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth/session-db";
 import { getAccountOverview } from "@/lib/auth/account-db";
 import { certificatesForUser } from "@/lib/certificates/certificates-db";
+import { certificateState } from "@/lib/certificates/certificates";
 import { getAccountTexts, consentLabel } from "@/lib/i18n/pages/account";
 import { certificatesCopy } from "@/lib/i18n/pages/certificates";
 import { pick, toLocale, type Locale } from "@/lib/i18n/config";
+import { formatDateLong } from "@/lib/intl";
 import { signOut } from "@/app/auth-actions";
 import { Button } from "@/components/ui/button";
 
@@ -33,12 +35,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/** Дата, изписана по правилата на съответния език. */
+/**
+ * Дата, изписана по правилата на съответния език — през lib/intl, за да
+ * върви със заключената часова зона. Датата на сертификата се пази като
+ * берлинска полунощ и гол Intl.DateTimeFormat на UTC сървър би показал
+ * предишния ден (одит, 04.08.2026).
+ */
 function formatDate(value: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(
-    locale === "bg" ? "bg-BG" : locale === "en" ? "en-GB" : "de-DE",
-    { day: "numeric", month: "long", year: "numeric" },
-  ).format(value);
+  return formatDateLong(value, locale);
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -201,7 +205,7 @@ export default async function AccountPage({ params }: Props) {
                         en: certificate.courseTitleEn,
                       })}{" "}
                       · {certificate.level}
-                      {certificate.revokedAt ? (
+                      {certificateState(certificate) === "revoked" ? (
                         <span className="ml-2 text-xs font-normal text-destructive">
                           {tCert.revokedNote}
                         </span>
@@ -212,7 +216,7 @@ export default async function AccountPage({ params }: Props) {
                       {formatDate(certificate.issuedAt, locale)}
                     </p>
                     <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-                      {certificate.revokedAt ? null : (
+                      {certificateState(certificate) === "revoked" ? null : (
                         <a
                           href={`/api/certificate/${certificate.id}`}
                           className="draw-link font-medium text-primary"

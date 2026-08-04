@@ -104,7 +104,14 @@ export async function issueCertificate(
 
     try {
       return await db.$transaction(async (tx: AuditTx) => {
-        const number = await nextCertificateNumber(tx);
+        // Годината в номера следва ДАТАТА НА ИЗДАВАНЕ, не текущия момент:
+        // сертификат със задна дата 19.12.2026, издаден на 5 януари, е
+        // NFI-Z-2026-…, не NFI-Z-2027-… — иначе номерът и „Ausgestellt am"
+        // на същия лист си противоречат.
+        const number = await nextCertificateNumber(
+          tx,
+          input.issuedAt ?? new Date(),
+        );
 
         const certificate = await tx.certificate.create({
           data: {

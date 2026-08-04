@@ -10,8 +10,8 @@
 // (свалянето на материали, файловете на продуктите), се държи еднакво в
 // dev и в продукция — сменя се само драйверът отдолу.
 
-import { createHmac, createHash, timingSafeEqual } from "node:crypto";
-import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { StorageObject } from "./index";
 
@@ -85,8 +85,16 @@ export async function localPut(
   const checksum = createHash("sha256").update(body).digest("hex");
   const meta: SidecarMeta = { mimeType, sizeBytes: body.length, checksum };
 
-  await writeFile(full, body);
-  await writeFile(metaPath(full), JSON.stringify(meta));
+  // Временен файл + rename, не пряк запис: rename е атомарен на същата
+  // файлова система, така че презапис на съществуващ ключ (например
+  // „Генерирай PDF наново" при сертификатите) никога не показва
+  // полудописан файл на конкурентно сваляне. S3 PUT е атомарен по
+  // природа; локалният драйвер не бива да е по-лош.
+  const suffix = `.tmp-${randomBytes(6).toString("hex")}`;
+  await writeFile(full + suffix, body);
+  await rename(full + suffix, full);
+  await writeFile(metaPath(full) + suffix, JSON.stringify(meta));
+  await rename(metaPath(full) + suffix, metaPath(full));
 
   return { key, sizeBytes: body.length, mimeType, checksum };
 }

@@ -1,27 +1,33 @@
 // СВАЛЯНЕ НА СЕРТИФИКАТ · задача 16.
 //
 // Автентикиран route, НЕ подписан линк: сертификатът е личен документ и
-// принадлежи на профила. Линкът от профила така никога не изтича (за
+// принадлежи на профила. Линкът от профила така не носи собствен срок (за
 // разлика от 5-минутен подписан URL, който умира, докато страницата стои
-// отворена), а PDF-ът се генерира при първото поискване, ако още го няма.
+// отворена) — изтече ли СЕСИЯТА, човекът получава 401 с път към входа и
+// линкът проработва пак след вход. PDF-ът се генерира при първото
+// поискване, ако още го няма.
 //
 // Достъп: собственикът или админ. Отмененият сертификат не се предоставя
 // на собственика — на хартия той изглежда валиден, а не е; админът може
 // да го тегли за архива.
 
 import { currentUser } from "@/lib/auth/session-db";
+import { adminCheck } from "@/lib/admin/guard";
 import { db } from "@/lib/db";
 import {
   CertificateGone,
   ensureCertificatePdf,
 } from "@/lib/certificates/certificates-db";
-import { certificateDownloadName } from "@/lib/certificates/certificates";
+import {
+  certificateDownloadName,
+  certificateState,
+} from "@/lib/certificates/certificates";
 import { readObject } from "@/lib/storage";
 import { certificatesCopy } from "@/lib/i18n/pages/certificates";
+import { miniErrorPage } from "@/lib/error-page";
 
 export const dynamic = "force-dynamic";
 
-/** Същият трижезичен мини-екран като /download/[token] — кратък и ясен. */
 function errorPage(
   status: number,
   key: "needLogin" | "notFound" | "revoked",
@@ -30,37 +36,13 @@ function errorPage(
     (locale) => certificatesCopy(locale).download[key],
   );
 
-  const html = `<!doctype html>
-<html lang="bg">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex">
-<title>NFI</title>
-<style>
-  body{font-family:system-ui,sans-serif;background:#f7f5f0;color:#16130f;
-    display:grid;place-items:center;min-height:100vh;margin:0;padding:24px}
-  main{max-width:34rem}
-  .line{height:3px;background:linear-gradient(90deg,#16130f 0 16.66%,#c11f2f 16.66% 33.32%,#b98a2b 33.32% 49.98%,#fff 49.98% 66.64%,#2f7d5b 66.64% 83.3%,#c11f2f 83.3% 100%);margin-bottom:20px}
-  p{line-height:1.55;margin:0 0 12px}
-  p+p{color:#57503f;font-size:.9rem}
-  a{color:#c11f2f}
-</style>
-</head>
-<body><main>
-<div class="line"></div>
-${messages.map((m, i) => `<p${i > 0 ? ' lang="' + ["bg", "de", "en"][i] + '"' : ""}>${m}</p>`).join("\n")}
-<p><a href="/">nfi</a></p>
-</main></body>
-</html>`;
-
-  return new Response(html, {
+  // При изтекла сесия долната връзка е ВХОДЪТ, не началото: голият
+  // /anmelden минава през middleware-а и получава езика на човека.
+  return miniErrorPage(
     status,
-    headers: {
-      "content-type": "text/html; charset=utf-8",
-      "cache-control": "private, no-store",
-    },
-  });
+    messages,
+    key === "needLogin" ? { linkHref: "/anmelden", linkLabel: "→ /anmelden" } : {},
+  );
 }
 
 export async function GET(
@@ -79,13 +61,17 @@ export async function GET(
 
   // Чуждият сертификат и несъществуващият изглеждат еднакво — 404, а не
   // 403: иначе id-тата стават проверими отвън.
+  //
+  // Админът се разпознава през СЪЩАТА проверка като /admin панела
+  // (adminCheck включва и ADMIN_EMAIL предпазителя) — голото
+  // `role === "ADMIN"` тук би било по-широка врата от самия панел.
   const isOwner = certificate?.userId === visitor.id;
-  const isAdmin = visitor.role === "ADMIN";
+  const isAdmin = (await adminCheck(visitor)).ok;
   if (!certificate || (!isOwner && !isAdmin)) {
     return errorPage(404, "notFound");
   }
 
-  if (certificate.revokedAt && !isAdmin) {
+  if (certificateState(certificate) === "revoked" && !isAdmin) {
     return errorPage(410, "revoked");
   }
 

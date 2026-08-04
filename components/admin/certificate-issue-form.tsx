@@ -70,14 +70,20 @@ export function CertificateIssueForm({ action, courses, levels, today }: Props) 
 
       <SelectField
         // Смяната на курса пренарежда менюто с неговото ниво; ръчен избор
-        // след това пак е възможен.
+        // след това пак е възможен. Изпратеното ниво тежи САМО докато
+        // курсът е същият като в изпратената форма — смени ли човекът
+        // курса след грешка, предложението пак идва от новия курс.
         key={courseId || "bez-kurs"}
         name="level"
         label="Ниво"
         required
         options={levels}
         placeholder="— избери ниво —"
-        defaultValue={sent.level ?? chosenLevel}
+        defaultValue={
+          courseId === (sent.courseId ?? "")
+            ? (sent.level ?? chosenLevel)
+            : chosenLevel
+        }
         error={errors.level}
         hint="Предложено от курса; смени го, ако групата е завършила друго ниво."
       />
