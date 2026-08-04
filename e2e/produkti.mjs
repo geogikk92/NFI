@@ -11,7 +11,7 @@
 
 import { chromium } from "playwright";
 
-const BASE = process.env.BASE ?? "http://localhost:3130";
+const BASE = process.env.E2E_BASE_URL ?? process.env.BASE ?? "http://localhost:3130";
 const results = [];
 
 function check(name, ok, detail = "") {

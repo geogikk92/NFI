@@ -8,7 +8,7 @@
 // Чистене: изтрий редовете с имейл, започващ с „e2e-".
 
 import { chromium } from "playwright";
-const B = "http://localhost:3130";
+const B = process.env.E2E_BASE_URL ?? process.env.BASE ?? "http://localhost:3130";
 const EMAIL = `e2e-${Date.now()}@primer.bg`;
 const PASS = "MnogoSilnaParola2026!";
 const out = [];

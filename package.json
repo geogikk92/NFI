@@ -24,6 +24,8 @@
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "admin:password": "tsx scripts/set-admin-password.ts",
+    "e2e": "node e2e/run.mjs",
+    "e2e:clean": "tsx --env-file-if-exists=.env.local scripts/e2e-cleanup.ts",
     "e2e:vhod": "node e2e/vhod.mjs",
     "e2e:registraciya": "node e2e/registraciya.mjs",
     "e2e:profil": "node e2e/profil.mjs",
