@@ -10,6 +10,8 @@ import { countItems } from "@/lib/commerce/cart";
 import { readConsent } from "@/lib/consent-cookie";
 import { currentUser } from "@/lib/auth/session-db";
 import { needsDecision } from "@/lib/consent";
+import { PreviewBar } from "@/components/content/preview-bar";
+import { isDraftPreview } from "@/lib/content/preview";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import {
@@ -34,15 +36,20 @@ export async function SiteShell({
   // `currentUser()` не прави страницата динамична — тя вече е такава заради
   // двете бисквитки по-долу. Тоест цената е една заявка към базата, не смяна
   // на стратегията за рендиране.
-  const [cart, consent, user] = await Promise.all([
+  const [cart, consent, user, draft] = await Promise.all([
     readCart(),
     readConsent(),
     currentUser(),
+    isDraftPreview(),
   ]);
   const t = getDictionary(locale);
 
   return (
     <>
+      {/* Preview лентата е ПЪРВОТО нещо на страницата: гледаш ли чернова,
+          трябва да го знаеш, преди да си прочел каквото и да е. */}
+      {draft ? <PreviewBar /> : null}
+
       {/* Първото нещо във фокусната верига — WCAG 2.4.1. Скрито е,
           докато не се фокусира с Tab. */}
       <a

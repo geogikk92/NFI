@@ -3,11 +3,16 @@
 // Структурата е готова; ТЕКСТЪТ и снимките идват от Василена (риск
 // „съдържанието идва отвън" в ПЛАН.md). Не се измисля история на
 // институт — тя е негова, не наша.
+//
+// От задача 18: трите раздела вече не са жълта бележка, а РЕДАКТИРУЕМИ
+// блокове. Тя ги пише сама от /admin/tekstove. Докато не ги напише за
+// даден език, бележката си остава — и продължава да спира деплоя.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import { AwaitingLegalText } from "@/components/content/legal-page";
+import { Block } from "@/components/content/block";
+import { isDraftPreview } from "@/lib/content/preview";
 import { localeAlternates } from "@/lib/i18n/alternates";
 import { toLocale } from "@/lib/i18n/config";
 import { aboutCopy } from "@/lib/i18n/pages/about";
@@ -26,6 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function UeberUnsPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = aboutCopy(locale);
+  const draft = await isDraftPreview();
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
@@ -50,24 +56,30 @@ export default async function UeberUnsPage({ params }: Props) {
       </header>
 
       <div className="prose mt-14">
-        {/* Указанията в AwaitingLegalText са бележка към екипа, не текст за
-            посетителя — затова остават на немски. */}
+        {/* Указанията в бележката са към екипа, не текст за посетителя —
+            затова остават на немски. */}
         <h2>{t.whoHeading}</h2>
-        <AwaitingLegalText
-          what="Geschichte des Instituts, Gründung, Selbstverständnis"
-          who="der Kundin"
+        <Block
+          k="about.who"
+          locale={locale}
+          draft={draft}
+          awaiting="Geschichte des Instituts, Gründung, Selbstverständnis"
         />
 
         <h2>{t.teachersHeading}</h2>
-        <AwaitingLegalText
-          what="Vorstellung der Lehrkräfte mit Foto und Qualifikation"
-          who="der Kundin"
+        <Block
+          k="about.teachers"
+          locale={locale}
+          draft={draft}
+          awaiting="Vorstellung der Lehrkräfte mit Foto und Qualifikation"
         />
 
         <h2>{t.methodHeading}</h2>
-        <AwaitingLegalText
-          what="Methodik, Gruppengrößen, Materialien"
-          who="der Kundin"
+        <Block
+          k="about.method"
+          locale={locale}
+          draft={draft}
+          awaiting="Methodik, Gruppengrößen, Materialien"
         />
       </div>
 

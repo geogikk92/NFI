@@ -222,11 +222,21 @@ export function TextField({
 interface TextareaFieldProps extends BaseProps {
   defaultValue?: string;
   rows?: number;
+  /**
+   * Известява формата за всяка промяна, БЕЗ да отнема стойността на
+   * полето (то си остава неконтролирано с `defaultValue`).
+   *
+   * Нужно е за брояча на знаци при редактора на текстове: човек трябва да
+   * вижда колко му остава ДОКАТО пише, а не след „Запази". Името е като
+   * при SelectField — една конвенция за целия файл.
+   */
+  onValueChange?: (value: string) => void;
 }
 
 export function TextareaField({
   defaultValue,
   rows = 5,
+  onValueChange,
   ...base
 }: TextareaFieldProps) {
   const { control } = ids(base.name);
@@ -238,6 +248,11 @@ export function TextareaField({
         name={base.name}
         rows={rows}
         defaultValue={defaultValue}
+        onChange={
+          onValueChange
+            ? (event) => onValueChange(event.target.value)
+            : undefined
+        }
         aria-invalid={base.error ? true : undefined}
         aria-describedby={describedBy(base.name, {
           hasHint: Boolean(base.hint),

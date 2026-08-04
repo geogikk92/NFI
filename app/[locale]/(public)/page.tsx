@@ -16,6 +16,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/content/json-ld";
+import { BlockText } from "@/components/content/block";
+import { isDraftPreview } from "@/lib/content/preview";
 import { localeAlternates } from "@/lib/i18n/alternates";
 import {
   founderSchema,
@@ -44,6 +46,7 @@ export default async function HomePage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = homeCopy(locale);
   const p = (path: string) => `/${locale}${path}`;
+  const draft = await isDraftPreview();
 
   return (
     <main>
@@ -122,7 +125,8 @@ export default async function HomePage({ params }: Props) {
             </span>
 
             <span className="tag tag-solid absolute -left-3.5 bottom-6 shadow-md">
-              {t.hero.startLabel} {t.hero.startValue}
+              {t.hero.startLabel}{" "}
+              <BlockText k="home.startDate" locale={locale} draft={draft} />
             </span>
           </div>
         </div>
@@ -354,7 +358,7 @@ export default async function HomePage({ params }: Props) {
           </ul>
 
           <p className="mt-8 font-mono text-2xs uppercase tracking-kicker text-subtle">
-            {t.reviews.community}
+            <BlockText k="home.communityNote" locale={locale} draft={draft} />
           </p>
         </div>
       </section>
@@ -413,7 +417,7 @@ export default async function HomePage({ params }: Props) {
                 id="community"
                 className="font-title text-(length:--text-display-l) font-bold leading-tight"
               >
-                {t.community.title}
+                <BlockText k="home.communityCount" locale={locale} draft={draft} />
               </h2>
               <Link
                 href={p("/community")}
