@@ -3,6 +3,7 @@
 
 import { cache } from "react";
 import { db } from "@/lib/db";
+import type { Locale } from "@/lib/i18n/config";
 
 export type CourseLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export type CourseFormat = "ONLINE" | "PRESENCE" | "HYBRID" | "INDIVIDUAL";
@@ -63,12 +64,21 @@ export interface CourseSummary {
   coverMediaId: string | null;
 }
 
+export interface CourseReview {
+  id: string;
+  authorName: string;
+  rating: number;
+  body: string;
+}
+
 export interface CourseDetail extends CourseSummary {
   description: string | null;
   descriptionDe: string | null;
   descriptionEn?: string | null;
   reviewCount: number;
   averageRating: number | null;
+  /** Публикуваните отзиви на езика на посетителя, най-новите първо. */
+  reviews: CourseReview[];
 }
 
 const SUMMARY_FIELDS = {
@@ -171,7 +181,7 @@ export async function countCoursesByLevel(
  * хиляда рецензии тегли хиляда реда, за да получи едно число.
  */
 export const getCourseBySlug = cache(
-  async (slug: string): Promise<CourseDetail | null> => {
+  async (slug: string, locale?: Locale): Promise<CourseDetail | null> => {
     const course = await db.course.findFirst({
       where: { slug, published: true },
       select: {
@@ -190,10 +200,29 @@ export const getCourseBySlug = cache(
       _avg: { rating: true },
     });
 
+    // САМИТЕ отзиви, не само средното. Дотук страницата казваше „4,8 от
+    // 12 отзива", но не показваше нито един — число без думите зад него
+    // не убеждава никого, а въведеният в админа текст не се виждаше
+    // никъде на сайта.
+    //
+    // Само на ЕЗИКА на посетителя: български отзив под немско заглавие е
+    // същата грешка като при редактируемите блокове (задача 18).
+    // Без подаден език (generateMetadata) отзиви не се четат — там не
+    // трябват и заявката е излишна.
+    const reviews = locale
+      ? await db.review.findMany({
+          where: { courseId: course.id, published: true, locale },
+          orderBy: { publishedAt: "desc" },
+          take: 6,
+          select: { id: true, authorName: true, rating: true, body: true },
+        })
+      : [];
+
     return {
       ...course,
       reviewCount: stats._count._all,
       averageRating: stats._avg.rating,
+      reviews,
     };
   },
 );
