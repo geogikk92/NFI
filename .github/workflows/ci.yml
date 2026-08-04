@@ -56,6 +56,9 @@ jobs:
       - name: Миграции
         run: npx prisma migrate deploy
 
+      - name: Сийд на тестовата база
+        run: npm run db:seed
+
       - name: Типове
         run: npm run typecheck
 
