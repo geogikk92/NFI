@@ -27,3 +27,12 @@ assertLocalDatabase({
     value: "da-znam-kakvo-pravja",
   },
 });
+
+// S3_* се чистят ИЗРИЧНО: попаднат ли в средата (реална конфигурация в
+// .env.local), lib/storage тръгва по S3 пътя и интеграционните тестове
+// на сертификатите падат без реален дефект — и вината пада върху
+// грешното място. Тестовете на самия S3 драйвер си слагат стойностите
+// сами, вътре в теста.
+for (const name of Object.keys(process.env)) {
+  if (name.startsWith("S3_")) delete process.env[name];
+}

@@ -1,13 +1,12 @@
-// ТЕРИТОРИЯ НА БОБИ · задача 17m — медиен слой, хранилище.
+// ТЕРИТОРИЯ НА БОБИ · задачи 17m / 17m-b — медиен слой, хранилище.
 //
-// До 03.08 това беше договорка с mock тяло. Сега е РЕАЛИЗАЦИЯ с два
-// драйвера:
+// ДВА драйвера зад един договор:
 //
 //   • локален (uploads/, в .gitignore) — работи веднага, без акаунти.
 //     Подписаните линкове са истински HMAC през app/api/storage.
-//   • S3/R2 — чака ключовете от Жоро (docs/ДЕПЛОЙ.md „По-късно").
-//     Конфигурирани ключове без драйвер дават ЯСНА грешка, не тиха
-//     повреда — виж s3NotReady().
+//   • S3/R2 (./s3.ts) — собствен SigV4 подпис върху fetch, доказан
+//     срещу официалните AWS вектори (sigv4.test.ts). Включва се, щом
+//     S3_* променливите са пълни — виж s3Configured().
 //
 // Сигнатурите са същите като в договорката от K1 + две нови функции
 // (readObject, uploadsConfigured). Жоро консумира без промяна.
@@ -20,6 +19,14 @@ import {
   localRemove,
   localSignedPath,
 } from "./local";
+import {
+  s3Head,
+  s3PresignedPut,
+  s3Put,
+  s3Read,
+  s3Remove,
+  s3SignedUrl,
+} from "./s3";
 
 export type StorageScope =
   /** Публични изображения — може да се кешира от CDN. */
@@ -52,40 +59,39 @@ export interface StorageObject {
   key: string;
   sizeBytes: number;
   mimeType: string;
+  /** sha256 на съдържанието — при S3 само за обекти, качени от нас
+   *  (пише се в x-amz-meta-sha256; ETag при multipart НЕ е хеш). */
   checksum?: string;
 }
 
 /**
- * S3 се смята за конфигуриран при наличен bucket + ключове.
+ * S3 се смята за конфигуриран при endpoint + bucket + двата ключа.
  *
- * ЕДИНСТВЕНАТА такава проверка: и драйверният избор тук, и
- * app/api/storage/route.ts питат нея. Две отделни проверки се разминават
- * при частична конфигурация и дават тихо счупени линкове.
+ * S3_ENDPOINT Е ЧАСТ ОТ ПРОВЕРКАТА (от 17m-b): R2 винаги иска endpoint —
+ * bucket и ключове без него по-рано минаваха за „готова конфигурация" и
+ * заявките щяха да тръгнат към AWS вместо към R2: тиха повреда, която
+ * изглежда като грешни креденшъли. Непълен набор сега пада към локалния
+ * драйвер; кое липсва се вижда в .env.example.
+ *
+ * ЕДИНСТВЕНАТА такава проверка: драйверният избор тук,
+ * app/api/storage/route.ts и админът на преводите питат нея. Две отделни
+ * проверки се разминават при частична конфигурация и дават тихо счупени
+ * линкове.
  */
 export function s3Configured(): boolean {
   return Boolean(
-    process.env.S3_BUCKET &&
+    process.env.S3_ENDPOINT &&
+      process.env.S3_BUCKET &&
       process.env.S3_ACCESS_KEY_ID &&
       process.env.S3_SECRET_ACCESS_KEY,
   );
 }
 
 /**
- * Конфигуриран S3 без драйвер е ГРЕШКА, не резервен път към localhost:
- * тихото падане към локалния диск в продукция значи файлове, които
- * изчезват при всеки deploy.
- */
-function s3NotReady(fn: string): never {
-  throw new Error(
-    `lib/storage.${fn}(): S3 ключовете са зададени, но S3 драйверът още не е ` +
-      "написан (задача 17m, следваща стъпка). Махни S3_* от средата, за да " +
-      "работи локалният драйвер, или изчакай S3 драйвера.",
-  );
-}
-
-/**
  * Ключ за нов файл: scope/година/slug-суфикс.разширение.
- * Суфиксът пази от съвпадения, без да прави ключа нечетим.
+ * Суфиксът пази от съвпадения, без да прави ключа нечетим — и прави
+ * ключа IMMUTABLE по конструкция: един ключ = едно съдържание завинаги.
+ * Точно това позволява публичният /media път да кешира агресивно.
  */
 export function newObjectKey(
   scope: StorageScope,
@@ -116,13 +122,22 @@ export async function createUploadTarget(
   mimeType: string,
   sizeBytes: number,
 ): Promise<UploadTarget> {
-  if (s3Configured()) s3NotReady("createUploadTarget");
-
-  void mimeType;
   void sizeBytes;
 
   const extension = filename.split(".").pop() ?? "bin";
   const key = newObjectKey(scope, filename.replace(/\.[^.]+$/, ""), extension);
+
+  if (s3Configured()) {
+    // Подписаният Content-Type заключва вида на файла; размерът НЕ може
+    // да се заключи (R2 няма POST policy) — проверява се след качване
+    // с head(). Работи само при CORS политика на bucket-а — виж s3.ts.
+    const expiresIn = 15 * 60;
+    return {
+      key,
+      url: s3PresignedPut(key, mimeType, expiresIn),
+      expiresAt: new Date(Date.now() + expiresIn * 1000),
+    };
+  }
 
   return {
     key,
@@ -141,25 +156,34 @@ export async function signedUrl(
   key: string,
   options?: SignedUrlOptions,
 ): Promise<string> {
-  if (s3Configured()) s3NotReady("signedUrl");
+  const expiresIn = options?.expiresIn ?? 300;
 
-  return localSignedPath(key, options?.expiresIn ?? 300, options?.downloadAs);
+  if (s3Configured()) {
+    // Абсолютен адрес към bucket-а. Консуматорите днес го слагат само в
+    // href/redirect — относителният локален път и абсолютният S3 адрес
+    // са взаимозаменяеми там.
+    return s3SignedUrl(key, expiresIn, options?.downloadAs);
+  }
+
+  return localSignedPath(key, expiresIn, options?.downloadAs);
 }
 
 /** Метаданни без сваляне — за проверка след качване. */
 export async function head(key: string): Promise<StorageObject | null> {
-  if (s3Configured()) s3NotReady("head");
+  if (s3Configured()) return s3Head(key);
   return localHead(key);
 }
 
 /**
  * Съдържанието на обект — за route handlers, които стриймват сами
  * (свалянето на материали слага Content-Disposition и брои опити).
+ * Тялото е ЦЯЛ Buffer, не стрийм — консуматорите правят body.length,
+ * subarray() и new Uint8Array(body).
  */
 export async function readObject(
   key: string,
 ): Promise<{ body: Buffer; mimeType: string } | null> {
-  if (s3Configured()) s3NotReady("readObject");
+  if (s3Configured()) return s3Read(key);
   return localRead(key);
 }
 
@@ -168,25 +192,24 @@ export async function readObject(
  * документи (задача 21). Връща true и когато обектът вече го няма.
  */
 export async function remove(key: string): Promise<boolean> {
-  if (s3Configured()) s3NotReady("remove");
+  if (s3Configured()) return s3Remove(key);
   return localRemove(key);
 }
 
-/** Сървърно качване — само за генерирани файлове (PDF от pdf-lib). */
+/** Сървърно качване — генерирани файлове (PDF) и качвания през админа. */
 export async function putObject(
   scope: StorageScope,
   key: string,
   body: Uint8Array | Buffer,
   mimeType: string,
 ): Promise<StorageObject> {
-  if (s3Configured()) s3NotReady("putObject");
-
   if (!key.startsWith(`${scope}/`)) {
     throw new Error(
       `Ключът „${key}" не е в scope „${scope}" — ключове се правят с newObjectKey().`,
     );
   }
 
+  if (s3Configured()) return s3Put(key, body, mimeType);
   return localPut(key, body, mimeType);
 }
 

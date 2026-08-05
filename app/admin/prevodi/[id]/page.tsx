@@ -21,6 +21,7 @@ import {
 } from "@/lib/admin/queries";
 import { formatDate, formatDateTime, toDateTimeAttribute } from "@/lib/intl";
 import { formatMoney } from "@/lib/money";
+import { s3Configured } from "@/lib/storage";
 import { saveTranslation } from "../actions";
 
 type Props = { params: Promise<{ id: string }> };
@@ -53,10 +54,14 @@ export default async function TranslationPage({ params }: Props) {
   const sources = request.documents.filter((doc) => doc.isSource);
   const results = request.documents.filter((doc) => !doc.isSource);
 
-  // Хранилището още е ДОГОВОРКА, не реализация (виж lib/storage/index.ts).
-  // Проверката е по променливата на средата, а не по опит за сваляне —
-  // по-добре честен надпис, отколкото бутон, който дава грешка.
-  const storageReady = Boolean(process.env.S3_BUCKET);
+  // От 17m-b хранилището е реализация с два драйвера: локален диск за
+  // разработка и S3/R2 за продукция. Единственият случай без хранилище
+  // е продукция БЕЗ конфигуриран S3 — на Vercel локалният диск изчезва
+  // при всеки deploy. Проверката е ОБЩАТА s3Configured(), не ръчен
+  // поглед в process.env: две отделни проверки се разминават при
+  // частична конфигурация.
+  const storageReady =
+    s3Configured() || process.env.NODE_ENV !== "production";
 
   return (
     <>
