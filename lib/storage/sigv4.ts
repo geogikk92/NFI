@@ -117,8 +117,14 @@ function canonicalHeaders(
 const signingKeyCache = new Map<string, Buffer>();
 
 function signingKey(credentials: SigV4Credentials, dateStamp: string): Buffer {
+  // Ключът на кеша е СЕКРЕТЪТ, не accessKeyId: деривацията отдолу зависи
+  // само от (секрет, ден, регион, услуга) и accessKeyId изобщо не влиза в
+  // нея. С accessKeyId като ключ смяна само на секрета при непроменен
+  // access key (MinIO позволява точно това) връщаше стария ключ и всеки
+  // подпис ставаше невалиден — при това с подвеждащо съобщение за права
+  // и часовник. (Одит, 05.08.2026.)
   const cacheKey = [
-    credentials.accessKeyId,
+    credentials.secretAccessKey,
     dateStamp,
     credentials.region,
     credentials.service,

@@ -129,13 +129,24 @@ export function parseMaterialForm(
   if (needsFile && !storageKeyRaw) {
     storageKeyField = {
       ok: false,
-      error: "PDF и аудио изискват ключ на файл в хранилището.",
+      error:
+        "PDF и аудио изискват файл — избери го от полето „Файл“ по-горе.",
     };
   } else if (storageKeyRaw && !isSafeKey(storageKeyRaw)) {
     storageKeyField = {
       ok: false,
       error:
         "Ключът може да съдържа само латиница, цифри, наклонени черти, тире и точка.",
+    };
+  } else if (storageKeyRaw.startsWith("media/")) {
+    // От 17m-b всичко под media/ се сервира ПУБЛИЧНО от /media/[...key].
+    // Материал там би се сваля без формата за контакт — пада цялата
+    // лийд фуния. Правилният scope е product/ (зад DownloadGrant токен).
+    storageKeyField = {
+      ok: false,
+      error:
+        "Ключ в media/ е ПУБЛИЧЕН и файлът би се свалял без формата. " +
+        "Качи файла наново от полето „Файл“ — той отива в защитения scope.",
     };
   } else {
     storageKeyField = { ok: true, value: storageKeyRaw || null };

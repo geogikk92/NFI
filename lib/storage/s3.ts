@@ -69,6 +69,20 @@ function target(): S3Target {
 
   const url = new URL(endpoint);
 
+  // Път в endpoint-а НЕ се поддържа и не се приема мълчаливо: драйверът
+  // адресира path-style (endpoint/bucket/ключ) и префиксът просто щеше да
+  // изчезне от всяка заявка и от всеки подписан адрес. По-лошото е, че
+  // договорът „404 → null" прави такава мисконфигурация неразличима от
+  // „файлът липсва". (Одит, 05.08.2026.)
+  if (url.pathname !== "/" || url.search) {
+    throw new Error(
+      `S3_ENDPOINT не бива да носи път или параметри („${url.pathname}${url.search}"). ` +
+        "Дай само адреса на хоста, напр. " +
+        "https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com — ключът и " +
+        "bucket-ът се долепят от драйвера.",
+    );
+  }
+
   return {
     host: url.host,
     protocol: url.protocol === "http:" ? "http" : "https",

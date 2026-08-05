@@ -66,6 +66,21 @@ describe("формата на заявката", () => {
     delete process.env.S3_ENDPOINT;
     await expect(s3Head("media/2026/x.png")).rejects.toThrow("S3_ENDPOINT");
   });
+
+  it("отказва endpoint с път, вместо да го изхвърли тихо", async () => {
+    process.env.S3_ENDPOINT = "https://minio.example.com/s3-prefix";
+    await expect(s3Head("media/2026/x.png")).rejects.toThrow("път");
+  });
+
+  it("приема endpoint с порт — хостът влиза в подписа с него", async () => {
+    process.env.S3_ENDPOINT = "http://127.0.0.1:9000";
+    const { calls, impl } = recordingFetch(new Response(null, { status: 200 }));
+
+    await s3Head("media/2026/x.png", impl);
+
+    expect(calls[0].url).toBe("http://127.0.0.1:9000/nfi-files/media/2026/x.png");
+    expect(headersOf(calls[0].init).authorization).toContain("SignedHeaders=host");
+  });
 });
 
 describe("договорът за грешки", () => {

@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CourseForm } from "@/components/admin/course-form";
 import { requireAdmin } from "@/lib/admin/guard";
+import { listCoverOptions } from "@/lib/admin/media";
 import {
   COURSE_FORMAT_OPTIONS,
   COURSE_LEVEL_OPTIONS,
@@ -23,6 +24,8 @@ export const metadata: Metadata = {
 export default async function NewCoursePage() {
   // Пазачът е и в layout-а. Двойно е нарочно — виж коментара там.
   await requireAdmin();
+
+  const covers = await listCoverOptions();
 
   return (
     <>
@@ -47,6 +50,7 @@ export default async function NewCoursePage() {
           action={saveCourse}
           levels={COURSE_LEVEL_OPTIONS}
           formats={COURSE_FORMAT_OPTIONS}
+          covers={covers}
         />
       </div>
     </>

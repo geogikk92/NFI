@@ -131,19 +131,50 @@ export function MaterialForm({ action, kinds, levels, material }: Props) {
         title="Съдържание"
         description={
           needsFile
-            ? "PDF и аудио живеят в хранилището — ключът идва от качването (или от Жоро, докато качването получи интерфейс)."
+            ? "PDF и аудио живеят в хранилището. Избери файл — ключът се образува сам при записа."
             : "Видеата се вграждат от Vimeo; записите от GoTo са външна връзка."
         }
       >
         {needsFile ? (
-          <TextField
-            name="storageKey"
-            label="Ключ в хранилището"
-            required
-            defaultValue={sent.storageKey ?? material?.storageKey ?? ""}
-            error={errors.storageKey}
-            hint="Например: media/2026/der-die-das-tablitza.pdf"
-          />
+          <>
+            <div className="grid gap-2">
+              <label htmlFor="material-file" className="text-sm font-medium">
+                Файл{" "}
+                <span className="font-normal text-muted-foreground">
+                  ({material?.storageKey ? "по желание — замества сегашния" : "PDF или MP3"})
+                </span>
+              </label>
+              <input
+                id="material-file"
+                name="storageFile"
+                type="file"
+                accept="application/pdf,audio/mpeg"
+                aria-describedby={
+                  errors.storageFile ? "material-file-error" : "material-file-hint"
+                }
+                aria-invalid={errors.storageFile ? true : undefined}
+                className="rounded-lg border border-input bg-surface px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium"
+              />
+              {errors.storageFile ? (
+                <p id="material-file-error" className="text-sm text-destructive">
+                  {errors.storageFile}
+                </p>
+              ) : (
+                <p id="material-file-hint" className="text-sm text-muted-foreground">
+                  Качва се при „Запази“. Файлът остава зад формата за контакт
+                  — не е публичен.
+                </p>
+              )}
+            </div>
+
+            <TextField
+              name="storageKey"
+              label="Ключ в хранилището"
+              defaultValue={sent.storageKey ?? material?.storageKey ?? ""}
+              error={errors.storageKey}
+              hint="Попълва се сам от качването. На ръка — само ако файлът вече е сложен в хранилището по друг път (например: product/2026/der-die-das.pdf)."
+            />
+          </>
         ) : (
           <TextField
             name="externalId"

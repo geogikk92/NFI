@@ -70,6 +70,31 @@ async function main() {
     })
   ).count;
 
+  // Медия от проверката на библиотеката (mediya.mjs). Първо се откачат
+  // кориците: coverMediaId няма foreign key и изтритата медия би оставила
+  // висящ идентификатор върху СИЙДНАТ курс.
+  const testMedia = await db.media.findMany({
+    where: { key: { contains: MARK } },
+    select: { id: true },
+  });
+  if (testMedia.length > 0) {
+    const ids = testMedia.map((row) => row.id);
+    await db.course.updateMany({
+      where: { coverMediaId: { in: ids } },
+      data: { coverMediaId: null },
+    });
+    removed["медия"] = (
+      await db.media.deleteMany({ where: { id: { in: ids } } })
+    ).count;
+  }
+
+  // Материали, ако проверката е паднала преди собственото си чистене.
+  removed["материали"] = (
+    await db.freeMaterial.deleteMany({
+      where: { slug: { contains: MARK } },
+    })
+  ).count;
+
   // Профили, създадени от проверката за регистрация.
   removed["профили"] = (
     await db.user.deleteMany({

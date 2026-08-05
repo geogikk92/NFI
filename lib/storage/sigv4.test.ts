@@ -70,6 +70,33 @@ describe("toAmzDate", () => {
   });
 });
 
+describe("кешът на ключа за подписване", () => {
+  it("НЕ връща стар ключ при смяна само на секрета", () => {
+    // Регресия: кешът се държеше по accessKeyId, а деривацията зависи от
+    // СЕКРЕТА. Смяна на секрета при същия access key (MinIO го позволява)
+    // даваше идентичен подпис — тоест невалиден срещу новия секрет.
+    const args = {
+      method: "GET",
+      host: "example.amazonaws.com",
+      rawPath: "/",
+      headers: [["x-amz-date", "20150830T123600Z"]] as Array<[string, string]>,
+      payloadHash: EMPTY_SHA256,
+      amzDate: "20150830T123600Z",
+    };
+
+    const first = signHeaders({
+      ...args,
+      credentials: { ...SUITE, secretAccessKey: "SECRET-OLD" },
+    });
+    const second = signHeaders({
+      ...args,
+      credentials: { ...SUITE, secretAccessKey: "SECRET-NEW" },
+    });
+
+    expect(first).not.toBe(second);
+  });
+});
+
 describe("aws-sig-v4-test-suite (генеричните правила)", () => {
   it("get-vanilla: най-простата заявка", () => {
     const auth = signHeaders({

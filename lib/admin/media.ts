@@ -15,6 +15,7 @@ import { type AuditMeta, type AuditTx, recordChange } from "@/lib/admin/audit";
 import { collect } from "@/lib/admin/form";
 import { optionalText } from "@/lib/admin/input";
 import { MEDIA_LIMITS } from "@/lib/admin/limits";
+import { mediaUrl } from "@/lib/media/url";
 
 export interface MediaMetaInput {
   alt: string | null;
@@ -87,6 +88,32 @@ export class MediaGone extends Error {
     super("Файлът вече не съществува.");
     this.name = "MediaGone";
   }
+}
+
+/** Избраната корица е изтрита, докато формата е стояла отворена. */
+export class CoverMediaMissing extends Error {
+  constructor() {
+    super("Избраната корица вече не съществува.");
+    this.name = "CoverMediaMissing";
+  }
+}
+
+/**
+ * Проверява, че корицата съществува — ВЪТРЕ в транзакцията на записа.
+ *
+ * Няма foreign key, който да пази вместо нас (нарочно, content.prisma),
+ * значи висящо id би минало тихо и публичната страница би останала със
+ * счупена картинка. Форматът се проверява в parse; съществуването — тук,
+ * защото между отварянето на формата и „Запази" минава време.
+ */
+export async function assertCoverMediaExists(
+  tx: AuditTx,
+  coverMediaId: string | null,
+): Promise<void> {
+  if (!coverMediaId) return;
+
+  const found = await tx.media.count({ where: { id: coverMediaId } });
+  if (found === 0) throw new CoverMediaMissing();
 }
 
 export async function getMediaForEdit(
@@ -250,6 +277,37 @@ export async function listMediaChoices(): Promise<MediaChoice[]> {
       createdAt: true,
     },
   });
+}
+
+/**
+ * Опциите за picker-а на корици — ГОТОВИ прости обекти за клиентския
+ * компонент (components/admin/media-field.tsx). Мапването е тук, а не в
+ * страниците, защото ще го викат три форми и три пъти писано на ръка се
+ * разминава.
+ */
+export interface CoverPickerOption {
+  id: string;
+  label: string;
+  year: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+}
+
+export async function listCoverOptions(): Promise<CoverPickerOption[]> {
+  const rows = await listMediaChoices();
+
+  return rows.map((row) => ({
+    id: row.id,
+    label: row.title ?? row.key.split("/").pop() ?? row.key,
+    // Ключът е media/<година>/<файл> — втората част е годината.
+    year: row.key.split("/")[1] ?? "",
+    url: mediaUrl(row.key),
+    width: row.width,
+    height: row.height,
+    alt: row.alt,
+  }));
 }
 
 // ─────────────────────────────────────────────────────────────────────────
