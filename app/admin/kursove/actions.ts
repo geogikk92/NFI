@@ -27,6 +27,7 @@ import {
   setCoursePublished,
   updateCourse,
 } from "@/lib/admin/courses";
+import { CoverMediaMissing } from "@/lib/admin/media";
 
 // ─────────────────────────────────────────────────────────────────────────
 //  ОБЕЗСИЛВАНЕ — какво трябва и какво НЕ, измерено и в двете посоки
@@ -88,6 +89,14 @@ function explain(error: unknown, data: FormData): AdminFormState {
 
   if (error instanceof CourseInUse) {
     return invalid(data, error.message);
+  }
+
+  if (error instanceof CoverMediaMissing) {
+    return invalid(data, CHECK_FIELDS, {
+      coverMediaId:
+        "Избраната корица е изтрита междувременно. Презареди страницата " +
+        "и избери друга.",
+    });
   }
 
   console.error("[admin] Записът на курс се провали:", error);

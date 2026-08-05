@@ -34,6 +34,7 @@
     "e2e:produkti": "node e2e/produkti.mjs",
     "e2e:promocii": "node e2e/promocii.mjs",
     "e2e:prevodi": "node e2e/prevodi.mjs",
+    "e2e:mediya": "node e2e/mediya.mjs",
     "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {

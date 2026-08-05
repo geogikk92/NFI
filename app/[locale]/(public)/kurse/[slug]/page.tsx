@@ -1,6 +1,7 @@
 // ТЕРИТОРИЯ НА БОБИ · задача 4 — детайл на курса.
 // Писано от Жоро, докато Боби е в отпуск.
 
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DataUnavailable } from "@/components/content/data-unavailable";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CourseCard } from "@/components/content/course-card";
 import { JsonLd } from "@/components/content/json-ld";
+import { coverForMedia } from "@/lib/cms/covers-db";
 import { getCourseBySlug, listRelatedCourses } from "@/lib/cms/courses";
 import { toDateTimeAttribute } from "@/lib/intl";
 import { pick, toLocale } from "@/lib/i18n/config";
@@ -77,7 +79,10 @@ export default async function CoursePage({ params }: Props) {
 
   if (!course) notFound();
 
-  const related = await listRelatedCourses(course);
+  const [related, cover] = await Promise.all([
+    listRelatedCourses(course),
+    coverForMedia(course.coverMediaId, locale),
+  ]);
   const t = coursesCopy(locale).detail;
 
   const title = pick(locale, {
@@ -149,6 +154,21 @@ export default async function CoursePage({ params }: Props) {
             <p className="mt-5 max-w-prose text-lg leading-relaxed text-muted-foreground">
               {summary}
             </p>
+          ) : null}
+
+          {cover ? (
+            // Корицата от библиотеката (задача 17m-b) — редакторски кадър
+            // в тялото на статията, не декорация в картата: картите
+            // остават типографски, както е в мокъпа. Размерите идват от
+            // базата, за да не подскача страницата при зареждане.
+            <Image
+              src={cover.url}
+              alt={cover.alt}
+              width={cover.width}
+              height={cover.height}
+              className="mt-10 h-auto w-full rounded-xl border border-border"
+              sizes="(min-width: 1024px) 640px, 100vw"
+            />
           ) : null}
 
           {description ? (

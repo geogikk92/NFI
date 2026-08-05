@@ -19,6 +19,7 @@ import {
   TextField,
   TextareaField,
 } from "@/components/admin/fields";
+import { MediaField, type MediaOption } from "@/components/admin/media-field";
 import { FormStatus, SubmitButton } from "@/components/admin/form-shell";
 import { Button } from "@/components/ui/button";
 import { IDLE, type AdminFormState } from "@/lib/admin/form";
@@ -57,6 +58,7 @@ export interface CourseFormValues {
   startsAt: Date | null;
   published: boolean;
   sortOrder: number;
+  coverMediaId: string | null;
 }
 
 interface Props {
@@ -66,6 +68,8 @@ interface Props {
   ) => Promise<AdminFormState>;
   levels: readonly { value: string; label: string }[];
   formats: readonly { value: string; label: string }[];
+  /** Изображенията от библиотеката — прости обекти, не Prisma редове. */
+  covers: MediaOption[];
   /** Липсва при създаване. */
   course?: CourseFormValues;
 }
@@ -87,7 +91,7 @@ function numberToInput(value: number | null | undefined): string {
   return value === null || value === undefined ? "" : String(value);
 }
 
-export function CourseForm({ action, levels, formats, course }: Props) {
+export function CourseForm({ action, levels, formats, covers, course }: Props) {
   const [state, formAction] = useActionState(action, IDLE);
   const editing = Boolean(course);
 
@@ -317,6 +321,19 @@ export function CourseForm({ action, levels, formats, course }: Props) {
             hint="По-малкото число излиза по-напред в списъка."
           />
         </div>
+      </FieldGroup>
+
+      <FieldGroup
+        title="Корица"
+        description="Показва се на страницата на курса, между резюмето и описанието. Картата в списъка остава типографска — така е в дизайна."
+      >
+        <MediaField
+          name="coverMediaId"
+          label="Снимка"
+          options={covers}
+          defaultValue={sent.coverMediaId ?? course?.coverMediaId ?? ""}
+          error={errors.coverMediaId}
+        />
       </FieldGroup>
 
       <FieldGroup title="Публикуване">

@@ -28,6 +28,7 @@ import {
 } from "@/lib/admin/input";
 import { COURSE_LIMITS } from "@/lib/admin/limits";
 import { slugProblem } from "@/lib/admin/slug";
+import { assertCoverMediaExists } from "@/lib/admin/media";
 import {
   COURSE_FORMATS,
   COURSE_LEVELS,
@@ -55,6 +56,28 @@ export interface CourseInput {
   startsAt: Date | null;
   sortOrder: number;
   published: boolean;
+  coverMediaId: string | null;
+}
+
+/**
+ * Изборът на корица от `<select>` — празно значи „без снимка".
+ *
+ * Тук се проверява само ФОРМАТЪТ (id от cuid — латиница и цифри):
+ * съществуването се проверява в транзакцията на записа
+ * (assertCoverMediaExists), защото между отварянето на формата и
+ * „Запази" файлът може да е изтрит.
+ */
+export function parseCoverMediaId(
+  raw: unknown,
+): { ok: true; value: string | null } | { ok: false; error: string } {
+  const value = String(raw ?? "").trim();
+  if (value === "") return { ok: true, value: null };
+
+  if (!/^[a-z0-9]{10,40}$/i.test(value)) {
+    return { ok: false, error: "Корицата не е валиден избор от списъка." };
+  }
+
+  return { ok: true, value };
 }
 
 /**
@@ -158,6 +181,8 @@ export function parseCourseForm(
     // Отметката липсва във FormData, когато не е отметната — затова
     // проверката е за наличие, не за стойност.
     published: { ok: true, value: data.get("published") !== null } as const,
+
+    coverMediaId: parseCoverMediaId(data.get("coverMediaId")),
   });
 }
 
@@ -195,6 +220,7 @@ const AUDITED = {
   published: true,
   publishedAt: true,
   sortOrder: true,
+  coverMediaId: true,
 } as const;
 
 /** Курсът, както го чете формата за редакция. Огледало на `AUDITED`. */
@@ -221,6 +247,7 @@ export interface AdminCourseDetail {
   published: boolean;
   publishedAt: Date | null;
   sortOrder: number;
+  coverMediaId: string | null;
 }
 
 /** Целият курс за формата за редакция. `null`, когато го няма. */
@@ -257,6 +284,8 @@ export async function createCourse(
   meta: AuditMeta,
 ): Promise<{ id: string; slug: string }> {
   return db.$transaction(async (tx: AuditTx) => {
+    await assertCoverMediaExists(tx, input.coverMediaId);
+
     const course = await tx.course.create({
       data: {
         ...input,
@@ -298,6 +327,8 @@ export async function updateCourse(
     });
 
     if (!before) throw new CourseGone();
+
+    await assertCoverMediaExists(tx, input.coverMediaId);
 
     const after = await tx.course.update({
       where: { id },
