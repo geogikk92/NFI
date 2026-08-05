@@ -69,6 +69,14 @@ export const CALL_REQUEST_STATUS_LABELS: Record<CallRequestStatus, string> = {
   SPAM: "Спам",
 };
 
+/** Готовият вид за `<select>` — по образеца на TRANSLATION_STATUS_OPTIONS. */
+export const CALL_REQUEST_STATUS_OPTIONS = CALL_REQUEST_STATUSES.map(
+  (status) => ({
+    value: status,
+    label: CALL_REQUEST_STATUS_LABELS[status],
+  }),
+);
+
 export const CALL_REQUEST_SOURCE_LABELS: Record<CallRequestSource, string> = {
   COURSE_PAGE: "Страница на курс",
   CONTACT_PAGE: "Страница „Контакти“",
