@@ -49,3 +49,28 @@ export const PRODUCT_LIMITS = {
   coverTitle: 60,
   coverMeta: 40,
 } as const;
+
+export const MEDIA_LIMITS = {
+  /** alt е изречение-две за екранен четец, не статия. */
+  alt: 300,
+  title: 200,
+  /**
+   * Таван на КАЧВАНЕТО в байтове (8 MB). Не е декоративен: публичният
+   * /media път буферира оригинала, а /_next/image го дърпа при всеки
+   * cache miss — по веднъж на ширина. Браузърът и без това смалява до
+   * 2560 px преди изпращане (components/admin/media-upload.tsx); тук се
+   * хваща качване с изключен JavaScript.
+   */
+  uploadBytes: 8 * 1024 * 1024,
+} as const;
+
+/**
+ * Приети формати за изображения — allow-list, проверяван ПО СЪДЪРЖАНИЕ
+ * (lib/media/image-header.ts), не по декларирания mimeType. HEIC/AVIF се
+ * отказват с ясно съобщение („запиши като JPEG"), SVG е XSS вектор.
+ */
+export const MEDIA_ACCEPTED_MIME = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+] as const;

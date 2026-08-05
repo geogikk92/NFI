@@ -76,13 +76,14 @@ describe("с пълен S3_* — S3 драйверът", () => {
   });
 
   it("readObject тръгва към bucket-а, не към диска", async () => {
-    const fetchSpy = vi.fn(
-      async (..._args: unknown[]) =>
-        new Response("s3-sadarzhanie", {
-          status: 200,
-          headers: { "content-type": "text/plain" },
-        }),
-    );
+    const fetchSpy = vi.fn(async (url: string, init?: RequestInit) => {
+      void url;
+      void init;
+      return new Response("s3-sadarzhanie", {
+        status: 200,
+        headers: { "content-type": "text/plain" },
+      });
+    });
     vi.stubGlobal("fetch", fetchSpy);
 
     const object = await readObject("media/2026/t-ab12cd.txt");
