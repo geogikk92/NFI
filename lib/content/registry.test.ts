@@ -38,13 +38,15 @@ describe("регистърът е здрав", () => {
     }
   });
 
-  it("седемте блока от клиентката нямат стойност в кода", () => {
+  it("четирите блока от клиентката нямат стойност в кода", () => {
     // Точно това ги прави видимо незавършени, докато тя не ги напише.
+    //
+    // Трите блока за „За нас" отпаднаха на 15.08.2026: Василена прати
+    // готовия текст и той живее в lib/i18n/pages/about.ts. Блок, който
+    // не се рендира никъде, е екран, който лъже — панелът предлагаше
+    // редакция на текст, който посетителят няма как да види.
     const awaiting = BLOCKS.filter((spec) => !hasCodeFallback(spec));
     expect(awaiting.map((spec) => spec.key).sort()).toEqual([
-      "about.method",
-      "about.teachers",
-      "about.who",
       "community.cafe",
       "community.groups",
       "contact.address",
@@ -82,7 +84,7 @@ describe("стойностите от кода", () => {
 });
 
 describe("проверка на стойност", () => {
-  const prose = blockSpec("about.who")!;
+  const prose = blockSpec("community.cafe")!;
   const date = blockSpec("home.startDate")!;
 
   it("празното е позволено — изтриването е право на редактора", () => {
@@ -118,8 +120,12 @@ describe("проверка на стойност", () => {
 });
 
 describe("групиране по страница", () => {
-  it("за всяка страница има поне един блок", () => {
-    expect(blocksForPage("about")).toHaveLength(3);
+  it("групирането по страница връща очакваните блокове", () => {
+    // „За нас" вече НЯМА блокове: текстът дойде готов от Василена и живее
+    // в кода. Страницата остава в PageId, за да може блок да се добави
+    // там без промяна на типа — а панелът пропуска празните групи, тоест
+    // тя не се показва като празен раздел.
+    expect(blocksForPage("about")).toHaveLength(0);
     expect(blocksForPage("community")).toHaveLength(2);
     expect(blocksForPage("contact")).toHaveLength(2);
     expect(blocksForPage("home").length).toBeGreaterThan(0);

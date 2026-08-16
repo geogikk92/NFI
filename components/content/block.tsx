@@ -2,7 +2,7 @@
 //
 // Един ред в JSX. Всичко останало около него е закован дизайн.
 //
-//   <Block k="about.who" locale={locale} />
+//   <Block k="community.cafe" locale={locale} />
 //
 // ТРИТЕ СЪСТОЯНИЯ и защо са точно тези:
 //

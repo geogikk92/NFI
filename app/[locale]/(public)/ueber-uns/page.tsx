@@ -1,21 +1,26 @@
 // Задача 3b — За нас.
 //
-// Структурата е готова; ТЕКСТЪТ и снимките идват от Василена (риск
-// „съдържанието идва отвън" в ПЛАН.md). Не се измисля история на
-// институт — тя е негова, не наша.
+// ТЕКСТЪТ Е НА ВАСИЛЕНА (15.08.2026), дословно от нейния документ.
+// Дотогава страницата беше скеле с три празни CMS блока и жълта бележка
+// „чака съдържание". Вече не чака.
 //
-// От задача 18: трите раздела вече не са жълта бележка, а РЕДАКТИРУЕМИ
-// блокове. Тя ги пише сама от /admin/tekstove. Докато не ги напише за
-// даден език, бележката си остава — и продължава да спира деплоя.
+// Формата за телефон стои ВЕДНАГА след биографията, а не в дъното — така
+// е поискано: „след текста трябва да идва сиво поле за писане на текст".
+// Ползва се същата CallRequestForm като на /kontakt, значи заявката влиза
+// в същия списък в панела и Василена я вижда на едно място.
+//
+// Разделите не са CMS блокове: текстът е готов и е нейн. Когато поиска да
+// го редактира сама, той се пренася в регистъра с codeValue — тогава
+// написаното тук остава като стойност по подразбиране.
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
-import { Block } from "@/components/content/block";
-import { isDraftPreview } from "@/lib/content/preview";
+import { CallRequestForm } from "@/components/content/call-request-form";
 import { localeAlternates } from "@/lib/i18n/alternates";
 import { toLocale } from "@/lib/i18n/config";
 import { aboutCopy } from "@/lib/i18n/pages/about";
+import { submitCallRequest } from "../kontakt/actions";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -25,73 +30,104 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     alternates: localeAlternates(toLocale(locale), "ueber-uns"),
-    title: t.metaTitle, description: t.metaDescription };
+    title: t.metaTitle,
+    description: t.metaDescription,
+  };
 }
 
 export default async function UeberUnsPage({ params }: Props) {
   const locale = toLocale((await params).locale);
   const t = aboutCopy(locale);
-  const draft = await isDraftPreview();
 
   return (
     <main className="mx-auto max-w-(--container-page) px-6 py-16">
-      <header className="max-w-2xl">
+      <header className="max-w-3xl">
         <span className="flagline w-20" aria-hidden />
-        <p className="kicker mt-6">{t.kicker}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight">
+        <p className="kicker mt-6">
+          <span className="kicker-sq" aria-hidden />
+          {t.kicker}
+        </p>
+        <h1 className="mt-4 font-title text-(length:--text-display-l) font-bold leading-tight">
           {t.title}
         </h1>
-        {/* Двуезичността е обещанието на марката, не украса — затова тези
-            два реда стоят на двата езика при всеки избран език. */}
-        <div className="bilingual mt-6 text-lg">
-          <p lang="de">
-            Wir unterrichten Deutsch für Menschen, die in Deutschland ankommen
-            wollen — nicht nur sprachlich.
-          </p>
-          <p lang="bg">
-            Преподаваме немски на хора, които искат да се установят в Германия —
-            не само езиково.
-          </p>
-        </div>
+
+        {/* Подкрепата стои НАЙ-ОТГОРЕ, не в дъното: това е първото, което
+            прави курса различен от всеки друг онлайн курс. */}
+        <p className="mt-6 border-l-2 border-primary bg-surface-sunken py-3 pl-5 text-(length:--text-lede) leading-relaxed">
+          {t.backing}
+        </p>
       </header>
 
-      <div className="prose mt-14">
-        {/* Указанията в бележката са към екипа, не текст за посетителя —
-            затова остават на немски. */}
-        <h2>{t.whoHeading}</h2>
-        <Block
-          k="about.who"
-          locale={locale}
-          draft={draft}
-          awaiting="Geschichte des Instituts, Gründung, Selbstverständnis"
-        />
-
-        <h2>{t.teachersHeading}</h2>
-        <Block
-          k="about.teachers"
-          locale={locale}
-          draft={draft}
-          awaiting="Vorstellung der Lehrkräfte mit Foto und Qualifikation"
-        />
-
-        <h2>{t.methodHeading}</h2>
-        <Block
-          k="about.method"
-          locale={locale}
-          draft={draft}
-          awaiting="Methodik, Gruppengrößen, Materialien"
-        />
+      {/* Биографията — от нея тръгва доверието, затова е преди всичко друго. */}
+      <div className="prose mt-12">
+        {t.intro.map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
       </div>
 
-      <section className="mt-20 rounded-xl border border-border bg-surface-sunken px-6 py-10">
-        <h2 className="font-title text-2xl">{t.ctaTitle}</h2>
-        <p className="mt-3 max-w-prose text-muted-foreground">{t.ctaBody}</p>
-        <div className="mt-6 flex flex-wrap gap-3">
+      {/* „Сивото поле" от документа. Тъмна рамка и различен фон, за да се
+          вижда, че тук се действа, а не се чете. */}
+      <section
+        id="obazhdane"
+        aria-labelledby="obazhdane-title"
+        className="mt-14 border border-border bg-surface-sunken px-6 py-10 sm:px-10"
+      >
+        <h2
+          id="obazhdane-title"
+          className="font-title text-(length:--text-display-m) font-bold leading-tight"
+        >
+          {t.formLede}
+        </h2>
+        <p className="mt-4 max-w-prose text-muted-foreground">{t.formHint}</p>
+
+        <div className="mt-8 max-w-xl">
+          <CallRequestForm
+            action={submitCallRequest}
+            source="CONTACT_PAGE"
+            locale={locale}
+          />
+        </div>
+      </section>
+
+      {/* Останалите раздели, в нейния ред. */}
+      <div className="prose mt-16">
+        {t.sections.map((section) => (
+          <section key={section.heading}>
+            <h2>{section.heading}</h2>
+            {section.body.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+            {"list" in section && section.list ? (
+              <ul>
+                {section.list.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : null}
+            {"after" in section && section.after
+              ? section.after.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))
+              : null}
+          </section>
+        ))}
+      </div>
+
+      {/* Затварящият въпрос е ЕДРО и с червената нишка: той е поканата. */}
+      <section className="mt-20 border-l-2 border-primary py-2 pl-6 sm:pl-10">
+        <h2 className="font-title text-(length:--text-display-m) font-bold leading-tight">
+          {t.closingHeading}
+        </h2>
+        <p className="mt-5 max-w-prose text-(length:--text-lede) leading-relaxed text-muted-foreground">
+          {t.closingBody}
+        </p>
+
+        <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <Link href={`/${locale}/kontakt`}>{t.ctaContact}</Link>
+            <Link href="#obazhdane">{t.formLedeCta}</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link href={`/${locale}/einstufungstest`}>{t.ctaTest}</Link>
+            <Link href={`/${locale}/einstufungstest`}>{t.testCta}</Link>
           </Button>
         </div>
       </section>

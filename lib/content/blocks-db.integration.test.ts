@@ -22,7 +22,7 @@ import {
 const hasDb = Boolean(process.env.DATABASE_URL);
 const suite = hasDb ? describe : describe.skip;
 
-const PROSE = "about.who";
+const PROSE = "community.cafe";
 const OVERRIDE = "home.startDate";
 
 const meta: AuditMeta = {
