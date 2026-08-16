@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/content/states";
 import { DataUnavailable } from "@/components/content/data-unavailable";
 import { loadOrExplain } from "@/lib/db-health";
 import {
-  COURSE_LEVELS,
+  OFFERED_LEVELS,
   countCoursesByLevel,
   listCourses,
   parseFormat,
@@ -67,8 +67,8 @@ export default async function CoursesPage({ params, searchParams }: Props) {
 
   const [courses, counts] = loaded.ok
     ? loaded.data
-    : [[], Object.fromEntries(COURSE_LEVELS.map((l) => [l, 0])) as Record<
-        (typeof COURSE_LEVELS)[number],
+    : [[], Object.fromEntries(OFFERED_LEVELS.map((l) => [l, 0])) as Record<
+        (typeof OFFERED_LEVELS)[number],
         number
       >];
 
@@ -142,7 +142,7 @@ export default async function CoursesPage({ params, searchParams }: Props) {
               {t.list.all}
             </Link>
           </li>
-          {COURSE_LEVELS.map((item) => {
+          {OFFERED_LEVELS.map((item) => {
             const count = counts[item];
             const active = level === item;
             const href = format
