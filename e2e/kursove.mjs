@@ -70,7 +70,7 @@ try {
   // ── Вход ──────────────────────────────────────────────────────────────
   await page.goto(`${BASE}/bg/anmelden`, { waitUntil: "domcontentloaded" });
   await page.fill('input[name="email"]', "admin@nfi.local");
-  await page.fill('input[name="password"]', "nfi-lokalna-parola");
+  await page.fill('input[name="password"]', "1");
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/admin/, { timeout: 15000 }).catch(() => {});
   check("вход в панела", page.url().includes("/admin"), page.url().replace(BASE, ""));

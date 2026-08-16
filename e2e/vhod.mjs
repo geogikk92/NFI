@@ -62,7 +62,7 @@ try {
 
   // ── 3. Вход с ВЯРНА парола ──
   await page.fill('input[name="email"]', "admin@nfi.local");
-  await page.fill('input[name="password"]', "nfi-lokalna-parola");
+  await page.fill('input[name="password"]', "1");
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/admin/, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(1500);

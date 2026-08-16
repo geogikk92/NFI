@@ -14,7 +14,7 @@ try {
   ok("анонимен се праща към входа", p.url().includes("anmelden"), p.url().replace(B,""));
 
   await p.fill('input[name="email"]', "student@nfi.local");
-  await p.fill('input[name="password"]', "nfi-lokalna-parola");
+  await p.fill('input[name="password"]', "1");
   await p.click('button[type="submit"]');
   await p.waitForTimeout(3000);
 

@@ -20,7 +20,7 @@ import { chromium } from "playwright";
 export const BASE = process.env.E2E_BASE_URL ?? "http://localhost:3130";
 
 /** Паролата на сийднатите профили. Един източник: prisma/seed.ts. */
-export const DEV_PASSWORD = "nfi-lokalna-parola";
+export const DEV_PASSWORD = "1";
 
 export const ADMIN = "admin@nfi.local";
 export const STUDENT = "student@nfi.local";
