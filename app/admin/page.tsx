@@ -1,11 +1,14 @@
 // АДМИН · задача 17a — таблото.
 //
-// Само реални числа от базата. Без графики и без „+12% спрямо миналия
-// месец": измислена статистика в админ панел се приема за истина и после се
-// решава по нея.
+// Само реални числа от базата. Забраната беше „без графики" — тя падна,
+// защото причината ѝ беше друга: „+12% спрямо миналия месец" е ИЗМИСЛЕНО
+// сравнение и в админ панел се приема за истина. Диаграмите тук рисуват
+// преброените редове ден по ден и нищо друго — без сравнения с периоди,
+// без проценти, без прогнози. Всяко число под тях се чете и в таблица.
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrendChart } from "@/components/admin/trend-chart";
 import { requireAdmin } from "@/lib/admin/guard";
 import {
   CALL_REQUEST_STATUSES,
@@ -13,9 +16,13 @@ import {
   DASHBOARD_RECENT_WINDOW_DAYS,
   SUBSCRIBER_STATUSES,
   SUBSCRIBER_STATUS_LABELS,
+  TREND_WINDOWS,
   getDashboardStats,
+  getDashboardTrend,
+  parseTrendWindow,
 } from "@/lib/admin/queries";
 import { formatNumber } from "@/lib/intl";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Табло",
@@ -51,10 +58,23 @@ function Stat({
   );
 }
 
-export default async function AdminDashboardPage() {
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminDashboardPage({ searchParams }: Props) {
   await requireAdmin();
 
-  const stats = await getDashboardStats();
+  const params = await searchParams;
+  // Адресът се редактира на ръка и се препраща — непозната стойност пада
+  // към 30 дни, вместо да гърми с 500.
+  const rawDays = Array.isArray(params.dni) ? params.dni[0] : params.dni;
+  const days = parseTrendWindow(rawDays);
+
+  const [stats, trend] = await Promise.all([
+    getDashboardStats(),
+    getDashboardTrend(days),
+  ]);
 
   return (
     <>
@@ -64,6 +84,54 @@ export default async function AdminDashboardPage() {
           Всички числа идват от базата в момента на отварянето на страницата.
         </p>
       </header>
+
+      <section className="mt-10">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold">Движение по дни</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Броят подадени неща за всеки ден, по берлинско време. Само
+              преброени редове — без сравнения с минали периоди.
+            </p>
+          </div>
+
+          {/* Един превключвател НАД трите диаграми, не по един на всяка:
+              иначе се гледат три различни периода и се сравняват наум.
+              Връзки, не бутони — периодът остава в адреса и се препраща. */}
+          <nav aria-label="Период на диаграмите" className="flex gap-1">
+            {TREND_WINDOWS.map((window) => {
+              const active = window === days;
+
+              return (
+                <Link
+                  key={window}
+                  href={`/admin?dni=${window}`}
+                  aria-current={active ? "true" : undefined}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {window} дни
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          {trend.series.map((series) => (
+            <TrendChart
+              key={series.key}
+              label={series.label}
+              hint={series.hint}
+              points={series.points}
+            />
+          ))}
+        </div>
+      </section>
 
       <section className="mt-10">
         <h2 className="text-xl font-semibold">Заявки за обаждане</h2>

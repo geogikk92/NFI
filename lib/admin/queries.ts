@@ -13,6 +13,13 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import {
+  bucketByDay,
+  trendWindowStart,
+  DEFAULT_TREND_WINDOW,
+  type TrendPoint,
+  type TrendWindow,
+} from "./trend";
 
 // ─────────────────────────────────────────────────────────────────────────
 //  Изброимите от Prisma, повторени като низови обединения
@@ -678,3 +685,91 @@ export async function getDashboardStats(): Promise<AdminDashboardStats> {
 
 /** Броят дни в прозореца — таблото го изписва в подсказката. */
 export const DASHBOARD_RECENT_WINDOW_DAYS = RECENT_WINDOW_DAYS;
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Табло · движението по дни
+// ─────────────────────────────────────────────────────────────────────────
+
+// Прозорците и разчитането им живеят в lib/admin/trend.ts — чистия модул,
+// който се тества без база. Изнасят се и оттук, за да не се налага
+// страницата да внася от два файла заради едно табло.
+export {
+  TREND_WINDOWS,
+  DEFAULT_TREND_WINDOW,
+  parseTrendWindow,
+  type TrendWindow,
+} from "./trend";
+
+export interface TrendSeries {
+  /** За ключ в React и за адреса на таблицата под диаграмата. */
+  key: string;
+  label: string;
+  /** Какво точно се брои — пише се под заглавието на диаграмата. */
+  hint: string;
+  points: TrendPoint[];
+}
+
+export interface AdminDashboardTrend {
+  days: TrendWindow;
+  series: TrendSeries[];
+}
+
+/**
+ * Движението по дни за диаграмите на таблото.
+ *
+ * Три ОТДЕЛНИ реда, не три серии в една диаграма: числата са с различен
+ * порядък и на обща ос по-малкото се залепя за нулата. Отделно —
+ * трите цвята на марката (червено, зелено, злато) не се различават при
+ * далтонизъм, а една линия на диаграма изобщо не разчита на цвят.
+ *
+ * ЧЕТЕНЕ В ПАМЕТТА, за разлика от броевете горе. Шапката на файла казва
+ * да се брои в базата и това остава вярно за „всички заявки" — тук обаче
+ * прозорецът е 30 или 90 дни, взима се ЕДНА колона, и трите таблици имат
+ * индекс по createdAt. Алтернативата е `$queryRaw` с
+ * `date_trunc('day', … AT TIME ZONE 'Europe/Berlin')`, което мести
+ * часовата зона в SQL — там, където не се тества. Стане ли обемът голям,
+ * смяната е точно тази.
+ */
+export async function getDashboardTrend(
+  days: TrendWindow = DEFAULT_TREND_WINDOW,
+): Promise<AdminDashboardTrend> {
+  const since = trendWindowStart(days);
+  const window = { createdAt: { gte: since } };
+  const onlyDate = { select: { createdAt: true } };
+
+  const [callRequests, subscribers, levelTests] = await Promise.all([
+    db.callRequest.findMany({ where: window, ...onlyDate }),
+    db.newsletterSubscriber.findMany({ where: window, ...onlyDate }),
+    db.levelTestResult.findMany({ where: window, ...onlyDate }),
+  ]);
+
+  const toPoints = (rows: { createdAt: Date }[]) =>
+    bucketByDay(
+      rows.map((row) => row.createdAt),
+      { days },
+    );
+
+  return {
+    days,
+    series: [
+      {
+        key: "zayavki",
+        label: "Заявки за обаждане",
+        hint: "По деня на подаване, включително спамът.",
+        points: toPoints(callRequests),
+      },
+      {
+        key: "abonati",
+        label: "Записвания за бюлетина",
+        hint: "По деня на записване — потвърждението идва по-късно.",
+        points: toPoints(subscribers),
+      },
+      {
+        key: "testove",
+        label: "Тестове за ниво",
+        hint: "Всеки завършен тест, с профил и без.",
+        points: toPoints(levelTests),
+      },
+    ],
+  };
+}
