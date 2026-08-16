@@ -27,7 +27,7 @@ import { assertLocalDatabase } from "../lib/db-target";
  * Преди 30.07.2026 тези профили бяха БЕЗ парола изобщо — понеже /admin
  * тогава не проверяваше кой влиза, никой не забеляза.
  */
-const DEV_PASSWORD = "nfi-lokalna-parola";
+const DEV_PASSWORD = "1";
 
 async function seedUsers() {
   // Хешира се веднъж за двата профила: scrypt при N=16384 иска ~80 ms и

@@ -12,7 +12,7 @@ import { hashPassword } from "./password";
 const suite = process.env.DATABASE_URL ? describe : describe.skip;
 
 /** Паролата от prisma/seed.ts. */
-const DEV_PASSWORD = "nfi-lokalna-parola";
+const DEV_PASSWORD = "1";
 
 suite("вход срещу истинска база", () => {
   afterAll(async () => {
