@@ -100,18 +100,27 @@ async function seedCourses() {
   const courses = [
     {
       slug: "deutsch-a1-abendkurs",
-      title: "Немски A1 · вечерен курс",
-      titleDe: "Deutsch A1 · Abendkurs",
-      titleEn: "German A1 · evening course",
+      title: "Немски A1 · онлайн",
+      titleDe: "Deutsch A1 · online",
+      titleEn: "German A1 · online",
       level: "A1" as const,
-      format: "PRESENCE" as const,
+      // Всички курсове са ONLINE през Zoom (потвърдено 15.08.2026).
+      // Присъствен и хибриден формат схемата ги поддържа, но институтът
+      // не ги предлага — примерните данни не бива да твърдят обратното.
+      format: "ONLINE" as const,
       summary: "За начинаещи без предварителни знания.",
       summaryDe: "Für Anfänger ohne Vorkenntnisse.",
       summaryEn: "For complete beginners, no prior knowledge needed.",
       priceCents: 39000,
       durationWeeks: 12,
       hoursPerWeek: 4,
-      maxParticipants: 12,
+      // ИЗРИЧНО null (15.08.2026): реален таван на групата няма, а
+      // „най-много 12 участници" беше обещание, което не се спазва.
+      // Празното поле НЕ стига — `update: course` по-долу пипа само
+      // подадените колони, тоест изпуснато поле оставя старата стойност
+      // в база, която вече е сийдната. Публичната страница просто не
+      // показва реда „Група", когато е null.
+      maxParticipants: null,
       sortOrder: 1,
     },
     {
@@ -135,7 +144,7 @@ async function seedCourses() {
       titleDe: "Prüfungsvorbereitung B2",
       titleEn: "B2 exam preparation",
       level: "B2" as const,
-      format: "HYBRID" as const,
+      format: "ONLINE" as const,
       summary: "Целенасочена подготовка за сертификатния изпит.",
       summaryDe: "Gezielte Vorbereitung auf die Zertifikatsprüfung.",
       summaryEn: "Focused preparation for the certificate exam.",

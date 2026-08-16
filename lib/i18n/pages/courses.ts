@@ -32,28 +32,28 @@ const de = {
   hoursPerWeek: (count: number) => `${count} Std./Woche`,
 
   list: {
-    mockupTitle: "Von A1 bis C1 — mit lebendiger Verbindung, keine Aufzeichnungen.",
+    mockupTitle: "Von A1 bis B2 — mit lebendiger Verbindung, keine Aufzeichnungen.",
     mockupLede:
-      "Alle Gruppen starten am 1. September 2026. Der Unterricht ist live (GoTo), abends, abgestimmt auf berufstätige Menschen. Den Preis erfährst du im kostenlosen Gespräch, in dem wir zusammen auch dein Niveau einschätzen.",
+      "Alle Gruppen starten im September 2026. Der Unterricht ist live über Zoom, morgens oder abends, abgestimmt auf Menschen im Schichtdienst. Den Preis erfährst du im kostenlosen Gespräch, in dem wir zusammen auch dein Niveau einschätzen.",
     factsHeading: "Kurz gefasst",
     facts: [
-      { label: "Start", value: "1. Sept. 2026" },
-      { label: "Format", value: "live · GoTo" },
-      { label: "Gruppen", value: "8–10 Personen" },
-      { label: "Wann", value: "abends · Di+Do" },
+      { label: "Start", value: "September 2026" },
+      { label: "Format", value: "live · Zoom" },
+      { label: "Betreuung", value: "individuell" },
+      { label: "Wann", value: "morgens oder abends" },
     ],
     pickHeading: "Wähle, wo du anfängst",
-    pickLede: "Fünf Niveaus, ein Faden: vom Alphabet bis zur Universität.",
-    schedule: "Di+Do 19:00–20:30 · 8–10 Personen · 14 Wochen",
+    pickLede: "Vier Niveaus, ein Faden: vom Alphabet bis zum sicheren Gespräch.",
+    schedule: "morgens oder abends · live über Zoom",
     mostWanted: "am gefragtesten",
     details: "Details",
     metaTitle: "Kurse",
     metaDescription:
-      "Deutschkurse von A1 bis C2 — Präsenz, Online und Hybrid. Kleine Gruppen, Prüfungsvorbereitung.",
+      "Deutschkurse von A1 bis B2 — live online über Zoom. Individuelle Betreuung, Deutsch für den Alltag in Deutschland.",
     kicker: "Kurse",
     title: "Deutsch lernen in Nürnberg",
     lead:
-      "Von den ersten Wörtern bis zur Prüfung — in kleinen Gruppen, mit Lehrkräften, die beide Sprachen kennen.",
+      "Von den ersten Wörtern bis B2 — live, mit individueller Betreuung und einer Lehrerin, die beide Sprachen kennt.",
     filterLabel: "Nach Niveau filtern",
     all: "Alle",
     found: (count: number) =>
@@ -120,28 +120,28 @@ const bg: CoursesCopy = {
   hoursPerWeek: (count: number) => `${count} ч/седмица`,
 
   list: {
-    mockupTitle: "От A1 до C1 — с жива връзка, не записи.",
+    mockupTitle: "От A1 до B2 — с жива връзка, не записи.",
     mockupLede:
-      "Всички групи стартират на 1 септември 2026. Занятията са на живо (GoTo), вечер, съобразени с работещи хора. Цената научаваш в безплатния разговор, където заедно преценяваме и нивото ти.",
+      "Всички групи стартират през септември 2026. Занятията са на живо през Zoom, сутрин или вечер, съобразени с хора на смени. Цената научаваш в безплатния разговор, където заедно преценяваме и нивото ти.",
     factsHeading: "Накратко",
     facts: [
-      { label: "Старт", value: "1 септ. 2026" },
-      { label: "Формат", value: "на живо · GoTo" },
-      { label: "Групи", value: "8–10 души" },
-      { label: "Кога", value: "вечер · вт+чт" },
+      { label: "Старт", value: "септември 2026" },
+      { label: "Формат", value: "на живо · Zoom" },
+      { label: "Отношение", value: "индивидуално" },
+      { label: "Кога", value: "сутрин или вечер" },
     ],
     pickHeading: "Избери откъде тръгваш",
-    pickLede: "Пет нива, една нишка: от азбуката до университета.",
-    schedule: "вт+чт 19:00–20:30 · 8–10 души · 14 седмици",
+    pickLede: "Четири нива, една нишка: от азбуката до уверения разговор.",
+    schedule: "сутрин или вечер · на живо през Zoom",
     mostWanted: "най-търсен",
     details: "Детайли",
     metaTitle: "Курсове",
     metaDescription:
-      "Курсове по немски от A1 до C2 — присъствено, онлайн и хибридно. Малки групи, подготовка за изпит.",
+      "Курсове по немски от A1 до B2 — на живо онлайн през Zoom. Индивидуално отношение, немски за живота в Германия.",
     kicker: "Курсове",
     title: "Немски език в Нюрнберг",
     lead:
-      "От първите думи до изпита — в малки групи, с преподаватели, които знаят и двата езика.",
+      "От първите думи до B2 — на живо, с индивидуално отношение и преподавател, който знае и двата езика.",
     filterLabel: "Филтриране по ниво",
     all: "Всички",
     found: (count: number) =>
@@ -206,28 +206,28 @@ const en: CoursesCopy = {
   hoursPerWeek: (count: number) => `${count} hrs/week`,
 
   list: {
-    mockupTitle: "From A1 to C1 — live, not recordings.",
+    mockupTitle: "From A1 to B2 — live, not recordings.",
     mockupLede:
-      "All groups start on 1 September 2026. Lessons are live (GoTo), in the evening, built around people who work. You get the price in the free call, where we also assess your level together.",
+      "All groups start in September 2026. Lessons are live on Zoom, morning or evening, built around people working shifts. You get the price in the free call, where we also assess your level together.",
     factsHeading: "In short",
     facts: [
-      { label: "Starts", value: "1 Sept 2026" },
-      { label: "Format", value: "live · GoTo" },
-      { label: "Groups", value: "8–10 people" },
-      { label: "When", value: "evenings · Tue+Thu" },
+      { label: "Starts", value: "September 2026" },
+      { label: "Format", value: "live · Zoom" },
+      { label: "Attention", value: "individual" },
+      { label: "When", value: "morning or evening" },
     ],
     pickHeading: "Choose where you start",
-    pickLede: "Five levels, one thread: from the alphabet to university.",
-    schedule: "Tue+Thu 19:00–20:30 · 8–10 people · 14 weeks",
+    pickLede: "Four levels, one thread: from the alphabet to confident conversation.",
+    schedule: "morning or evening · live on Zoom",
     mostWanted: "most requested",
     details: "Details",
     metaTitle: "Courses",
     metaDescription:
-      "German courses from A1 to C2 — in person, online and hybrid. Small groups, exam preparation.",
+      "German courses from A1 to B2 — live online on Zoom. Individual attention, German for daily life in Germany.",
     kicker: "Courses",
     title: "Learning German in Nuremberg",
     lead:
-      "From your first words to the exam — in small groups, with teachers who know both languages.",
+      "From your first words to B2 — live, with individual attention and a teacher who knows both languages.",
     filterLabel: "Filter by level",
     all: "All",
     found: (count: number) =>
