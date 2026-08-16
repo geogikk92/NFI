@@ -27,7 +27,7 @@ import { assertLocalDatabase } from "../lib/db-target";
  * Преди 30.07.2026 тези профили бяха БЕЗ парола изобщо — понеже /admin
  * тогава не проверяваше кой влиза, никой не забеляза.
  */
-const DEV_PASSWORD = "nfi-lokalna-parola";
+const DEV_PASSWORD = "1";
 
 async function seedUsers() {
   // Хешира се веднъж за двата профила: scrypt при N=16384 иска ~80 ms и
@@ -454,6 +454,111 @@ async function seedDiscounts() {
 }
 
 /**
+ * Примерни заявки за обаждане.
+ *
+ * Съществуват по същата причина като примерните преводи: екранът трябва да
+ * може да се види, без да се чака истински посетител да остави телефон.
+ * Изтрий ги, щом тръгнат истинските заявки.
+ *
+ * Данните са ЯВНО измислени — имена от учебник, домейн „example.com".
+ *
+ * Четирите покриват СЪСТОЯНИЯТА, които админът среща, а не четири
+ * еднакви реда:
+ *
+ *   1. „Нова" от страница на курс, със съобщение и предпочитан час — всекидневният
+ *      случай и единственият, на който излиза бързото „Потърсен";
+ *   2. „Нова" от теста за ниво, БЕЗ телефон — детайлът има отделен изглед за
+ *      заявка само с имейл и той иначе не се вижда никога;
+ *   3. „Потърсен" с човешка бележка и handledAt — как изглежда обработена заявка;
+ *   4. „Спам" с АВТОМАТИЧНА бележка, каквато слага honeypot защитата.
+ *
+ * Четвъртата е нарочна по същия начин, по който третият превод е с
+ * просрочен срок: тя е единственият начин да се види предупреждението във
+ * формата, че бележката е сложена от автоматичната проверка, а не от човек.
+ * Иначе този клон на екрана чака да мине бот.
+ */
+async function seedCallRequests() {
+  const day = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  // Курсът се търси по slug, а не се закача по ред: сийдът на курсовете
+  // може да се пусне отделно и подредбата да е друга.
+  const course = await db.course.findUnique({
+    where: { slug: "deutsch-b1-online" },
+    select: { id: true },
+  });
+
+  const requests = [
+    {
+      name: "Мария Иванова",
+      email: "maria.obazhdane@example.com",
+      phone: "+49 151 0000011",
+      message:
+        "Здравейте, интересувам се от B1 онлайн.\nРаботя до 17 ч., затова питам дали има вечерна група.",
+      preferredTime: "след 18:00",
+      source: "COURSE_PAGE" as const,
+      status: "NEW" as const,
+      courseId: course?.id ?? null,
+      createdAt: new Date(now - 3 * 60 * 60 * 1000),
+    },
+    {
+      name: "Petar Georgiev",
+      email: "petar.obazhdane@example.com",
+      phone: null,
+      message: null,
+      preferredTime: null,
+      source: "LEVEL_TEST" as const,
+      status: "NEW" as const,
+      courseId: null,
+      createdAt: new Date(now - 1 * day),
+    },
+    {
+      name: "Anna Schmidt",
+      email: "anna.obazhdane@example.com",
+      phone: "+49 151 0000013",
+      message: "Питам за подготовката за изпит B2 през септември.",
+      preferredTime: "сутрин",
+      source: "CONTACT_PAGE" as const,
+      status: "CONTACTED" as const,
+      courseId: null,
+      handledAt: new Date(now - 2 * day),
+      handledNote:
+        "Звъннах на 2 октомври, не вдига. Пратих имейл с датите на групите.",
+      createdAt: new Date(now - 4 * day),
+    },
+    {
+      name: "aaa bbb",
+      email: "spam.obazhdane@example.com",
+      phone: "+00 000 000",
+      message: "http://example.com/oferta http://example.com/oferta",
+      preferredTime: null,
+      source: "CONTACT_PAGE" as const,
+      status: "SPAM" as const,
+      courseId: null,
+      // Точно това пише honeypot защитата в lib/cms/call-requests-db.ts.
+      // Началото („Автоматично маркирана:") е ключът, по който формата
+      // разпознава, че бележката НЕ е човешка — виж isAutomaticNote.
+      handledNote: "Автоматично маркирана: honeypot",
+      createdAt: new Date(now - 6 * day),
+    },
+  ];
+
+  for (const request of requests) {
+    // Заявката няма уникална колона — истинските нямат номер и не бива да
+    // имат. Затова идемпотентността е по имейла на примера: той е
+    // измислен и не може да дойде от истински посетител.
+    const existing = await db.callRequest.findFirst({
+      where: { email: request.email },
+      select: { id: true },
+    });
+
+    if (existing) continue;
+
+    await db.callRequest.create({ data: request });
+  }
+}
+
+/**
  * Примерни заявки за превод.
  *
  * Съществуват, защото публичната форма за подаване още я няма (тя чака
@@ -776,6 +881,8 @@ async function main() {
   await seedLevelTest();
   await seedShipping();
   await seedDiscounts();
+  // След курсовете: първата заявка се закача за „deutsch-b1-online".
+  await seedCallRequests();
   await seedTranslations();
   await seedFreeMaterials();
   await seedCertificates();
@@ -787,6 +894,7 @@ async function main() {
     "зони за доставка": await db.shippingZone.count(),
     отстъпки: await db.discount.count(),
     "въпроси в теста": await db.levelTestQuestion.count(),
+    "заявки за обаждане": await db.callRequest.count(),
     "заявки за превод": await db.translationRequest.count(),
     "редактирани текстове": await db.contentBlock.count(),
     "безплатни материали": await db.freeMaterial.count(),
