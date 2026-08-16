@@ -6,40 +6,31 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/content/states";
+import { Flash, commonFlashErrors } from "@/components/admin/flash";
 import { requireAdmin } from "@/lib/admin/guard";
 import {
   CALL_REQUEST_LIMIT,
   CALL_REQUEST_SOURCE_LABELS,
   CALL_REQUEST_STATUSES,
   CALL_REQUEST_STATUS_LABELS,
-  type CallRequestStatus,
   countCallRequestsByStatus,
   listCallRequests,
   parseCallRequestStatus,
 } from "@/lib/admin/queries";
 import { formatDateTime, formatNumber, toDateTimeAttribute } from "@/lib/intl";
 import { cn } from "@/lib/utils";
+import { CallRequestStatusBadge } from "./status-badge";
+import { markContacted } from "./actions";
 
 export const metadata: Metadata = {
   title: "Заявки за обаждане",
   robots: { index: false, follow: false },
 };
 
-/**
- * Цветът е ДОПЪЛНЕНИЕ към текста, не заместител (WCAG 1.4.1) — в клетката
- * винаги стои изписаният статус.
- */
-const STATUS_VARIANT: Record<
-  CallRequestStatus,
-  "default" | "secondary" | "destructive" | "outline" | "ghost"
-> = {
-  NEW: "default",
-  CONTACTED: "secondary",
-  SCHEDULED: "outline",
-  CLOSED: "ghost",
-  SPAM: "destructive",
+/** Съобщенията след бързото действие. Идват през адреса — виж Flash. */
+const FLASH = {
+  potarsen: "Заявката е отбелязана като „Потърсен“.",
 };
 
 /** Липсващата стойност се ИЗПИСВА. Тире четецът обявява като нищо. */
@@ -48,7 +39,7 @@ function Missing({ children = "няма" }: { children?: string }) {
 }
 
 type Props = {
-  searchParams: Promise<{ status?: string | string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function AdminCallRequestsPage({ searchParams }: Props) {
@@ -82,6 +73,12 @@ export default async function AdminCallRequestsPage({ searchParams }: Props) {
           погрешка.
         </p>
       </header>
+
+      <Flash
+        query={params}
+        success={FLASH}
+        errors={commonFlashErrors("Заявката")}
+      />
 
       {/* Филтърът е връзки, не бутони: състоянието е в адреса, значи екранът
           работи и без JavaScript и може да се препрати. */}
@@ -216,6 +213,9 @@ export default async function AdminCallRequestsPage({ searchParams }: Props) {
                 <th scope="col" className="px-4 py-3 text-left font-medium">
                   Статус
                 </th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">
+                  Действие
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +230,12 @@ export default async function AdminCallRequestsPage({ searchParams }: Props) {
                     scope="row"
                     className="px-4 py-3 text-left font-medium whitespace-nowrap"
                   >
-                    {request.name}
+                    <Link
+                      href={`/admin/anketi/${request.id}`}
+                      className="underline underline-offset-2 hover:no-underline"
+                    >
+                      {request.name}
+                    </Link>
                   </th>
 
                   <td className="px-4 py-3">
@@ -279,9 +284,31 @@ export default async function AdminCallRequestsPage({ searchParams }: Props) {
                   </td>
 
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <Badge variant={STATUS_VARIANT[request.status]}>
-                      {CALL_REQUEST_STATUS_LABELS[request.status]}
-                    </Badge>
+                    <CallRequestStatusBadge status={request.status} />
+                  </td>
+
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    {request.status === "NEW" ? (
+                      <form action={markContacted}>
+                        <input type="hidden" name="id" value={request.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md px-2 py-1 text-sm font-medium underline underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                        >
+                          Потърсен
+                          {/* Бутоните на всички редове пишат едно и също —
+                              без името четецът обявява двайсет пъти
+                              „Потърсен" и не се разбира кой ред е това. */}
+                          <span className="sr-only"> — {request.name}</span>
+                        </button>
+                      </form>
+                    ) : (
+                      // „Насрочено", „Затворена" и „Спам" са преценки — те
+                      // искат отваряне на заявката, не едно натискане.
+                      <span className="text-xs text-muted-foreground">
+                        отвори заявката
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}
