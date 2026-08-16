@@ -55,6 +55,7 @@ export const ENTITY_LABELS: Record<string, string> = {
   TranslationRequest: "Заявка за превод",
   LevelTestResult: "Резултат от теста",
   User: "Потребител",
+  Media: "Файл",
 };
 
 /**
@@ -216,6 +217,18 @@ const FIELD_LABELS: Record<string, string> = {
   resultLevel: "получено ниво",
   score: "точки",
   ip: "IP адрес",
+  // Медийната библиотека (17m-b). coverMediaId има ред тук, защото е
+  // ИЗВАДЕН от INTERNAL_IDS — виж бележката там.
+  coverMediaId: "корица",
+  alt: "описание за екранен четец (български)",
+  altDe: "описание за екранен четец (немски)",
+  key: "ключ в хранилището",
+  bucket: "хранилище",
+  mimeType: "тип на файла",
+  sizeBytes: "тегло (байтове)",
+  width: "широчина",
+  height: "височина",
+  checksum: "контролна сума",
 };
 
 export function fieldLabel(field: string): string {
@@ -297,13 +310,17 @@ const HIDDEN_FIELDS = new Set(["id", "updatedAt", "createdAt"]);
  * записани подробности", тоест дневникът отричаше промяна, която е в
  * базата. Точно обратното на предназначението му. (Одит, 04.08.2026.)
  */
+// coverMediaId НЕ Е тук от 17m-b: закачането на корица е промяна, която
+// човек прави нарочно от формата — скрита, дневникът би отричал промяна,
+// която е в базата (същият дефект като с externalId по-горе). Стойността
+// е id и не е красива, но „корица: … → …" поне казва КАКВО се е сменило.
 const INTERNAL_IDS = new Set([
   "courseId",
   "userId",
   "callRequestId",
   "updatedById",
-  "coverMediaId",
   "freeMaterialId",
+  "uploadedById",
 ]);
 
 function isInternalId(field: string): boolean {
@@ -484,6 +501,10 @@ export async function resolveEntityTitles(
     load("Discount", async (ids) =>
       (await db.discount.findMany({ where: { id: { in: ids } }, select: { id: true, code: true } }))
         .map((r) => ({ id: r.id, label: r.code })),
+    ),
+    load("Media", async (ids) =>
+      (await db.media.findMany({ where: { id: { in: ids } }, select: { id: true, title: true, key: true } }))
+        .map((r) => ({ id: r.id, label: r.title ?? r.key })),
     ),
   ]);
 

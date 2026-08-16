@@ -11,6 +11,7 @@ import {
   getCourseForEdit,
   getCourseUsage,
 } from "@/lib/admin/courses";
+import { listCoverOptions } from "@/lib/admin/media";
 import {
   COURSE_FORMAT_OPTIONS,
   COURSE_LEVEL_OPTIONS,
@@ -33,9 +34,10 @@ export default async function EditCoursePage({ params, searchParams }: Props) {
   const { id } = await params;
   const { sazdaden } = await searchParams;
 
-  const [course, usage] = await Promise.all([
+  const [course, usage, covers] = await Promise.all([
     getCourseForEdit(id),
     getCourseUsage(id),
+    listCoverOptions(),
   ]);
 
   // Тук 404 е ВЯРНО, за разлика от публичните страници: адресът идва от
@@ -90,6 +92,7 @@ export default async function EditCoursePage({ params, searchParams }: Props) {
           action={saveCourse}
           levels={COURSE_LEVEL_OPTIONS}
           formats={COURSE_FORMAT_OPTIONS}
+          covers={covers}
           course={{
             id: course.id,
             slug: course.slug,
@@ -111,6 +114,7 @@ export default async function EditCoursePage({ params, searchParams }: Props) {
             startsAt: course.startsAt,
             published: course.published,
             sortOrder: course.sortOrder,
+            coverMediaId: course.coverMediaId,
           }}
         />
 

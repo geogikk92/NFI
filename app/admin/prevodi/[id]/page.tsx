@@ -21,6 +21,7 @@ import {
 } from "@/lib/admin/queries";
 import { formatDate, formatDateTime, toDateTimeAttribute } from "@/lib/intl";
 import { formatMoney } from "@/lib/money";
+import { s3Configured } from "@/lib/storage";
 import { saveTranslation } from "../actions";
 
 type Props = { params: Promise<{ id: string }> };
@@ -53,10 +54,13 @@ export default async function TranslationPage({ params }: Props) {
   const sources = request.documents.filter((doc) => doc.isSource);
   const results = request.documents.filter((doc) => !doc.isSource);
 
-  // Хранилището още е ДОГОВОРКА, не реализация (виж lib/storage/index.ts).
-  // Проверката е по променливата на средата, а не по опит за сваляне —
-  // по-добре честен надпис, отколкото бутон, който дава грешка.
-  const storageReady = Boolean(process.env.S3_BUCKET);
+  // Продукция БЕЗ конфигуриран S3 е РЕАЛЕН проблем: от 17m-b хранилището
+  // работи, но локалният диск на Vercel изчезва при всеки deploy, тоест
+  // качените документи се губят. В разработка локалният драйвер е
+  // напълно годен. Проверката е ОБЩАТА s3Configured(), не ръчен поглед в
+  // process.env — две отделни проверки се разминават при частична
+  // конфигурация.
+  const storageLost = !s3Configured() && process.env.NODE_ENV === "production";
 
   return (
     <>
@@ -136,14 +140,32 @@ export default async function TranslationPage({ params }: Props) {
               Документи
             </h2>
 
-            {!storageReady ? (
-              // ЧЕСТНО, вместо бутон, който дава грешка. Хранилището още е
-              // договорка (lib/storage/index.ts), не реализация.
-              <p className="mt-3 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-                <strong>Файловете още не могат да се свалят.</strong> Липсва
-                хранилището (S3/R2) — до него описанието отдолу е всичко, с
-                което разполагаме. Клиентът праща документите по имейл
-                междувременно.
+            {/* ЧЕСТНО, вместо бутон, който дава грешка. Твърдението е за
+                ТОЗИ ЕКРАН, не за хранилището: от 17m-b хранилището работи,
+                но преводната опашка с прегледа и свалянето е задача 14b и
+                е на Жоро. Затова бележката стои независимо от S3. */}
+            <p className="mt-3 rounded-lg border border-border bg-surface-sunken px-4 py-3 text-sm text-muted-foreground">
+              <strong className="text-foreground">
+                Файловете още не могат да се свалят оттук.
+              </strong>{" "}
+              Този екран показва само описанието на документите; прегледът и
+              свалянето идват с преводната опашка (задача 14b). Клиентът
+              праща документите по имейл междувременно.
+            </p>
+
+            {storageLost ? (
+              // Отделно и ПО-СИЛНО: в продукция без S3 качените документи
+              // не просто не се свалят — те изчезват при всеки deploy.
+              <p
+                role="alert"
+                className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+              >
+                <strong className="text-destructive">
+                  Хранилището не е настроено.
+                </strong>{" "}
+                Липсват S3/R2 ключовете, а локалният диск в продукция се губи
+                при всеки deploy — качените документи не се пазят. Виж
+                docs/ДЕПЛОЙ.md, раздел „По-късно, когато дойдат акаунтите“.
               </p>
             ) : null}
 

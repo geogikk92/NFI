@@ -718,10 +718,17 @@ function assertNotProduction(): void {
 // ─────────────────────────────────────────────────────────────────────────
 
 async function seedFreeMaterials() {
-  // Малък, но ИСТИНСКИ PDF в локалното хранилище — така целият поток
+  // Малък, но ИСТИНСКИ PDF в хранилището — така целият поток
   // форма → токен → сваляне се минава на чиста машина, без S3.
-  const { localPut } = await import("../lib/storage/local");
-  const pdfKey = "media/seed/der-die-das-tablitza.pdf";
+  //
+  // Scope-ът е "product", НЕ "media" (от 17m-b): безплатните материали
+  // са зад форма и се свалят с DownloadGrant токен, а всичко под
+  // media/ се сервира ПУБЛИЧНО от /media/[...key] — сложи ли се PDF-ът
+  // там, лийд фунията пада. И минава през putObject, не през localPut:
+  // директният локален запис при конфигуриран S3 оставя ключ, който в
+  // bucket-а го няма → вечно изхабени токени.
+  const { putObject } = await import("../lib/storage");
+  const pdfKey = "product/seed/der-die-das-tablitza.pdf";
   // Валиден PDF, сглобен обект по обект с точни отмествания в xref —
   // иначе стриктни четци (не Preview) отказват файла.
   const stream =
@@ -749,7 +756,7 @@ async function seedFreeMaterials() {
   pdf +=
     `trailer<</Size ${objects.length + 1}/Root 1 0 R>>\n` +
     `startxref\n${xrefAt}\n%%EOF`;
-  await localPut(pdfKey, Buffer.from(pdf), "application/pdf");
+  await putObject("product", pdfKey, Buffer.from(pdf), "application/pdf");
 
   const materials = [
     {

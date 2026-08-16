@@ -22,6 +22,8 @@ import {
   setMaterialPublished,
   updateMaterial,
 } from "@/lib/admin/materials";
+import { slugify } from "@/lib/admin/slug";
+import { newObjectKey, putObject } from "@/lib/storage";
 
 const SLUG_TAKEN = {
   slug:
@@ -50,11 +52,69 @@ function explain(error: unknown, data: FormData): AdminFormState {
   );
 }
 
+/**
+ * Разпознава файла ПО СЪДЪРЖАНИЕ — името и деклариният тип лъжат.
+ * Приема се точно това, което материалите доставят: PDF и MP3.
+ */
+function sniffMaterialFile(
+  bytes: Uint8Array,
+): { mimeType: string; extension: string } | null {
+  if (bytes.length > 4 && String.fromCharCode(...bytes.subarray(0, 5)) === "%PDF-") {
+    return { mimeType: "application/pdf", extension: "pdf" };
+  }
+
+  // MP3: или ID3 етикет, или директно MPEG frame sync (11 единични бита).
+  const id3 = bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33;
+  const frameSync = bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
+  if (bytes.length > 3 && (id3 || frameSync)) {
+    return { mimeType: "audio/mpeg", extension: "mp3" };
+  }
+
+  return null;
+}
+
 export async function saveMaterial(
   _prev: AdminFormState,
   data: FormData,
 ): Promise<AdminFormState> {
   const admin = await requireAdmin();
+
+  // Качването е ПРЕДИ разбора: успее ли, ключът влиза във FormData и
+  // разборът го вижда като попълнено поле — една проверка за двата пътя
+  // (качен файл и ръчен ключ). Провали ли се разборът СЛЕД качването,
+  // остава обект-сирак в хранилището — поносимо; загубен файл не е.
+  const file = data.get("storageFile");
+  if (file instanceof File && file.size > 0) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+
+    const sniffed = sniffMaterialFile(bytes);
+    if (!sniffed) {
+      return invalid(data, CHECK_FIELDS, {
+        storageFile:
+          "Файлът не е PDF или MP3 — материалите доставят точно тези два " +
+          "вида. Провери дали е избран правилният файл.",
+      });
+    }
+
+    // Scope "product", НЕ "media": материалите са зад форма за контакт и
+    // се свалят с DownloadGrant токен, а всичко под media/ е ПУБЛИЧНО.
+    const base =
+      slugify(String(data.get("slug") ?? "").trim()) ||
+      slugify(file.name.replace(/\.[^.]+$/, "")) ||
+      "material";
+    const key = newObjectKey("product", base, sniffed.extension);
+
+    try {
+      await putObject("product", key, bytes, sniffed.mimeType);
+    } catch (error) {
+      console.error("[admin] Качването на файл за материал се провали:", error);
+      return invalid(data, CHECK_FIELDS, {
+        storageFile: "Качването не мина. Опитай пак след малко.",
+      });
+    }
+
+    data.set("storageKey", key);
+  }
 
   const parsed = parseMaterialForm(data);
   if (!parsed.ok) return invalid(data, CHECK_FIELDS, parsed.fieldErrors);

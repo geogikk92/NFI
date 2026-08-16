@@ -46,6 +46,7 @@ const SECTIONS: readonly NavSection[] = [
       { href: "/admin/sertifikati", label: "Сертификати" },
       { href: "/admin/recenzii", label: "Отзиви" },
       { href: "/admin/materiali", label: "Безплатни материали" },
+      { href: "/admin/mediya", label: "Медия" },
       { href: "/admin/abonati", label: "Абонати" },
     ],
   },
