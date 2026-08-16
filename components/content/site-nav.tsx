@@ -113,9 +113,10 @@ export function SiteNav({
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
-          <div className="hidden sm:block">
-            <LocaleSwitcher current={locale} label={t.nav.languageLabel} />
-          </div>
+          {/* Езикът стои в лентата на ВСЯКА ширина. Скрит зад бургера
+              той се намира само от онзи, който вече знае, че го има —
+              а точно човекът, попаднал на грешен език, не знае. */}
+          <LocaleSwitcher current={locale} label={t.nav.languageLabel} />
 
           <Button asChild variant="ghost" size="sm">
             <Link href={`/${locale}/warenkorb`}>
@@ -215,12 +216,6 @@ export function SiteNav({
                 </Link>
               </li>
             ))}
-            <li className="flex items-center justify-between px-3 py-3 sm:hidden">
-              <span className="text-sm text-muted-foreground">
-                {t.nav.languageLabel}
-              </span>
-              <LocaleSwitcher current={locale} label={t.nav.languageLabel} />
-            </li>
             {/* Същото и в мобилното меню: на телефон горните бутони са
                 скрити, а вход, който съществува само на голям екран, не
                 съществува за половината посетители. */}

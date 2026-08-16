@@ -39,6 +39,17 @@ try {
     const href = await q.locator('a[hreflang="de"]').first().getAttribute("href");
     ok(`${path} → DE пази query`, href === want, String(href));
   }
+
+  // Падащото меню е нативен `<details>` — трите връзки са в документа и
+  // при изключен скрипт. Смени ли го някой с Radix DropdownMenu, другите
+  // два езика изчезват от HTML-а и този ред пада пръв.
+  await q.goto(`${B}/bg/kurse`, { waitUntil: "domcontentloaded" });
+  const inside = await q.locator('details:has(> summary) a[hreflang]').count();
+  ok("без JS: трите езика са в HTML вътре в <details>", inside === 3, `${inside}`);
+  ok(
+    "спусъкът показва текущия език с името му",
+    (await q.locator("summary").first().textContent())?.includes("Български"),
+  );
   await noJs.close();
 
   // Таблицата в Datenschutz се превърта настрани на тесен екран.
