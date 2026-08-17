@@ -46,7 +46,8 @@ export function ProductCover({
 }: ProductCoverProps) {
   // Ако админът не е попълнил корицата, пада на заглавието на продукта —
   // празна цветна кутия е по-лоша от кутия с името вътре.
-  const title = coverTitle?.trim() || pick(locale, fallback);
+  const germanTitle = coverTitle?.trim();
+  const title = germanTitle || pick(locale, fallback);
 
   return (
     <div
@@ -54,6 +55,13 @@ export function ProductCover({
       // Корицата е декоративна: цялата информация в нея се повтаря като
       // истински текст до нея в рафта. За екранния четец е шум.
       aria-hidden
+      // Езикът включва СРИЧКОПРЕНАСЯНЕТО (hyphens: auto в globals.css).
+      // Без него дълга немска дума се чупи без тире — „Arbeitsh|eft" —
+      // и чете като дефект, вместо като типография. Слага се само
+      // когато заглавието наистина идва от немското поле; при резервния
+      // вариант текстът е на езика на посетителя и немските правила за
+      // пренасяне биха били грешни.
+      lang={germanTitle ? "de" : undefined}
     >
       {brand ? <span className="cover-brand">{brand}</span> : <span />}
 

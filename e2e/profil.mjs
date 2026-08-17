@@ -4,6 +4,10 @@
 //   npm run e2e:profil
 
 import { chromium } from "playwright";
+// Паролата НЕ се преписва: шест проверки имаха свое копие и когато
+// сийдът смени стойността, всичките паднаха с „вярна парола не праща
+// към /admin" — тоест изглеждаше като счупен вход. (17.08.2026.)
+import { DEV_PASSWORD } from "./_harness.mjs";
 const B = process.env.E2E_BASE_URL ?? process.env.BASE ?? "http://localhost:3130";
 const out = [];
 const ok = (n,v,d="") => { out.push(v); console.log(`${v?"✓":"✗"} ${n}${d?"  — "+d:""}`); };
@@ -14,7 +18,7 @@ try {
   ok("анонимен се праща към входа", p.url().includes("anmelden"), p.url().replace(B,""));
 
   await p.fill('input[name="email"]', "student@nfi.local");
-  await p.fill('input[name="password"]', "nfi-lokalna-parola");
+  await p.fill('input[name="password"]', DEV_PASSWORD);
   await p.click('button[type="submit"]');
   await p.waitForTimeout(3000);
 

@@ -53,33 +53,41 @@ function CartProblems({
   if (problems.length === 0) return null;
 
   return (
-    <ul className="mt-6 space-y-2" role="alert">
-      {problems.map((problem) => {
-        const stuckId =
-          "productId" in problem && !visibleIds.has(problem.productId)
-            ? problem.productId
-            : null;
+    // role="alert" стои на ОБВИВКАТА, не на <ul>. Сложена върху самия
+    // списък, ролята ЗАМЕСТВА подразбиращата се роля „list" и децата
+    // престават да са елементи на списък — четецът спира да казва „списък
+    // от 3 неща, елемент 1 от 3". Тоест обявяването на тревогата ядеше
+    // ориентацията в нея. Хванато от `npm run a11y:pages` (правило
+    // listitem). Обвивката пази и двете.
+    <div role="alert" className="mt-6">
+      <ul className="space-y-2">
+        {problems.map((problem) => {
+          const stuckId =
+            "productId" in problem && !visibleIds.has(problem.productId)
+              ? problem.productId
+              : null;
 
-        return (
-          <li
-            key={problem.code + problem.message}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-          >
-            <span>{problem.message}</span>
+          return (
+            <li
+              key={problem.code + problem.message}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+            >
+              <span>{problem.message}</span>
 
-            {stuckId ? (
-              <form action={removeFromCartForm}>
-                <input type="hidden" name="locale" value={locale} />
-                <input type="hidden" name="productId" value={stuckId} />
-                <Button type="submit" size="sm" variant="outline">
-                  {removeLabel}
-                </Button>
-              </form>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
+              {stuckId ? (
+                <form action={removeFromCartForm}>
+                  <input type="hidden" name="locale" value={locale} />
+                  <input type="hidden" name="productId" value={stuckId} />
+                  <Button type="submit" size="sm" variant="outline">
+                    {removeLabel}
+                  </Button>
+                </form>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

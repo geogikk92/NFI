@@ -80,7 +80,14 @@ export default async function ShopPage({ params }: Props) {
                 {/* Типографската корица — материалите нямат снимки.
                     Декоративна е: всичко в нея се повтаря като истински
                     текст отдясно, затова е aria-hidden. */}
-                <div className="w-[clamp(5.5rem,27%,7.5rem)] shrink-0">
+                {/* Долната граница е 7.5rem (120px), не 5.5rem (88px).
+                    При 88px корицата е с размер на пощенска марка и
+                    немските думи не се побират: „Arbeitsheft" на 19px
+                    иска 90px, а вътрешността оставаше 62px — заглавието
+                    се чупеше на „Arbe/itshe/ft". При 120px същата дума
+                    се събира на един ред. (Измерено на 05.08.2026 при
+                    екран 375px.) */}
+                <div className="w-[clamp(7.5rem,27%,9rem)] shrink-0">
                   <ProductCover
                     color={product.coverColor}
                     brand={product.coverBrand}

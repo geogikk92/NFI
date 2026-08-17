@@ -8,11 +8,9 @@ import { afterAll, describe, expect, it } from "vitest";
 import { db } from "../db";
 import { authenticate, LOGIN_MAX_FAILURES } from "./login-db";
 import { hashPassword } from "./password";
+import { DEV_PASSWORD } from "./dev-password";
 
 const suite = process.env.DATABASE_URL ? describe : describe.skip;
-
-/** Паролата от prisma/seed.ts. */
-const DEV_PASSWORD = "1";
 
 suite("вход срещу истинска база", () => {
   afterAll(async () => {

@@ -13,21 +13,10 @@ import { db } from "../lib/db";
 import { LEGAL_TEXT_VERSIONS } from "../lib/legal";
 import { hashPassword } from "../lib/auth/password";
 import { assertLocalDatabase } from "../lib/db-target";
+import { DEV_PASSWORD } from "../lib/auth/dev-password";
 
-/**
- * Паролата за РАЗРАБОТКА на сийднатите профили.
- *
- * Стои открито в кода нарочно. Това е безопасно, защото сийдът отказва да
- * пише в НЕлокална база (виж assertNotProduction по-долу) и защото НЕ пипа
- * вече съществуваща парола. В живата база паролата се задава с отделна
- * команда, която не пази нищо:
- *
- *     DATABASE_URL="…" npm run admin:password -- admin@nfi.local
- *
- * Преди 30.07.2026 тези профили бяха БЕЗ парола изобщо — понеже /admin
- * тогава не проверяваше кой влиза, никой не забеляза.
- */
-const DEV_PASSWORD = "1";
+// Паролата идва от lib/auth/dev-password.ts — ЕДИН източник за сийда,
+// скриптовете и двата пакета проверки. Виж бележката там защо.
 
 async function seedUsers() {
   // Хешира се веднъж за двата профила: scrypt при N=16384 иска ~80 ms и
