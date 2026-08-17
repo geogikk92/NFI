@@ -14,18 +14,13 @@ import "server-only";
 
 import { db } from "@/lib/db";
 
-/**
- * Имената на действията. Изброени тук, за да не се разминат между мястото,
- * което пише, и мястото, което брои — разминаят ли се, ограничението тихо
- * спира да работи, а никой тест няма да го хване.
- */
-export const RATE_ACTIONS = {
-  loginFailed: "auth.login.failed",
-  register: "auth.register",
-  levelTest: "content.level-test.submit",
-} as const;
+// Имената на действията живеят в ЧИСТИЯ lib/rate-limit.ts, за да може и
+// скрипт извън Next да ги внесе (scripts/e2e-cleanup.ts трие броячите
+// между пусканията). Ре-експортират се оттук, за да не се пипат
+// досегашните вносители.
+export { RATE_ACTIONS, type RateAction } from "@/lib/rate-limit";
 
-export type RateAction = (typeof RATE_ACTIONS)[keyof typeof RATE_ACTIONS];
+import { RATE_ACTIONS, type RateAction } from "@/lib/rate-limit";
 
 export interface RateLimitRule {
   action: RateAction;

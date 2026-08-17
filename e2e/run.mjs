@@ -146,7 +146,8 @@ async function startServer(port) {
     try {
       const response = await fetch(`${base}/bg`, { signal: AbortSignal.timeout(5000) });
       if (response.ok) {
-        console.log("· Сървърът отговаря.\n");
+        console.log("· Сървърът отговаря.");
+        await warmUp(base);
         return { server, base };
       }
     } catch {
@@ -158,6 +159,66 @@ async function startServer(port) {
 
   server.kill("SIGTERM");
   throw new Error(`Сървърът не отговори за 90 секунди:\n${log.slice(-1500)}`);
+}
+
+/**
+ * Отваря веднъж маршрутите, които проверките ползват — за да се компилират
+ * ПРЕДИ да почне измерването.
+ *
+ * При `next dev` всеки маршрут се компилира при първото си посещение. Без
+ * това стопляне цената се плаща ВЪТРЕ в проверките, и то на машина, вече
+ * натоварена от предишните — оттам идваше трепкането: `sertifikati.mjs`
+ * пуснат сам винаги минаваше, а в пълен пробег падаше през път точно на
+ * издаването (най-тежката заявка: брояч + PDF с вградени шрифтове).
+ * Вдигането на срока от 20 на 45 s не помогна, което показа, че причината
+ * не е в числото.
+ *
+ * Продукционен билд би решил компилацията, но НЕ СТАВА: там бисквитката е
+ * `__Host-nfi_session`, а браузърът приема това име само по https — виж
+ * бележката при startServer. Затова се стопля, вместо да се сменя режимът.
+ *
+ * Админските адреси отговарят 404 без вход и това е достатъчно: маршрутът
+ * се компилира и без успешен достъп. (17.08.2026.)
+ */
+async function warmUp(base) {
+  const routes = [
+    "/bg/anmelden",
+    "/bg/registrieren",
+    "/bg/profil",
+    "/bg/kurse",
+    "/bg/shop",
+    "/bg/warenkorb",
+    "/bg/materialien",
+    "/bg/einstufungstest",
+    "/de/kurse",
+    "/admin",
+    "/admin/anketi",
+    "/admin/kursove",
+    "/admin/kursove/nov",
+    "/admin/produkti",
+    "/admin/promocii",
+    "/admin/prevodi",
+    "/admin/sertifikati",
+    "/admin/sertifikati/nov",
+    "/admin/mediya",
+    "/admin/mediya/nov",
+    "/admin/materiali",
+    "/admin/materiali/nov",
+    "/admin/dnevnik",
+  ];
+
+  process.stdout.write(`· Стоплям ${routes.length} маршрута…`);
+
+  for (const route of routes) {
+    try {
+      await fetch(base + route, { signal: AbortSignal.timeout(60_000) });
+    } catch {
+      // Провалът тук не е дефект: маршрутът може да иска вход или да
+      // отговори бавно. Целта е компилацията, не отговорът.
+    }
+  }
+
+  console.log(" готово.\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -13,6 +13,10 @@
 // Сийднатата база трябва да е налична: паролата долу идва от prisma/seed.ts.
 
 import { chromium } from "playwright";
+// Паролата НЕ се преписва: шест проверки имаха свое копие и когато
+// сийдът смени стойността, всичките паднаха с „вярна парола не праща
+// към /admin" — тоест изглеждаше като счупен вход. (17.08.2026.)
+import { DEV_PASSWORD } from "./_harness.mjs";
 
 const BASE = process.env.E2E_BASE_URL ?? process.env.BASE ?? "http://localhost:3130";
 const results = [];
@@ -62,7 +66,7 @@ try {
 
   // ── 3. Вход с ВЯРНА парола ──
   await page.fill('input[name="email"]', "admin@nfi.local");
-  await page.fill('input[name="password"]', "nfi-lokalna-parola");
+  await page.fill('input[name="password"]', DEV_PASSWORD);
   await page.click('button[type="submit"]');
   await page.waitForURL(/\/admin/, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(1500);

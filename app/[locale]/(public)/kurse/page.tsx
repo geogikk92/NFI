@@ -168,7 +168,14 @@ export default async function CoursesPage({ params, searchParams }: Props) {
                   )}
                 >
                   {item}
-                  <span className="text-xs opacity-70">({count})</span>
+                  {/* БЕЗ opacity: прозрачността смесва цвета с фона и
+                      сваля контраста под прага. Върху `text-subtle`
+                      (нулев брой) opacity-70 даваше 3.2:1 при изискване
+                      4.5:1 — хванато от `npm run a11y:pages`. По-малкият
+                      размер вече казва „второстепенно"; наследеният цвят
+                      минава и в трите състояния, включително белия текст
+                      върху червено при активен филтър. */}
+                  <span className="text-xs">({count})</span>
                   <span className="sr-only">
                     {" "}
                     — {levelLabel(locale, item)}

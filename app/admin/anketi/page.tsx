@@ -96,7 +96,7 @@ export default async function AdminCallRequestsPage({ searchParams }: Props) {
               )}
             >
               Всички
-              <span className="text-xs opacity-70 tabular-nums">
+              <span className="text-xs tabular-nums">
                 ({formatNumber(total, "bg")})
               </span>
             </Link>
@@ -121,7 +121,7 @@ export default async function AdminCallRequestsPage({ searchParams }: Props) {
                   )}
                 >
                   {CALL_REQUEST_STATUS_LABELS[item]}
-                  <span className="text-xs opacity-70 tabular-nums">
+                  <span className="text-xs tabular-nums">
                     ({formatNumber(counts[item], "bg")})
                   </span>
                 </Link>
